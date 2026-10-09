@@ -1,0 +1,21 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Credenciales y variables privadas
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Herramientas y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
