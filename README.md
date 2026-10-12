@@ -60,6 +60,7 @@ El entorno virtual `.venv/` y el archivo privado `.env` se mantienen exclusivame
 
 ```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate
 .\.venv\Scripts\Activate.ps1
 ```
 
