@@ -29,7 +29,7 @@ load_dotenv()
 
 # Configuración del proveedor de inteligencia artificial.
 # Se centraliza para facilitar futuros cambios de modelo.
-MODELO = "gemini-2.5-flash"
+MODELO = "gemini-3.5-flash-lite"
 
 URL_GEMINI = (
     "https://generativelanguage.googleapis.com/"
