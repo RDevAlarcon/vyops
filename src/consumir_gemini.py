@@ -21,6 +21,8 @@ Seguridad:
 
 import os
 import requests
+import time
+
 from dotenv import load_dotenv
 
 # Carga las variables definidas en el archivo .env del proyecto.
@@ -135,9 +137,18 @@ def enviar_peticion(
         # Clasificamos los errores HTTP más relevantes para
         # entregar mensajes comprensibles al usuario.
         codigo = error.response.status_code
-
-        if codigo in (401, 403):
+        if codigo == 400:
+            mensaje = (
+                "La solicitud enviada a Gemini no es válida. "
+                "Revisa los parámetros y el formato de los datos."
+            )
+        elif codigo in (401, 403):
             mensaje = "La API rechazó la autenticación o el acceso."
+        elif codigo == 404:
+            mensaje = (
+                "El modelo o recurso solicitado no está disponible "
+                "en el endpoint configurado."
+            )
         elif codigo == 429:
             mensaje = "El servicio alcanzó su límite de solicitudes."
         elif codigo == 503:
@@ -205,6 +216,28 @@ def extraer_texto(datos: dict) -> str:
     return texto
 
 
+def extraer_uso_tokens(datos: dict) -> dict:
+    """Extrae las métricas de consumo de tokens de Gemini.
+
+    Args:
+        datos: Respuesta JSON del proveedor.
+
+    Returns:
+        Diccionario con los tokens de entrada, salida y totales.
+
+    Nota:
+        Si Gemini no incluye usageMetadata, los valores
+        se mantienen como None para evitar inventar consumo.
+    """
+    metadata = datos.get("usageMetadata") or {}
+
+    return {
+        "tokens_entrada": metadata.get("promptTokenCount"),
+        "tokens_salida": metadata.get("candidatesTokenCount"),
+        "tokens_totales": metadata.get("totalTokenCount"),
+    }
+
+
 def obtener_dato_de_prueba(pregunta: str) -> str:
     """Coordina el proceso completo de consulta a Gemini.
 
@@ -217,15 +250,29 @@ def obtener_dato_de_prueba(pregunta: str) -> str:
     Diseño:
         Esta función orquesta las demás sin duplicar su lógica.
         Cada función conserva una responsabilidad específica.
+
+    Nota:
+        El tiempo medido corresponde a la comunicación
+        con Gemini, incluyendo la espera de su respuesta.
+        No representa exclusivamente el procesamiento
+        interno del modelo.
     """
     # Paso 1: validar y construir la petición.
     url, encabezados, cuerpo = armar_peticion(pregunta)
+    # Medimos el tiempo de la petición al proveedor.
+    inicio = time.perf_counter()
 
     # Paso 2: comunicarse con el proveedor.
     datos = enviar_peticion(url, encabezados, cuerpo)
 
+    duracion = time.perf_counter() - inicio
+
     # Paso 3: recuperar el texto generado.
-    return extraer_texto(datos)
+    return {
+        "respuesta": extraer_texto(datos),
+        "uso_tokens": extraer_uso_tokens(datos),
+        "tiempo_respuesta_segundos": round(duracion, 3),
+    }
 
 
 if __name__ == "__main__":
@@ -240,7 +287,18 @@ if __name__ == "__main__":
 
     try:
         resultado = obtener_dato_de_prueba(pregunta)
-        print(resultado)
+
+        print("\nRespuesta de Gemini:")
+        print(resultado["respuesta"])
+
+        print("\nConsumo de tokens:")
+        for nombre, cantidad in resultado["uso_tokens"].items():
+            print(f"  {nombre}: {cantidad}")
+
+        print(
+            "\nTiempo de respuesta: "
+            f"{resultado['tiempo_respuesta_segundos']:.3f} segundos"
+        )
 
     except (ValueError, RuntimeError) as error:
         # Mostramos un mensaje claro sin detener el programa
