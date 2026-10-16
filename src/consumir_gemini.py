@@ -33,9 +33,19 @@ load_dotenv()
 # Se centraliza para facilitar futuros cambios de modelo.
 MODELO = "gemini-3.5-flash-lite"
 
+# tarifas para el modelo gemini-3.5-flash-lite segun gemini pricing: https://ai.google.dev/gemini-api/docs/pricing?utm_source=chatgpt.com&hl=es-419#standard_7
+PRECIO_ENTRADA_MILLON = 0.30
+PRECIO_SALIDA_MILLON = 2.50
+
+#MODELO = "gemini-3.6-flash"
+
+# tarifas para el modelo gemini-3.6-flash segun gemini pricing: https://ai.google.dev/gemini-api/docs/pricing?utm_source=chatgpt.com&hl=es-419#gemini-3.6-flash
+#PRECIO_ENTRADA_MILLON = 0.75
+#PRECIO_SALIDA_MILLON = 3.75
+
 # Tarifas ficticias por millón de tokens para fines académicos.
-PRECIO_ENTRADA_MILLON = 0.50
-PRECIO_SALIDA_MILLON = 2.00
+#PRECIO_ENTRADA_MILLON = 0.50
+#PRECIO_SALIDA_MILLON = 2.00
 URL_GEMINI = (
     "https://generativelanguage.googleapis.com/"
     f"v1beta/models/{MODELO}:generateContent"
@@ -155,8 +165,10 @@ def enviar_peticion(
         elif codigo == 429:
             mensaje = "El servicio alcanzó su límite de solicitudes."
         elif codigo == 503:
+            detalle = error.response.text[:1000]
             mensaje = (
-                "El servicio de IA no está disponible temporalmente."
+                "El servicio de IA respondió HTTP 503. "
+                f"Detalle del proveedor: {detalle}"
             )
         else:
             mensaje = (
@@ -221,6 +233,8 @@ def extraer_texto(datos: dict) -> str:
 
 def extraer_uso_tokens(datos: dict) -> dict:
     """Extrae las métricas de consumo de tokens de Gemini.
+       Distingue los tokens de respuesta visible de los tokens
+       utilizados para el razonamiento interno del modelo.
 
     Args:
         datos: Respuesta JSON del proveedor.
@@ -237,6 +251,7 @@ def extraer_uso_tokens(datos: dict) -> dict:
     return {
         "tokens_entrada": metadata.get("promptTokenCount"),
         "tokens_salida": metadata.get("candidatesTokenCount"),
+        "tokens_razonamiento": metadata.get("thoughtsTokenCount"),
         "tokens_totales": metadata.get("totalTokenCount"),
     }
 
@@ -324,6 +339,7 @@ def calcular_costo(
 
     tokens_entrada = uso["tokens_entrada"]
     tokens_salida = uso["tokens_salida"]
+    tokens_razonamiento = uso["tokens_razonamiento"]
 
     # No calculamos costos con métricas inexistentes o inválidas.
     if any(
@@ -333,10 +349,21 @@ def calcular_costo(
         raise RuntimeError(
             "No se encontraron métricas válidas para calcular el costo."
         )
+    # Algunos modelos no utilizan razonamiento interno.
+    if tokens_razonamiento is None:
+        tokens_razonamiento = 0
+
+    if type(tokens_razonamiento) is not int or tokens_razonamiento < 0:
+        raise RuntimeError(
+            "El consumo de tokens de razonamiento no es válido."
+        )
+
+    # Los tokens de razonamiento se facturan como salida.
+    tokens_salida_facturables = tokens_salida + tokens_razonamiento
 
     # Las tarifas se expresan por millón de tokens.
     costo_entrada = tokens_entrada * (precio_entrada / 1_000_000)
-    costo_salida = tokens_salida * (precio_salida / 1_000_000)
+    costo_salida = tokens_salida_facturables * (precio_salida / 1_000_000)
 
     return costo_entrada + costo_salida
 
@@ -368,7 +395,7 @@ if __name__ == "__main__":
         )
         # Mostramos el costo calculado con tarifas académicas ficticias.
         print(
-            "\nCosto estimado (tarifas ficticias): "
+            "\nCosto estimado (tarifas oficiales de referencia): "
             f"USD {resultado['costo_estimado_usd']:.8f}"
         )
 

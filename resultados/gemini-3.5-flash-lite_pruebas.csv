@@ -1,0 +1,67 @@
+﻿fecha,modelo,id_pregunta,categoria,pregunta,estado,respuesta,tiempo_segundos,tokens_entrada,tokens_salida,tokens_razonamiento,tokens_totales,costo_estimado_usd,error
+2026-10-16T15:28:05.961352-03:00,gemini-3.5-flash-lite,1,Atención al cliente,"Un cliente pregunta por el horario de una empresa, pero no tenemos ese dato. ¿Cómo responderías? Redacta una respuesta breve para el cliente.",exito,"Aquí tienes una opción breve y profesional:
+
+> ""¡Hola! En este momento no tengo a la mano esa información, pero lo consulto con el equipo y te respondo en cuanto antes. ¡Gracias por tu paciencia!""",7.187,31,47,,78,0.00012680000000000002,
+2026-10-16T15:28:13.208674-03:00,gemini-3.5-flash-lite,2,Clasificación,"Clasifica ""Necesito cambiar mi reserva de mañana"" como ventas, soporte o reservas. Devuelve solo JSON con la clave ""categoria"".",exito,"```json
+{
+  ""categoria"": ""reservas""
+}
+```",25.059,29,17,,46,5.1200000000000004e-05,
+2026-10-16T15:28:38.274032-03:00,gemini-3.5-flash-lite,3,Extracción de datos,"Extrae nombre, servicio y fecha de: ""Soy Ana, necesito una limpieza el 20 de octubre"". Devuelve solo JSON. No inventes el año.",exito,"{
+  ""nombre"": ""Ana"",
+  ""servicio"": ""limpieza"",
+  ""fecha"": ""20 de octubre""
+}",5.201,34,31,,65,8.77e-05,
+2026-10-16T15:28:43.479385-03:00,gemini-3.5-flash-lite,4,Selección de herramientas,Un usuario solicita consultar el estado de su pedido 1234. ¿Qué herramienta necesitarías y qué harías antes de responder? No inventes el estado del pedido.,exito,"Para poder atender esta solicitud correctamente, necesitaría seguir un proceso basado en los principios de atención al cliente y seguridad de datos. Aquí detallo la herramienta y los pasos previos:
+
+### 1. ¿Qué herramienta necesitaría?
+Necesitaría un **Sistema de Gestión de Pedidos (OMS - *Order Management System*)** o una plataforma de comercio electrónico integrada (como SAP, Salesforce, Shopify, o el CRM interno de la empresa) que tenga acceso a la base de datos de envíos y logística en tiempo real.
+
+---
+
+### 2. ¿Qué haría antes de responder?
+
+Antes de darle cualquier información al usuario, realizaría las siguientes acciones:
+
+1. **Verificación de identidad y seguridad:** 
+   * Aunque el usuario me ha dado el número de pedido (1234), debo verificar si es el propietario legítimo de la cuenta o el comprador autorizado. Para ello, le solicitaría datos de confirmación (por ejemplo: el correo electrónico asociado, su nombre completo o los últimos dígitos del método de pago), dependiendo de los protocolos de privacidad de la empresa.
+
+2. **Consulta en el sistema:**
+   * Ingresaría el número de pedido `1234` en la herramienta correspondiente para verificar el estado real y actualizado (ej. *en preparación, enviado, retenido en aduana, entregado*, etc.).
+   * Revisaría los detalles logísticos asociados (empresa de transporte, número de guía/tracking y fecha estimada de entrega).
+
+3. **Análisis de incidencias:**
+   * Comprobaría si hay algún problema o retraso notificado en el sistema para ese pedido en particular, de modo que pueda anticiparme a cualquier queja.
+
+### Conclusión
+Una vez que el sistema me devuelva el estado real del pedido `1234` y haya validado la identidad del usuario (si aplica), procederé a redactar la respuesta basándome **estrictamente** en los datos arrojados por la herramienta, sin inventar ninguna información.",7.151,36,420,,456,0.0010608000000000002,
+2026-10-16T15:28:50.636191-03:00,gemini-3.5-flash-lite,5,Operaciones empresariales,Una pyme recibe pedidos por WhatsApp y los copia manualmente a Excel. Propón tres mejoras priorizadas y explica brevemente sus beneficios.,exito,"Para una PyME que sufre el cuello de botella de la transcripción manual de WhatsApp a Excel, el objetivo es **reducir errores, ahorrar tiempo y escalar la operación** sin perder el trato personalizado. 
+
+Aquí tienes tres mejoras propuestas, ordenadas por **prioridad** (de menor fricción/costo a mayor automatización):
+
+---
+
+### 1. Prioridad Alta: Uso de WhatsApp Business + Plantillas de Pedidos
+* **Qué es:** Migrar a WhatsApp Business (si no se usa) y establecer un formato estandarizado (plantilla) que el cliente deba completar obligatoriamente para hacer su pedido (ej: Nombre, Dirección, Producto, Cantidad).
+* **Beneficios:**
+  * **Estandarización:** Al obligar al cliente a seguir un formato, se elimina la ambigüedad de los mensajes de texto libres.
+  * **Copiar y Pegar eficiente:** Aunque sigue siendo manual, el operador puede copiar bloques de texto estructurados directamente en Excel en segundos, reduciendo drásticamente los errores de dedo y de interpretación.
+  * **Profesionalismo:** Mejora la imagen de la PyME ante el cliente.
+
+### 2. Prioridad Media: Implementación de un ""Portapapeles Inteligente"" o Macros en Excel
+* **Qué es:** Capacitar al equipo en el uso de herramientas del portapapeles (como el historial de Windows con `Win + V`) y crear una macro sencilla en Excel o usar funciones de pegado especial que estandaricen la información al ingresarla. Otra opción accesible es usar formularios internos (como Microsoft Forms o Google Forms): el vendedor llena el formulario rápido mientras habla con el cliente, y este se vierte **automáticamente** en Excel.
+* **Beneficios:**
+  * **Cero transcripción:** Si se usa un formulario interno, se elimina el bache del Excel; los datos van del chat al formulario y del formulario a la base de datos solos.
+  * **Velocidad:** Reduce el tiempo por pedido hasta en un 70%.
+  * **Trazabilidad:** Minimiza el riesgo de olvidar pedidos que quedan perdidos en el ""scroll"" del chat.
+
+### 3. Prioridad Baja (A futuro): Automatización con Chatbots y APIs (Zapier / Make)
+* **Qué es:** Integrar una solución automatizada (como un bot de WhatsApp mediante la API oficial o plataformas como ManyChat) conectada a Excel o a un sistema de gestión (ERP/CRM) a través de herramientas de integración como Zapier o Make. El cliente interactúa con un menú y el pedido se registra solo en la hoja de cálculo.
+* **Beneficios:**
+  * **Escalabilidad total:** Permite recibir y registrar cientos de pedidos simultáneamente, incluso fuera del horario laboral, sin intervención humana.
+  * **Eliminación del error humano:** Al no haber personas copiando, el porcentaje de errores de stock o despacho baja prácticamente a cero.
+  * **Enfoque en ventas:** Libera al personal de tareas operativas repetitivas para que se concentren en la atención al cliente y cierre de ventas.
+
+---
+
+**Resumen de recomendación:** Empieza hoy mismo con la **Prioridad 1** (ordenar cómo el cliente pide). A la vuelta de un mes, implementa la **Prioridad 2** (Google/MS Forms) para automatizar el Excel. Cuando el volumen de ventas lo justifique y haya presupuesto, da el salto a la **Prioridad 3**.",9.863,27,744,,771,0.0018681000000000001,

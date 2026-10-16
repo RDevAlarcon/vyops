@@ -1,0 +1,102 @@
+﻿fecha,modelo,id_pregunta,categoria,pregunta,estado,respuesta,tiempo_segundos,tokens_entrada,tokens_salida,tokens_razonamiento,tokens_totales,costo_estimado_usd,error
+2026-10-16T14:52:41.152053-03:00,gemini-3.6-flash,1,Atención al cliente,"Un cliente pregunta por el horario de una empresa, pero no tenemos ese dato. ¿Cómo responderías? Redacta una respuesta breve para el cliente.",exito,"Aquí tienes un par de opciones breves y profesionales, según el estilo de tu empresa:
+
+**Opción 1 (Proactiva - Te comprometes a averiguar):**
+> ""Hola. En este momento no dispongo de esa información, pero con gusto la consulto y te me pongo en contacto contigo lo antes posible para confirmártela. ¡Gracias por tu paciencia!""
+
+**Opción 2 (Directa y amable - Si no tienes forma de conseguir el dato):**
+> ""Hola. Lamentablemente no contamos con el horario de esa empresa en nuestra base de datos. Te sugerimos consultar directamente en sus canales oficiales o sitio web. ¡Saludos!""
+
+**Opción 3 (Muy corta / Mensajería rápida como WhatsApp):**
+> ""¡Hola! No tengo ese dato a la mano en este momento, pero lo investigo y te aviso a la brevedad. Gracias.""",6.52,31,187,657,875,0.00318825,
+2026-10-16T14:52:47.684926-03:00,gemini-3.6-flash,2,Clasificación,"Clasifica ""Necesito cambiar mi reserva de mañana"" como ventas, soporte o reservas. Devuelve solo JSON con la clave ""categoria"".",exito,"```json
+{
+  ""categoria"": ""reservas""
+}
+```",3.363,29,17,268,314,0.0010905,
+2026-10-16T14:52:51.258495-03:00,gemini-3.6-flash,3,Extracción de datos,"Extrae nombre, servicio y fecha de: ""Soy Ana, necesito una limpieza el 20 de octubre"". Devuelve solo JSON. No inventes el año.",exito,"```json
+{
+  ""nombre"": ""Ana"",
+  ""servicio"": ""limpieza"",
+  ""fecha"": ""20 de octubre""
+}
+```",3.221,34,36,315,385,0.0013417499999999998,
+2026-10-16T14:52:54.483347-03:00,gemini-3.6-flash,4,Selección de herramientas,Un usuario solicita consultar el estado de su pedido 1234. ¿Qué herramienta necesitarías y qué harías antes de responder? No inventes el estado del pedido.,error,,5.11,,,,,,"El servicio de IA respondió HTTP 503. Detalle del proveedor: {
+  ""error"": {
+    ""code"": 503,
+    ""message"": ""This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."",
+    ""status"": ""UNAVAILABLE""
+  }
+}
+"
+2026-10-16T15:01:46.464040-03:00,gemini-3.6-flash,4,Selección de herramientas,Un usuario solicita consultar el estado de su pedido 1234. ¿Qué herramienta necesitarías y qué harías antes de responder? No inventes el estado del pedido.,exito,"Para responder a esta solicitud, seguiría estos pasos:
+
+### 1. Herramienta que necesitaría
+Necesitaría una **función o herramienta de integración API** (por ejemplo, `consultar_estado_pedido(order_id)` o `get_order_status`) conectada directamente al sistema de gestión de pedidos (ERP, CRM o base de datos de comercio electrónico) de la empresa.
+
+---
+
+### 2. Lo que haría antes de responder
+
+1. **Validación de identidad/seguridad (si aplica):** 
+   * Verificar si el usuario está autenticado en la plataforma.
+   * Si no lo está, solicitaría un dato adicional de verificación (como el correo electrónico asociado a la compra) para proteger la privacidad del cliente antes de mostrar información sensible.
+
+2. **Ejecución de la herramienta:** 
+   * Ejecutaría la llamada a la herramienta/API utilizando el parámetro `order_id: ""1234""`.
+
+3. **Procesamiento de los resultados reales:**
+   * **Si el sistema devuelve los datos:** Tomaría la información exacta devuelta por la base de datos (por ejemplo: ""En tránsito"", ""Entregado"", fecha estimada de llegada, empresa de transporte) y la redactaría de forma clara para el usuario.
+   * **Si el pedido no existe:** Le informaría al usuario que el número de pedido 1234 no fue encontrado en el sistema y le pediría revisar el número.
+   * **Si hay un error técnico:** Le indicaría que no es posible consultar el estado en ese momento debido a un problema de conexión y le sugeriría intentar más tarde o contactar con soporte humano.
+
+4. **Control de calidad de la respuesta:** 
+   * Asegurarme estrictamente de **no inventar** ningún dato (como fechas, estados o empresas de envío) y limitar mi respuesta únicamente a la información obtenida a través de la herramienta.",8.143,36,412,822,1270,0.004654500000000001,
+2026-10-16T15:01:54.615179-03:00,gemini-3.6-flash,5,Operaciones empresariales,Una pyme recibe pedidos por WhatsApp y los copia manualmente a Excel. Propón tres mejoras priorizadas y explica brevemente sus beneficios.,error,,2.851,,,,,,"El servicio de IA respondió HTTP 503. Detalle del proveedor: {
+  ""error"": {
+    ""code"": 503,
+    ""message"": ""This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."",
+    ""status"": ""UNAVAILABLE""
+  }
+}
+"
+2026-10-16T15:04:24.861378-03:00,gemini-3.6-flash,5,Operaciones empresariales,Una pyme recibe pedidos por WhatsApp y los copia manualmente a Excel. Propón tres mejoras priorizadas y explica brevemente sus beneficios.,exito,"Para una PyME, copiar manualmente datos de WhatsApp a Excel genera pérdida de tiempo, errores humanos y dificultad para escalar. 
+
+A continuación, presento **tres mejoras priorizadas** por nivel de esfuerzo e impacto (de lo más rápido e implemetable a lo más avanzado):
+
+---
+
+### 1. Prioridad Alta (Corto plazo / Bajo costo): Estandarización con Formularios Digitales
+En lugar de recibir texto libre, se configura una **respuesta automática en WhatsApp Business** que envía un enlace a un formulario (Google Forms o Microsoft Forms) cuando el cliente quiere pedir.
+
+* **Beneficios:**
+  * **Cero copia manual:** El formulario guarda la información automáticamente en un Excel/Google Sheets en tiempo real.
+  * **Datos estructurados:** Elimina datos incompletos (el formulario obliga a poner dirección, teléfono, producto exacto, etc.).
+  * **Implementación inmediata:** Se puede configurar en menos de un día y es 100% gratuito.
+
+---
+
+### 2. Prioridad Media (Mediano plazo / Costo bajo-medio): Automatización ""No-Code"" (Make / Zapier)
+Si los clientes prefieren seguir pidiendo por texto directo en WhatsApp, se implementa una herramienta de integración (como Make o Zapier) conectada a la API de WhatsApp Business. 
+
+* **Beneficios:**
+  * **Procesamiento automático:** La herramienta lee las respuestas del cliente en WhatsApp y llena las filas de Excel automáticamente.
+  * **Notificaciones inteligentes:** Puede enviar una confirmación automática al cliente (""Tu pedido #123 ha sido registrado"") sin intervención humana.
+  * **Ahorro masivo de tiempo:** Libera al personal operativo para que se concentre en la preparación del pedido y el servicio al cliente.
+
+---
+
+### 3. Prioridad Avanzada (Largo plazo / Inversión): Chatbot con Sistema CRM/ERP
+Sustituir el flujo Excel por un **CRM ligero integrado con WhatsApp** (como Trengo, Sirena/Zendesk o ManyChat conectando a un software de ventas). Un chatbot guía al cliente paso a paso en la compra.
+
+* **Beneficios:**
+  * **Atención 24/7:** La empresa puede tomar pedidos fuera del horario laboral de forma 100% autónoma.
+  * **Escalabilidad y Centralización:** Permite que múltiples vendedores atiendan el mismo número de WhatsApp sin traspasarse datos en Excel, integrando inventario y facturación en un solo lugar.
+  * **Control total de métricas:** Genera reportes automáticos de ventas, clientes recurrentes y tiempos de respuesta.
+
+---
+
+### Resumen de hoja de ruta recomendada:
+1. **Hoy:** Implementar la **Prioridad 1** (Formulario) para frenar la pérdida de tiempo de inmediato.
+2. **Próximo mes:** Evaluar la **Prioridad 2** para automatizar la entrada de datos si el volumen crece.
+3. **A futuro:** Migrar a la **Prioridad 3** cuando el Excel ya no sea suficiente para gestionar el volumen de ventas.",12.337,27,665,1023,1715,0.006350250000000001,
