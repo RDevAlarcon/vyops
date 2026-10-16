@@ -22,7 +22,7 @@ Seguridad:
 import os
 import requests
 import time
-
+import math 
 from dotenv import load_dotenv
 
 # Carga las variables definidas en el archivo .env del proyecto.
@@ -33,6 +33,9 @@ load_dotenv()
 # Se centraliza para facilitar futuros cambios de modelo.
 MODELO = "gemini-3.5-flash-lite"
 
+# Tarifas ficticias por millón de tokens para fines académicos.
+PRECIO_ENTRADA_MILLON = 0.50
+PRECIO_SALIDA_MILLON = 2.00
 URL_GEMINI = (
     "https://generativelanguage.googleapis.com/"
     f"v1beta/models/{MODELO}:generateContent"
@@ -238,14 +241,14 @@ def extraer_uso_tokens(datos: dict) -> dict:
     }
 
 
-def obtener_dato_de_prueba(pregunta: str) -> str:
+def obtener_dato_de_prueba(pregunta: str) -> dict:
     """Coordina el proceso completo de consulta a Gemini.
 
     Args:
         pregunta: Consulta que se enviará al modelo.
 
     Returns:
-        Respuesta del modelo como texto.
+        devuelve un diccionario con respuesta, consumo, tiempo y costo estimado.
 
     Diseño:
         Esta función orquesta las demás sin duplicar su lógica.
@@ -272,8 +275,72 @@ def obtener_dato_de_prueba(pregunta: str) -> str:
         "respuesta": extraer_texto(datos),
         "uso_tokens": extraer_uso_tokens(datos),
         "tiempo_respuesta_segundos": round(duracion, 3),
+        "costo_estimado_usd": calcular_costo(
+            datos,
+            PRECIO_ENTRADA_MILLON,
+            PRECIO_SALIDA_MILLON,
+        ),
     }
 
+
+
+def calcular_costo(
+    datos: dict,
+    precio_entrada: float,
+    precio_salida: float,
+) -> float:
+    """Calcula el costo estimado de una consulta a Gemini.
+
+    Args:
+        datos: Respuesta JSON del proveedor.
+        precio_entrada: Precio USD por millón de tokens de entrada.
+        precio_salida: Precio USD por millón de tokens de salida.
+
+    Returns:
+        Costo estimado en USD según las tarifas proporcionadas.
+
+    Raises:
+        ValueError: Si los precios no son válidos.
+        RuntimeError: Si faltan las métricas necesarias.
+
+    Nota:
+        Utiliza tarifas ficticias para fines académicos.
+        No contempla tarifas especiales ni facturación real.
+    """
+    # Verificamos que las tarifas sean números válidos.
+    if any(
+        isinstance(precio, bool)
+        or not isinstance(precio, (int, float))
+        or not math.isfinite(precio)
+        or precio < 0
+        for precio in (precio_entrada, precio_salida)
+    ):
+        raise ValueError(
+            "Los precios deben ser números finitos no negativos."
+        )
+
+    # Recuperamos los tokens informados por Gemini.
+    uso = extraer_uso_tokens(datos)
+
+    tokens_entrada = uso["tokens_entrada"]
+    tokens_salida = uso["tokens_salida"]
+
+    # No calculamos costos con métricas inexistentes o inválidas.
+    if any(
+        type(tokens) is not int or tokens < 0
+        for tokens in (tokens_entrada, tokens_salida)
+    ):
+        raise RuntimeError(
+            "No se encontraron métricas válidas para calcular el costo."
+        )
+
+    # Las tarifas se expresan por millón de tokens.
+    costo_entrada = tokens_entrada * (precio_entrada / 1_000_000)
+    costo_salida = tokens_salida * (precio_salida / 1_000_000)
+
+    return costo_entrada + costo_salida
+
+    
 
 if __name__ == "__main__":
     # Punto de entrada para ejecutar el módulo directamente.
@@ -298,6 +365,11 @@ if __name__ == "__main__":
         print(
             "\nTiempo de respuesta: "
             f"{resultado['tiempo_respuesta_segundos']:.3f} segundos"
+        )
+        # Mostramos el costo calculado con tarifas académicas ficticias.
+        print(
+            "\nCosto estimado (tarifas ficticias): "
+            f"USD {resultado['costo_estimado_usd']:.8f}"
         )
 
     except (ValueError, RuntimeError) as error:
