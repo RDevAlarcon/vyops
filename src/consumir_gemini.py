@@ -23,6 +23,8 @@ import os
 import requests
 import time
 import math 
+import json
+import re
 from dotenv import load_dotenv
 
 # Carga las variables definidas en el archivo .env del proyecto.
@@ -50,30 +52,46 @@ URL_GEMINI = (
     "https://generativelanguage.googleapis.com/"
     f"v1beta/models/{MODELO}:generateContent"
 )
+MAX_INTENTOS = 3
 
-def armar_peticion(pregunta: str) -> tuple[str, dict, dict]:
-    """Valida la entrada y prepara una solicitud para Gemini.
+def armar_peticion(
+    pregunta: str,
+    system_instruction: str | None = None,
+    response_schema: dict | None = None,
+) -> tuple[str, dict, dict]:
+    """Valida los datos y prepara una solicitud para Gemini.
 
     Args:
-        pregunta: Texto que el usuario desea enviar al modelo.
+        pregunta: Mensaje concreto del usuario.
+        system_instruction: Instrucciones permanentes del asistente.
+        response_schema: Esquema JSON esperado para la respuesta.
 
     Returns:
         Tupla con la URL, los encabezados HTTP y el cuerpo JSON.
 
     Raises:
-        ValueError: Si la pregunta es inválida o falta la API key.
-
-    Nota:
-        La validación se realiza antes de llamar al proveedor para
-        evitar solicitudes innecesarias.
+        ValueError: Si los datos de entrada o la API key son inválidos.
     """
-    # Una pregunta debe ser texto y contener caracteres distintos
-    # de espacios en blanco.
+    # Validamos la pregunta antes de consultar al proveedor.
     if not isinstance(pregunta, str) or not pregunta.strip():
         raise ValueError("La pregunta debe contener texto válido.")
 
-    # Obtiene la credencial desde el entorno local.
-    # Nunca se incluye directamente en el código fuente.
+    if system_instruction is not None:
+        if (
+            not isinstance(system_instruction, str)
+            or not system_instruction.strip()
+        ):
+            raise ValueError(
+                "La instrucción de sistema debe contener texto válido."
+            )
+
+    if response_schema is not None:
+        if not isinstance(response_schema, dict) or not response_schema:
+            raise ValueError(
+                "El esquema de respuesta debe ser un diccionario válido."
+            )
+
+    # La credencial permanece fuera del código fuente.
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key or not api_key.strip():
@@ -81,13 +99,12 @@ def armar_peticion(pregunta: str) -> tuple[str, dict, dict]:
             "Falta configurar GEMINI_API_KEY en el archivo .env."
         )
 
-    # La autenticación se realiza mediante el encabezado HTTP.
     encabezados = {
         "x-goog-api-key": api_key,
         "Content-Type": "application/json",
     }
 
-    # Construye el cuerpo con la estructura requerida por Gemini.
+    # El mensaje del usuario cambia en cada solicitud.
     cuerpo = {
         "contents": [
             {
@@ -97,6 +114,21 @@ def armar_peticion(pregunta: str) -> tuple[str, dict, dict]:
             }
         ]
     }
+
+    # Las instrucciones permanentes van separadas del mensaje.
+    if system_instruction is not None:
+        cuerpo["systemInstruction"] = {
+            "parts": [
+                {"text": system_instruction.strip()}
+            ]
+        }
+
+    # Cuando se solicita JSON, aplicamos el esquema desde la API.
+    if response_schema is not None:
+        cuerpo["generationConfig"] = {
+            "responseMimeType": "application/json",
+            "responseSchema": response_schema,
+        }
 
     return URL_GEMINI, encabezados, cuerpo
 
@@ -123,18 +155,74 @@ def enviar_peticion(
     Seguridad:
         No se imprimen credenciales ni encabezados de autenticación.
     """
-    try:
-        # timeout evita que una solicitud quede esperando
-        # indefinidamente si el servicio no responde.
-        respuesta = requests.post(
-            url,
-            headers=encabezados,
-            json=cuerpo,
-            timeout=30,
-        )
 
-        # Convierte respuestas HTTP en excepciones.
-        respuesta.raise_for_status()
+    try:
+        # Reintentamos hasta tres veces cuando Gemini responde
+        # con HTTP 429, HTTP 503 o supera el tiempo de espera.
+        for intento in range(MAX_INTENTOS):
+            try:
+                respuesta = requests.post(
+                    url,
+                    headers=encabezados,
+                    json=cuerpo,
+                    timeout=30,
+                )
+
+                # Si la respuesta es correcta, terminamos el ciclo.
+                respuesta.raise_for_status()
+                break
+
+            except requests.exceptions.Timeout:
+                if intento == MAX_INTENTOS - 1:
+                    raise
+
+                espera = 2 ** (intento + 1)
+
+                print(
+                    f"Gemini tardó demasiado en responder. "
+                    f"Reintentando en {espera} segundos "
+                    f"(intento {intento + 2}/{MAX_INTENTOS})."
+                )
+
+                time.sleep(espera)
+
+            except requests.exceptions.HTTPError as error:
+                codigo = error.response.status_code
+
+                # Solo reintentamos ante límites de solicitudes
+                # o indisponibilidad temporal del proveedor.
+                if codigo not in (429, 503):
+                    raise
+
+                # Si agotamos los intentos, el error pasa
+                # al manejador HTTP que ya tenemos.
+                if intento == MAX_INTENTOS - 1:
+                    raise
+
+                # Espera exponencial: 2 segundos y luego 4.
+                espera = 2 ** (intento + 1)
+
+                # Si Gemini indica Retry-After en segundos,
+                # respetamos ese valor cuando sea mayor.
+                retry_after = error.response.headers.get("Retry-After")
+
+                if retry_after:
+                    try:
+                        espera = max(espera, float(retry_after))
+                    except ValueError:
+                        pass
+
+                # Evitamos esperas indefinidas.
+                espera = min(espera, 60)
+
+                print(
+                    f"Gemini respondió HTTP {codigo}. "
+                    f"Reintentando en {espera:g} segundos "
+                    f"(intento {intento + 2}/{MAX_INTENTOS})."
+                )
+
+                time.sleep(espera)
+
 
     except requests.exceptions.Timeout as error:
         raise RuntimeError(
@@ -231,6 +319,76 @@ def extraer_texto(datos: dict) -> str:
     return texto
 
 
+def parsear_respuesta_json(
+    texto: str,
+    claves_esperadas: list[str] | None = None,
+) -> dict:
+    """Convierte una respuesta del modelo en un diccionario validado.
+
+    Args:
+        texto: Respuesta textual generada por Gemini.
+        claves_esperadas: Claves obligatorias del resultado.
+
+    Returns:
+        Diccionario con los datos interpretados.
+
+    Raises:
+        ValueError: Si la respuesta no es JSON válido o no
+            contiene la estructura esperada.
+    """
+    if not isinstance(texto, str) or not texto.strip():
+        raise ValueError("La respuesta del modelo está vacía.")
+
+    # Eliminamos espacios y delimitadores Markdown opcionales.
+    texto_limpio = texto.strip()
+    texto_limpio = re.sub(
+        r"^```(?:json)?\s*",
+        "",
+        texto_limpio,
+        flags=re.IGNORECASE,
+    )
+    texto_limpio = re.sub(
+        r"\s*```$",
+        "",
+        texto_limpio,
+    )
+
+    # Interpretamos el texto como JSON.
+    try:
+        datos = json.loads(texto_limpio)
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            "La respuesta del modelo no contiene JSON válido."
+        ) from error
+
+    # Para esta actividad esperamos un objeto JSON.
+    if not isinstance(datos, dict):
+        raise ValueError(
+            "La respuesta JSON debe contener un objeto."
+        )
+
+    # Verificamos las claves requeridas.
+    if claves_esperadas is not None:
+        if not isinstance(claves_esperadas, list) or not all(
+            isinstance(clave, str) and clave
+            for clave in claves_esperadas
+        ):
+            raise ValueError("La lista de claves esperadas es inválida.")
+
+        faltantes = [
+            clave
+            for clave in claves_esperadas
+            if clave not in datos
+        ]
+
+        if faltantes:
+            raise ValueError(
+                f"La respuesta no contiene las claves: {faltantes}"
+            )
+
+    return datos
+
+
 def extraer_uso_tokens(datos: dict) -> dict:
     """Extrae las métricas de consumo de tokens de Gemini.
        Distingue los tokens de respuesta visible de los tokens
@@ -317,11 +475,8 @@ def calcular_costo(
     Raises:
         ValueError: Si los precios no son válidos.
         RuntimeError: Si faltan las métricas necesarias.
-
-    Nota:
-        Utiliza tarifas ficticias para fines académicos.
-        No contempla tarifas especiales ni facturación real.
     """
+
     # Verificamos que las tarifas sean números válidos.
     if any(
         isinstance(precio, bool)
@@ -393,7 +548,7 @@ if __name__ == "__main__":
             "\nTiempo de respuesta: "
             f"{resultado['tiempo_respuesta_segundos']:.3f} segundos"
         )
-        # Mostramos el costo calculado con tarifas académicas ficticias.
+        # Mostramos el costo calculado con tarifas oficiales de referencia.
         print(
             "\nCosto estimado (tarifas oficiales de referencia): "
             f"USD {resultado['costo_estimado_usd']:.8f}"

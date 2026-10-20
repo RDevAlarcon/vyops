@@ -1,0 +1,84 @@
+{
+  "modelo": "gemini-3.5-flash-lite",
+  "fecha_utc": "2026-10-20T17:38:22.488453+00:00",
+  "repeticiones_por_prompt": 3,
+  "resultados": [
+    {
+      "prompt": "clasificar_solicitud",
+      "repeticion": 1,
+      "exito": false,
+      "error": "El servicio tardó demasiado en responder."
+    },
+    {
+      "prompt": "clasificar_solicitud",
+      "repeticion": 2,
+      "exito": true,
+      "respuesta": {
+        "categoria": "reservas",
+        "confianza": 100
+      }
+    },
+    {
+      "prompt": "clasificar_solicitud",
+      "repeticion": 3,
+      "exito": true,
+      "respuesta": {
+        "categoria": "reservas",
+        "confianza": 100
+      }
+    },
+    {
+      "prompt": "extraer_datos_cliente",
+      "repeticion": 1,
+      "exito": true,
+      "respuesta": {
+        "nombre": "Camila",
+        "servicio": "evaluación de kinesiología",
+        "fecha": "viernes"
+      }
+    },
+    {
+      "prompt": "extraer_datos_cliente",
+      "repeticion": 2,
+      "exito": true,
+      "respuesta": {
+        "nombre": "Camila",
+        "servicio": "evaluación de kinesiología",
+        "fecha": "viernes"
+      }
+    },
+    {
+      "prompt": "extraer_datos_cliente",
+      "repeticion": 3,
+      "exito": false,
+      "error": "El servicio tardó demasiado en responder."
+    },
+    {
+      "prompt": "priorizar_solicitud",
+      "repeticion": 1,
+      "exito": true,
+      "respuesta": {
+        "prioridad": "alta",
+        "motivo": "El sistema de ventas dejó de funcionar y no se puede atender a los clientes."
+      }
+    },
+    {
+      "prompt": "priorizar_solicitud",
+      "repeticion": 2,
+      "exito": true,
+      "respuesta": {
+        "prioridad": "alta",
+        "motivo": "El sistema de ventas dejó de funcionar y no se puede operar."
+      }
+    },
+    {
+      "prompt": "priorizar_solicitud",
+      "repeticion": 3,
+      "exito": true,
+      "respuesta": {
+        "prioridad": "alta",
+        "motivo": "El sistema de ventas dejó de funcionar y no se puede atender a los clientes."
+      }
+    }
+  ]
+}
