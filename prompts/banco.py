@@ -1,12 +1,46 @@
 
-"""Banco de prompts estructurados para VyOps.
 
-Unidad U1.3 — Bloque 10.
+"""Banco de prompts estructurados para el proyecto VyOps.
 
-Cada prompt define una tarea empresarial, instrucciones de sistema,
-un ejemplo de entrada y el esquema JSON de salida esperado.
+Proyecto académico — Especialización en Desarrollo con IA Generativa.
+Unidad 1 — Bloque 10: Ingeniería de prompts y consistencia.
+
+Objetivo:
+    Definir un conjunto de prompts reutilizables para evaluar
+    tareas empresariales mediante Google Gemini.
+
+Casos incluidos:
+    1. Clasificación de solicitudes.
+    2. Extracción de información de clientes.
+    3. Priorización de solicitudes empresariales.
+
+Estructura:
+    Cada elemento de BANCO_DE_PROMPTS contiene:
+        - nombre: Identificador del caso de evaluación.
+        - system_instruction: Instrucciones para el modelo.
+        - ejemplo_usuario: Mensaje utilizado durante la prueba.
+        - claves_esperadas: Campos obligatorios de la respuesta.
+        - response_schema: Esquema JSON solicitado a Gemini.
+
+Validación:
+    Los esquemas definen tipos de datos, campos obligatorios
+    y restricciones aplicables a cada tarea.
+
+    La comprobación de las respuestas se realiza desde
+    prompts/test_consistencia.py.
+
+Arquitectura:
+    Este módulo contiene únicamente la configuración de los
+    prompts. No realiza solicitudes HTTP, no utiliza credenciales
+    y no ejecuta consultas a Gemini.
+
+Extensibilidad:
+    Permite incorporar nuevos casos de evaluación manteniendo
+    separadas las instrucciones de la lógica de ejecución.
 """
-
+# Catálogo de casos de prueba utilizados para evaluar la consistencia
+# de las respuestas estructuradas de Gemini.
+# Cada caso incluye instrucciones, entrada de ejemplo y esquema JSON.
 BANCO_DE_PROMPTS = [
     {
         "nombre": "clasificar_solicitud",

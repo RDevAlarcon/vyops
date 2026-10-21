@@ -4,140 +4,257 @@
 
 ## 1. Descripción del proyecto
 
-VyOps es un proyecto de agente de inteligencia artificial orientado a apoyar la gestión operativa de pequeñas y medianas empresas.
+VyOps es un proyecto de agente de inteligencia artificial orientado a apoyar la gestión operativa de organizaciones y pequeñas y medianas empresas.
 
-Su objetivo es permitir que los usuarios consulten información empresarial, obtengan respuestas contextualizadas y, progresivamente, puedan ejecutar tareas mediante herramientas e integraciones con APIs.
+Su objetivo es permitir que los usuarios consulten información, obtengan respuestas contextualizadas y, progresivamente, puedan ejecutar tareas mediante herramientas e integraciones con APIs.
 
-El proyecto se desarrollará de manera incremental durante el programa, aplicando conceptos de integración de modelos de lenguaje, desarrollo backend, recuperación de información (RAG), orquestación y despliegue reproducible.
+La arquitectura prevista es modular y multiempresa (*multi-tenant*), con separación de información por organización.
+
+El proyecto se desarrolla de manera incremental durante el programa SkillNest.
 
 ## 2. Objetivo
 
 Construir una solución capaz de:
 
-- Interpretar solicitudes de usuarios mediante lenguaje natural.
+- Interpretar solicitudes mediante lenguaje natural.
 - Consumir modelos de inteligencia artificial mediante APIs.
-- Integrar información de diferentes fuentes empresariales.
-- Recuperar información relevante mediante técnicas RAG.
-- Utilizar herramientas externas para resolver solicitudes operativas.
-- Incorporar mecanismos de validación, manejo de errores y observabilidad.
+- Procesar respuestas estructuradas.
+- Validar datos y manejar errores.
+- Evaluar modelos y prompts.
+- Integrar fuentes documentales mediante RAG en etapas posteriores.
+- Incorporar herramientas, controles de acceso y observabilidad progresivamente.
 
-Estas capacidades representan el alcance previsto del proyecto y se implementarán progresivamente durante el curso.
+Las funcionalidades futuras se implementarán durante las siguientes unidades.
 
-## 3. Tecnologías
+## 3. Estado actual — Unidad 1 / Gate 1
+
+La primera unidad incluye:
+
+- Entorno virtual Python y dependencias reproducibles.
+- Configuración segura de credenciales.
+- Consumo funcional de Google Gemini mediante API REST.
+- Procesamiento de respuestas y métricas de tokens.
+- Manejo de errores HTTP y reintentos ante fallos transitorios.
+- Evaluación comparativa de modelos.
+- Banco de tres prompts con instrucciones de sistema.
+- Validación de respuestas JSON estructuradas.
+- Evaluación de consistencia con nueve ejecuciones.
+- Documentación técnica y control de versiones.
+
+**Modelo seleccionado para las pruebas actuales:** `gemini-3.5-flash-lite`.
+
+## 4. Tecnologías
 
 | Tecnología | Propósito |
 |---|---|
 | Python 3.13 | Lenguaje principal |
-| Google Gemini API | Proveedor de modelos de IA |
-| google-genai | SDK oficial de Gemini |
+| Google Gemini API | Proveedor de inteligencia artificial |
 | requests | Cliente HTTP |
-| python-dotenv | Gestión de variables de entorno |
+| python-dotenv | Variables de entorno |
+| google-genai | SDK de Gemini disponible en el entorno |
+| tzdata | Soporte de zonas horarias |
 | Git y GitHub | Control de versiones |
-| Postman | Pruebas de APIs |
+| Postman | Pruebas de API |
 | venv | Aislamiento de dependencias |
 
-Otras tecnologías se incorporarán conforme a los requerimientos de las siguientes unidades.
-
-## 4. Estructura del repositorio
+## 5. Estructura del repositorio
 
 ```text
 vyops/
-├── src/                  # Código fuente
-├── docs/                 # Documentación y evidencias
-│   └── evidencia_peticion_autenticada.png
-├── tests/                # Pruebas automatizadas
-├── .env.example          # Plantilla de configuración
-├── .gitignore            # Archivos excluidos de Git
-├── README.md             # Documentación del proyecto
-└── requirements.txt      # Dependencias Python
+├── src/
+│   ├── consumir_gemini.py
+│   └── comparar_modelos.py
+├── prompts/
+│   ├── banco.py
+│   ├── test_consistencia.py
+│   ├── registro_resultados.json
+│   ├── registro_resultados_anterior.json
+│   └── registro_resultados_con_errores.json
+├── resultados/
+├── docs/
+│   ├── evaluacion_modelos.md
+│   ├── evaluacion_prompts.md
+│   └── decision-arquitectura.md
+├── tests/
+├── .env.example
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
-El entorno virtual `.venv/` y el archivo privado `.env` se mantienen exclusivamente en el entorno local.
+Los archivos `.env` y `.venv/` son locales y no se incluyen en Git.
 
-## 5. Configuración del entorno
+## 6. Instalación desde cero — Windows PowerShell
 
-### Crear y activar el entorno virtual
+### 6.1. Requisitos previos
+
+- Python 3.13 instalado.
+- Git instalado.
+- Conexión a internet.
+- Clave API de Gemini obtenida desde Google AI Studio.
+
+### 6.2. Clonar el repositorio
+
+```powershell
+git clone https://github.com/RDevAlarcon/vyops.git
+cd vyops
+```
+
+### 6.3. Crear el entorno virtual
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate
+```
+
+### 6.4. Activar el entorno virtual
+
+```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### Instalar las dependencias
+### 6.5. Instalar dependencias
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### Configurar las variables de entorno
+Verificar dependencias:
 
-Crear un archivo `.env` a partir de `.env.example` y configurar:
-
-```dotenv
-GEMINI_API_KEY=tu_clave_aqui
+```powershell
+python -m pip check
 ```
 
-La credencial debe obtenerse desde Google AI Studio y nunca debe incluirse en archivos versionados.
+### 6.6. Configurar credenciales
 
-## 6. Avance del proyecto
+Copiar la plantilla:
 
-### Unidad U1.2 — Configuración técnica inicial
+```powershell
+Copy-Item .env.example .env
+```
 
-**Estado: Completada**
+Abrir `.env` y reemplazar el valor de ejemplo por la clave API real:
 
-Actividades realizadas:
+```dotenv
+GEMINI_API_KEY=tu_clave_real
+```
 
-- Inicialización del repositorio Git.
-- Configuración de la rama principal `main`.
-- Creación y activación del entorno virtual Python.
-- Instalación y registro de dependencias.
-- Configuración de variables de entorno.
-- Protección de credenciales mediante `.gitignore`.
-- Creación del repositorio remoto en GitHub.
-- Configuración de una colección de Postman.
-- Primera petición HTTP autenticada a Google Gemini.
-- Registro de evidencia de respuesta exitosa.
+Nunca publicar la clave ni incluir `.env` en Git.
+
+## 7. Ejecución de la aplicación
+
+Desde la raíz del proyecto, con el entorno virtual activado y `.env` configurado:
+
+```powershell
+python src/consumir_gemini.py
+```
+
+El programa realiza una consulta de prueba a Gemini y muestra:
+
+- Respuesta generada.
+- Tokens utilizados.
+- Tiempo de respuesta.
+- Costo estimado de la consulta.
+
+La ejecución requiere acceso a la API y disponibilidad del proveedor.
+
+## 8. Evaluación de modelos
+
+Se implementó una comparación de modelos de Gemini considerando:
+
+- Respuestas correctas.
+- Tiempo de respuesta.
+- Consumo de tokens.
+- Costo estimado.
+- Errores de API.
+
+Script:
+
+```powershell
+python src/comparar_modelos.py
+```
+
+Documentación:
+
+- `docs/evaluacion_modelos.md`
+- `docs/decision-arquitectura.md`
+
+Los resultados históricos se conservan en `resultados/`.
+
+## 9. Banco de prompts y validación JSON
+
+El banco contiene tres prompts:
+
+1. `clasificar_solicitud`
+2. `extraer_datos_cliente`
+3. `priorizar_solicitud`
+
+Cada prompt define instrucciones de sistema, entrada de ejemplo, esquema JSON y claves obligatorias.
+
+La evaluación se ejecuta mediante:
+
+```powershell
+python prompts/test_consistencia.py
+```
+
+Este comando realiza nueve consultas reales a Gemini y actualiza `prompts/registro_resultados.json`. Por lo tanto, consume cuota de API y puede generar costos.
+
+**Resultado registrado el 20 de octubre de 2026:** 9 de 9 pruebas exitosas, con un 100 % de cumplimiento estructural para los ejemplos evaluados.
+
+La evidencia histórica y el análisis se encuentran en:
+
+- `prompts/registro_resultados.json`
+- `prompts/registro_resultados_anterior.json`
+- `prompts/registro_resultados_con_errores.json`
+- `docs/evaluacion_prompts.md`
+
+## 10. Seguridad y buenas prácticas
+
+- Las credenciales se cargan desde `.env`.
+- `.env` está excluido mediante `.gitignore`.
+- `.env.example` contiene únicamente valores de ejemplo.
+- Las dependencias se registran en `requirements.txt`.
+- Las peticiones HTTP incorporan manejo de errores.
+- Los errores transitorios pueden activar reintentos controlados.
+- Las respuestas JSON se validan antes de procesarlas.
+- El historial de cambios se mantiene en GitHub.
+
+## 11. Evidencia técnica de la Unidad 1
 
 ### Primera petición autenticada
 
-| Campo | Resultado |
-|---|---|
-| Fecha | 09-10-2026 |
-| Método | POST |
-| Proveedor | Google Gemini |
-| Modelo | gemini-2.5-flash |
-| Endpoint | `/v1beta/models/gemini-2.5-flash:generateContent` |
-| Estado HTTP | 200 OK |
-| Resultado | Respuesta generada correctamente |
+El 9 de octubre de 2026 se realizó una petición HTTP autenticada a Gemini mediante Postman.
 
-**Evidencia:** [Primera petición autenticada](docs/evidencia_peticion_autenticada.png)
+- Modelo utilizado inicialmente: `gemini-2.5-flash`.
+- Resultado HTTP: `200 OK`.
+- Evidencia: [Primera petición autenticada](docs/evidencia_petición_autenticada.png).
 
-Esta validación se realizó mediante Postman. El consumo programático desde Python se implementará en la siguiente unidad.
+Posteriormente se implementó el cliente Python y se evaluaron otros modelos para seleccionar una alternativa apropiada para VyOps.
 
-## 7. Próximas etapas
+### Arquitectura
 
-- **Unidad U1.3:** desarrollar el primer módulo Python para consumir Gemini, procesar respuestas y manejar errores.
-- **Gate 1:** construir una miniaplicación funcional de consumo de modelos mediante API.
-- **Gate 2:** incorporar integración de herramientas, recuperación de información y orquestación.
-- **Gate 3 / Capstone:** consolidar la aplicación, las pruebas, la documentación y el despliegue reproducible.
+El diseño técnico y su evolución se documentan en `docs/`, incluyendo el diagrama de arquitectura y las decisiones de selección del modelo.
+El diagrama de arquitectura de la Unidad 1 está disponible en:
+[Diagrama de arquitectura de VyOps](docs/Diagrama_arquitectura.png).
 
-El alcance definitivo de cada etapa se ajustará a las instrucciones y criterios de evaluación del programa.
+### Prueba funcional del cliente Python
 
-## 8. Seguridad y buenas prácticas
+El 20 de octubre de 2026 se comprobó la ejecución de `src/consumir_gemini.py`:
 
-Durante todo el desarrollo se mantendrán las siguientes reglas:
+- Respuesta generada correctamente.
+- 45 tokens totales.
+- Tiempo de respuesta: 10,606 segundos.
+- Costo estimado: USD 0,00008390.
 
-- No publicar claves API, contraseñas ni tokens.
-- Mantener las credenciales reales fuera del control de versiones.
-- Utilizar entornos virtuales independientes por proyecto.
-- Registrar las dependencias necesarias para reproducir el entorno.
-- Documentar los avances mediante commits descriptivos.
-- Mantener el trabajo evaluable en GitHub.
-- Incorporar pruebas y controles de seguridad conforme avance el proyecto.
+## 12. Próximas etapas
 
-## 9. Contexto académico
+Tras completar la evaluación del Gate 1, el proyecto continuará incorporando nuevas capacidades según los requisitos del programa.
+
+Entre las funcionalidades previstas se encuentran la recuperación documental mediante RAG, la integración de herramientas y el desarrollo de componentes de backend.
+
+Estas funcionalidades no forman parte de la implementación actual de la Unidad 1.
+
+## 13. Contexto académico
 
 VyOps se desarrolla como proyecto práctico de la **Especialización en Desarrollo con IA Generativa — Accenture / SkillNest**.
 
-El repositorio evolucionará durante el programa, reutilizando y ampliando los componentes implementados en cada unidad y Gate.
+El repositorio evoluciona progresivamente, reutilizando los componentes implementados en cada unidad y Gate.

@@ -1,57 +1,73 @@
 
 """Cliente HTTP de Google Gemini para el proyecto VyOps.
 
-Unidad U1.3 — Especialización en Desarrollo con IA Generativa.
+Proyecto académico — Especialización en Desarrollo con IA Generativa.
+Unidad 1: Integración de modelos y evaluación de respuestas.
 
-Responsabilidades del módulo:
-    1. Validar las preguntas y preparar solicitudes HTTP.
-    2. Comunicarse con la API de Google Gemini.
-    3. Procesar las respuestas JSON del proveedor.
-    4. Gestionar errores previsibles con mensajes comprensibles.
+Responsabilidades:
+    1. Validar preguntas, instrucciones de sistema y esquemas JSON.
+    2. Construir solicitudes HTTP autenticadas para Google Gemini.
+    3. Enviar peticiones y gestionar errores de conexión y HTTP.
+    4. Reintentar solicitudes ante fallos transitorios del proveedor.
+    5. Extraer y validar respuestas de texto y JSON estructurado.
+    6. Obtener métricas de tokens, tiempo y costo estimado.
 
 Arquitectura:
-    Este módulo representa una primera integración con un proveedor
-    de inteligencia artificial. En futuras unidades podrá integrarse
-    al núcleo multiempresa de VyOps.
+    El módulo separa la construcción de solicitudes, la comunicación
+    HTTP y el procesamiento de respuestas en funciones independientes.
+
+    Esta implementación constituye la base inicial de integración
+    con modelos de IA para la futura arquitectura multiempresa de VyOps.
 
 Seguridad:
-    La credencial se obtiene desde variables de entorno y se envía
-    mediante un encabezado HTTP, nunca como parámetro de la URL.
+    La clave GEMINI_API_KEY se obtiene desde variables de entorno.
+    Se envía mediante un encabezado HTTP y nunca se incorpora
+    directamente al código fuente ni a los parámetros de la URL.
 """
-
-import os
-import requests
-import time
-import math 
 import json
+import math
+import os
 import re
+import time
+
+import requests
 from dotenv import load_dotenv
 
 # Carga las variables definidas en el archivo .env del proyecto.
 # Las credenciales reales no deben almacenarse en Git.
 load_dotenv()
 
-# Configuración del proveedor de inteligencia artificial.
-# Se centraliza para facilitar futuros cambios de modelo.
+# Modelo seleccionado para las consultas actuales de VyOps.
+# La evaluación comparativa se encuentra en docs/evaluacion_modelos.md.
 MODELO = "gemini-3.5-flash-lite"
 
-# tarifas para el modelo gemini-3.5-flash-lite segun gemini pricing: https://ai.google.dev/gemini-api/docs/pricing?utm_source=chatgpt.com&hl=es-419#standard_7
+# Tarifas de referencia en USD por millón de tokens.
+# Se utilizan exclusivamente para estimar el costo de las consultas.
+# Fuente: https://ai.google.dev/gemini-api/docs/pricing
+# Estas tarifas deben revisarse si el proveedor modifica sus precios.
 PRECIO_ENTRADA_MILLON = 0.30
 PRECIO_SALIDA_MILLON = 2.50
 
-#MODELO = "gemini-3.6-flash"
-
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# MODELO = "gemini-3.6-flash"
+#
 # tarifas para el modelo gemini-3.6-flash segun gemini pricing: https://ai.google.dev/gemini-api/docs/pricing?utm_source=chatgpt.com&hl=es-419#gemini-3.6-flash
-#PRECIO_ENTRADA_MILLON = 0.75
-#PRECIO_SALIDA_MILLON = 3.75
-
+# PRECIO_ENTRADA_MILLON = 0.75
+# PRECIO_SALIDA_MILLON = 3.75
+#
 # Tarifas ficticias por millón de tokens para fines académicos.
-#PRECIO_ENTRADA_MILLON = 0.50
-#PRECIO_SALIDA_MILLON = 2.00
+# PRECIO_ENTRADA_MILLON = 0.50
+# PRECIO_SALIDA_MILLON = 2.00
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Endpoint REST de Gemini.
+# Se construye dinámicamente para utilizar el modelo configurado.
 URL_GEMINI = (
     "https://generativelanguage.googleapis.com/"
     f"v1beta/models/{MODELO}:generateContent"
 )
+# Número máximo de intentos para errores transitorios.
+# Incluye la solicitud inicial y hasta dos reintentos.
 MAX_INTENTOS = 3
 
 def armar_peticion(
@@ -59,18 +75,32 @@ def armar_peticion(
     system_instruction: str | None = None,
     response_schema: dict | None = None,
 ) -> tuple[str, dict, dict]:
-    """Valida los datos y prepara una solicitud para Gemini.
+    """Valida los parámetros y construye una solicitud HTTP para Gemini.
+
+    Comprueba que la pregunta sea válida y que exista una clave API.
+    Permite agregar instrucciones de sistema y solicitar respuestas
+    JSON estructuradas mediante un esquema opcional.
 
     Args:
-        pregunta: Mensaje concreto del usuario.
-        system_instruction: Instrucciones permanentes del asistente.
-        response_schema: Esquema JSON esperado para la respuesta.
+        pregunta: Texto de la consulta que realizará el usuario.
+        system_instruction: Instrucciones de comportamiento para
+            el modelo. Es opcional.
+        response_schema: Diccionario que define la estructura JSON
+            esperada. Es opcional.
 
     Returns:
-        Tupla con la URL, los encabezados HTTP y el cuerpo JSON.
+        Tupla con tres elementos:
+            - URL del endpoint REST de Gemini.
+            - Encabezados HTTP con autenticación y tipo de contenido.
+            - Cuerpo de la solicitud en formato de diccionario.
 
     Raises:
-        ValueError: Si los datos de entrada o la API key son inválidos.
+        ValueError: Si la pregunta, las instrucciones de sistema
+            o el esquema son inválidos, o si falta GEMINI_API_KEY.
+
+    Seguridad:
+        La clave API se obtiene desde el entorno y se incorpora
+        exclusivamente al encabezado x-goog-api-key.
     """
     # Validamos la pregunta antes de consultar al proveedor.
     if not isinstance(pregunta, str) or not pregunta.strip():
@@ -138,22 +168,37 @@ def enviar_peticion(
     encabezados: dict,
     cuerpo: dict,
 ) -> dict:
-    """Envía la solicitud HTTP y procesa la respuesta JSON.
+    """Envía una solicitud HTTP a Gemini y devuelve su respuesta JSON.
+
+    Realiza una petición POST al endpoint configurado, utilizando
+    los encabezados de autenticación y el cuerpo proporcionados.
+
+    Cada intento tiene un tiempo de espera máximo de 30 segundos.
+    Ante errores HTTP 429, HTTP 503 o tiempos de espera agotados,
+    realiza hasta dos reintentos adicionales.
+
+    Los reintentos utilizan una espera exponencial de 2 y 4 segundos.
+    Cuando el proveedor devuelve Retry-After en segundos, se considera
+    ese valor para calcular la espera, con un límite de 60 segundos.
 
     Args:
-        url: Endpoint del proveedor de IA.
-        encabezados: Configuración HTTP y autenticación.
-        cuerpo: Datos que se enviarán al modelo.
+        url: Dirección del endpoint REST de Gemini.
+        encabezados: Diccionario con los encabezados HTTP,
+            incluida la clave de autenticación.
+        cuerpo: Diccionario con el contenido de la solicitud.
 
     Returns:
-        Diccionario con la respuesta JSON del proveedor.
+        Diccionario obtenido al interpretar la respuesta JSON
+        enviada por Google Gemini.
 
     Raises:
-        RuntimeError: Si falla la conexión, se supera el tiempo
-            de espera, ocurre un error HTTP o el JSON es inválido.
+        RuntimeError: Si ocurre un error de conexión, se agota
+            el tiempo de espera, falla la petición HTTP o la
+            respuesta del proveedor no contiene JSON válido.
 
     Seguridad:
-        No se imprimen credenciales ni encabezados de autenticación.
+        La función no imprime la clave API ni los encabezados
+        utilizados para autenticar las solicitudes.
     """
 
     try:
@@ -283,22 +328,31 @@ def enviar_peticion(
 
 
 def extraer_texto(datos: dict) -> str:
-    """Obtiene el texto generado desde la respuesta de Gemini.
+    """Extrae y valida el texto generado por Google Gemini.
+
+    Accede al primer candidato de la respuesta y obtiene
+    el texto contenido en su primera parte.
+
+    La estructura JSON esperada es:
+        candidates[0] -> content -> parts[0] -> text
 
     Args:
-        datos: Diccionario JSON devuelto por el proveedor.
+        datos: Diccionario con la respuesta JSON de Gemini.
 
     Returns:
-        Texto generado por el modelo de inteligencia artificial.
+        Cadena de texto generada por el modelo.
 
     Raises:
-        RuntimeError: Si faltan campos, la estructura es incorrecta
-            o el texto generado está vacío.
+        RuntimeError: Si faltan campos en la respuesta, la
+            estructura no corresponde al formato esperado
+            o el contenido generado está vacío.
 
     Nota:
-        Gemini puede devolver respuestas diferentes ante errores,
-        bloqueos o resultados sin contenido generado.
+        Esta implementación procesa el primer candidato y
+        su primera parte. No combina múltiples candidatos
+        ni fragmentos de texto.
     """
+
     try:
         # Ruta esperada dentro del JSON de Gemini:
         # candidates -> content -> parts -> text.
@@ -323,19 +377,38 @@ def parsear_respuesta_json(
     texto: str,
     claves_esperadas: list[str] | None = None,
 ) -> dict:
-    """Convierte una respuesta del modelo en un diccionario validado.
+
+    """Convierte una respuesta textual de Gemini en un objeto JSON validado.
+
+    Comprueba que el texto recibido no esté vacío y elimina los
+    delimitadores Markdown opcionales, como ```json y ```.
+
+    Después interpreta el contenido mediante json.loads() y verifica
+    que el resultado sea un diccionario de Python.
+
+    Cuando se proporciona una lista de claves esperadas, comprueba
+    que todas estén presentes en el objeto JSON.
 
     Args:
-        texto: Respuesta textual generada por Gemini.
-        claves_esperadas: Claves obligatorias del resultado.
+        texto: Cadena de texto devuelta por el modelo.
+        claves_esperadas: Lista opcional de claves obligatorias
+            que debe contener la respuesta JSON.
 
     Returns:
-        Diccionario con los datos interpretados.
+        Diccionario con los datos JSON interpretados.
 
     Raises:
-        ValueError: Si la respuesta no es JSON válido o no
-            contiene la estructura esperada.
+        ValueError: Si el texto está vacío, contiene JSON inválido,
+            el resultado no es un objeto JSON, la lista de claves
+            esperadas es inválida o falta alguna clave obligatoria.
+
+    Nota:
+        Esta función valida el formato JSON y la presencia de claves.
+        La comprobación de tipos, valores enumerados y límites
+        numéricos se realiza mediante validar_estructura(),
+        definida en prompts/test_consistencia.py.
     """
+
     if not isinstance(texto, str) or not texto.strip():
         raise ValueError("La respuesta del modelo está vacía.")
 
@@ -390,20 +463,32 @@ def parsear_respuesta_json(
 
 
 def extraer_uso_tokens(datos: dict) -> dict:
-    """Extrae las métricas de consumo de tokens de Gemini.
-       Distingue los tokens de respuesta visible de los tokens
-       utilizados para el razonamiento interno del modelo.
+
+    """Extrae las métricas de consumo de tokens de Google Gemini.
+
+    Consulta el objeto usageMetadata de la respuesta del proveedor
+    y recupera los contadores de tokens disponibles.
 
     Args:
-        datos: Respuesta JSON del proveedor.
+        datos: Diccionario con la respuesta JSON de Gemini.
 
     Returns:
-        Diccionario con los tokens de entrada, salida y totales.
+        Diccionario con cuatro métricas:
+            - tokens_entrada: Tokens utilizados por la solicitud.
+            - tokens_salida: Tokens de la respuesta generada.
+            - tokens_razonamiento: Tokens de razonamiento interno.
+            - tokens_totales: Total informado por el proveedor.
+
+        Si alguna métrica no está disponible, su valor será None.
 
     Nota:
-        Si Gemini no incluye usageMetadata, los valores
-        se mantienen como None para evitar inventar consumo.
+        Los valores se obtienen directamente de la respuesta
+        del proveedor. Esta función no calcula ni estima tokens.
+
+        La ausencia de una métrica no significa necesariamente
+        que su consumo sea cero.
     """
+
     metadata = datos.get("usageMetadata") or {}
 
     return {
@@ -415,24 +500,37 @@ def extraer_uso_tokens(datos: dict) -> dict:
 
 
 def obtener_dato_de_prueba(pregunta: str) -> dict:
-    """Coordina el proceso completo de consulta a Gemini.
+
+    """Ejecuta una consulta de prueba y reúne sus resultados.
+
+    Coordina las funciones del cliente HTTP para preparar la
+    solicitud, consultar a Gemini y procesar la respuesta.
+
+    Utiliza perf_counter() para medir el tiempo transcurrido
+    durante la comunicación con el proveedor, incluyendo
+    posibles reintentos y sus tiempos de espera.
 
     Args:
-        pregunta: Consulta que se enviará al modelo.
+        pregunta: Texto de la consulta que se enviará a Gemini.
 
     Returns:
-        devuelve un diccionario con respuesta, consumo, tiempo y costo estimado.
+        Diccionario con los siguientes campos:
+            - respuesta: Texto generado por el modelo.
+            - uso_tokens: Métricas informadas por Gemini.
+            - tiempo_respuesta_segundos: Duración de la consulta.
+            - costo_estimado_usd: Costo estimado en dólares.
+
+    Raises:
+        ValueError: Si la pregunta o la configuración son inválidas.
+        RuntimeError: Si falla la petición, la respuesta no tiene
+            el formato esperado o no se puede calcular el costo.
 
     Diseño:
-        Esta función orquesta las demás sin duplicar su lógica.
-        Cada función conserva una responsabilidad específica.
-
-    Nota:
-        El tiempo medido corresponde a la comunicación
-        con Gemini, incluyendo la espera de su respuesta.
-        No representa exclusivamente el procesamiento
-        interno del modelo.
+        Esta función actúa como coordinadora y reutiliza las
+        funciones especializadas del módulo, evitando duplicar
+        la lógica de comunicación y procesamiento.
     """
+
     # Paso 1: validar y construir la petición.
     url, encabezados, cuerpo = armar_peticion(pregunta)
     # Medimos el tiempo de la petición al proveedor.
@@ -462,19 +560,39 @@ def calcular_costo(
     precio_entrada: float,
     precio_salida: float,
 ) -> float:
-    """Calcula el costo estimado de una consulta a Gemini.
+
+    """Calcula el costo estimado de una consulta a Google Gemini.
+
+    Utiliza las métricas de tokens informadas por el proveedor
+    y las tarifas configuradas en USD por millón de tokens.
+
+    Valida que las tarifas sean números finitos y no negativos,
+    y que los contadores de tokens tengan valores válidos.
 
     Args:
-        datos: Respuesta JSON del proveedor.
-        precio_entrada: Precio USD por millón de tokens de entrada.
-        precio_salida: Precio USD por millón de tokens de salida.
+        datos: Diccionario con la respuesta JSON de Gemini.
+        precio_entrada: Tarifa en USD por millón de tokens de entrada.
+        precio_salida: Tarifa en USD por millón de tokens de salida.
 
     Returns:
-        Costo estimado en USD según las tarifas proporcionadas.
+        Costo estimado de la consulta, expresado en dólares
+        estadounidenses (USD).
 
     Raises:
-        ValueError: Si los precios no son válidos.
-        RuntimeError: Si faltan las métricas necesarias.
+        ValueError: Si las tarifas o los contadores de tokens
+            tienen valores inválidos.
+        RuntimeError: Si faltan las métricas necesarias
+            para calcular el costo estimado.
+
+    Nota:
+        El cálculo utiliza los contadores de tokens disponibles
+        y las tarifas de referencia configuradas.
+
+        Es una estimación académica y no sustituye los importes
+        de facturación oficiales del proveedor.
+
+        La fórmula de cálculo debe revisarse cuando cambien
+        las reglas de contabilización o las tarifas del modelo.
     """
 
     # Verificamos que las tarifas sean números válidos.
@@ -522,7 +640,22 @@ def calcular_costo(
 
     return costo_entrada + costo_salida
 
-    
+
+# ---------------------------------------------------------------------------
+# Punto de entrada: prueba manual de integración con Google Gemini.
+#
+# Este bloque se ejecuta únicamente cuando el archivo se inicia directamente.
+# No se ejecuta cuando sus funciones son importadas desde otros módulos.
+#
+# Flujo de la prueba:
+#   1. Define una pregunta de ejemplo.
+#   2. Envía la consulta a Gemini mediante obtener_dato_de_prueba().
+#   3. Muestra la respuesta generada y las métricas de consumo.
+#   4. Presenta el tiempo de ejecución y el costo estimado.
+#   5. Captura errores previsibles para informar el motivo del fallo.
+#
+# Permite verificar la integración real con la API durante el Gate 1.
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     # Punto de entrada para ejecutar el módulo directamente.
