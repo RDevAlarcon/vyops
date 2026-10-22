@@ -145,17 +145,53 @@ Nunca publicar la clave ni incluir `.env` en Git.
 Desde la raíz del proyecto, con el entorno virtual activado y `.env` configurado:
 
 ```powershell
+python src/main.py
+```
+
+También es posible ejecutar directamente el módulo de consumo de Gemini:
+
+```powershell
 python src/consumir_gemini.py
 ```
 
-El programa realiza una consulta de prueba a Gemini y muestra:
+### 7.1. Pruebas funcionales
+
+El archivo `src/main.py` ejecuta tres pruebas.
+
+**Prueba 1 — Consulta a Gemini**
+
+Realiza una petición al modelo y muestra:
 
 - Respuesta generada.
 - Tokens utilizados.
 - Tiempo de respuesta.
 - Costo estimado de la consulta.
 
-La ejecución requiere acceso a la API y disponibilidad del proveedor.
+**Prueba 2 — Instrucción de sistema**
+
+Envía una consulta utilizando `system_instruction` para configurar el comportamiento de Gemini como asistente de orientación municipal.
+
+**Prueba 3 — Validación de entrada**
+
+Envía una entrada inválida y comprueba que el sistema la rechace mediante una excepción `ValueError` controlada.
+
+### 7.2. Resultado de verificación
+
+El 22 de octubre de 2026 se ejecutó `src/main.py` correctamente.
+
+| Prueba | Resultado |
+|---|---|
+| Consulta a Gemini | Correcta |
+| Instrucción de sistema | Correcta |
+| Validación de entrada | Correcta |
+
+Las dos primeras pruebas requieren conexión a internet y disponibilidad de la API de Gemini. Consumen cuota del proveedor y pueden generar costos.
+
+### 7.3. Otros componentes
+
+Los módulos de evaluación comparativa de modelos y consistencia de prompts se mantienen independientes del punto de entrada principal.
+
+Sus procedimientos de ejecución se describen en las siguientes secciones.
 
 ## 8. Evaluación de modelos
 

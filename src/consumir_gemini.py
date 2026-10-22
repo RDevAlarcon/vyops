@@ -499,7 +499,9 @@ def extraer_uso_tokens(datos: dict) -> dict:
     }
 
 
-def obtener_dato_de_prueba(pregunta: str) -> dict:
+def obtener_dato_de_prueba(
+        pregunta: str,
+        system_instruction: str | None = None) -> dict:
 
     """Ejecuta una consulta de prueba y reúne sus resultados.
 
@@ -512,7 +514,7 @@ def obtener_dato_de_prueba(pregunta: str) -> dict:
 
     Args:
         pregunta: Texto de la consulta que se enviará a Gemini.
-
+        system_instruction: Instrucción de sistema opcional para Gemini.
     Returns:
         Diccionario con los siguientes campos:
             - respuesta: Texto generado por el modelo.
@@ -532,7 +534,7 @@ def obtener_dato_de_prueba(pregunta: str) -> dict:
     """
 
     # Paso 1: validar y construir la petición.
-    url, encabezados, cuerpo = armar_peticion(pregunta)
+    url, encabezados, cuerpo = armar_peticion(pregunta, system_instruction=system_instruction,)
     # Medimos el tiempo de la petición al proveedor.
     inicio = time.perf_counter()
 
