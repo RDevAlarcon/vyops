@@ -294,3 +294,15 @@ Estas funcionalidades no forman parte de la implementación actual de la Unidad 
 VyOps se desarrolla como proyecto práctico de la **Especialización en Desarrollo con IA Generativa — Accenture / SkillNest**.
 
 El repositorio evoluciona progresivamente, reutilizando los componentes implementados en cada unidad y Gate.
+
+## Derechos de autor y propiedad intelectual
+
+**Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
+
+VyOps es un proyecto de desarrollo de software cuya autoría corresponde a Ricardo Alarcón.
+
+El código fuente, la documentación y los materiales originales están protegidos por derechos de autor. Su publicación en GitHub no constituye una autorización general para copiarlos, modificarlos, distribuirlos o utilizarlos comercialmente.
+
+Para más información, consulta el archivo [LICENSE](LICENSE).
+
+Este proyecto se desarrolla en el contexto académico del programa SkillNest, sin perjuicio de las condiciones de propiedad intelectual aplicables al programa.
