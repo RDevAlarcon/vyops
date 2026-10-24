@@ -62,8 +62,13 @@ La primera unidad incluye:
 ```text
 vyops/
 ├── src/
+│   ├── main.py
+│   ├── cliente_api.py
 │   ├── consumir_gemini.py
 │   └── comparar_modelos.py
+├── tests/
+│   ├── test_cliente_gemini.py
+│   └── test_cliente_modular.py
 ├── prompts/
 │   ├── banco.py
 │   ├── test_consistencia.py
@@ -75,13 +80,12 @@ vyops/
 │   ├── evaluacion_modelos.md
 │   ├── evaluacion_prompts.md
 │   └── decision-arquitectura.md
-├── tests/
 ├── .env.example
 ├── .gitignore
+├── LICENSE
 ├── README.md
 └── requirements.txt
 ```
-
 Los archivos `.env` y `.venv/` son locales y no se incluyen en Git.
 
 ## 6. Instalación desde cero — Windows PowerShell
@@ -281,7 +285,104 @@ El 20 de octubre de 2026 se comprobó la ejecución de `src/consumir_gemini.py`:
 - Tiempo de respuesta: 10,606 segundos.
 - Costo estimado: USD 0,00008390.
 
-## 12. Próximas etapas
+
+## Unidad 2 — Bloque 12: Cliente de API modular
+
+### Objetivo
+
+Implementar una interfaz reutilizable para consultar la API de
+Google Gemini, separando el consumo del modelo de la lógica
+de las aplicaciones que utilizarán el cliente.
+
+El módulo reutiliza las funciones desarrolladas durante Gate 1
+y mantiene un manejo centralizado de errores y reintentos.
+
+### Implementación
+
+**Archivo principal:** `src/cliente_api.py`
+
+La función pública `consultar_modelo()` coordina tres operaciones:
+
+1. `armar_peticion()`: valida los parámetros y construye
+   la solicitud HTTP.
+2. `enviar_peticion()`: realiza la solicitud a Gemini,
+   controla los errores y gestiona los reintentos.
+3. `extraer_texto()`: obtiene el texto generado desde
+   la respuesta JSON.
+
+Las tres funciones reutilizadas se encuentran en
+`src/consumir_gemini.py`.
+
+### Ejecución del cliente
+
+Desde la raíz del proyecto, con el entorno virtual activado
+y la API key configurada:
+
+```powershell
+python -m src.cliente_api
+```
+
+Este comando ejecuta una consulta de demostración a Gemini
+y muestra la respuesta o un error controlado en consola.
+
+La consulta utiliza la API real, requiere conexión a internet
+y puede consumir cuota o generar costos.
+
+### Manejo de errores y reintentos
+
+El cliente contempla:
+
+- HTTP 400: solicitud rechazada, incluyendo posibles problemas
+  con la API key o los parámetros enviados.
+- HTTP 401 y 403: problemas de autenticación o acceso.
+- HTTP 404: modelo o recurso no disponible.
+- HTTP 429: límite de solicitudes.
+- HTTP 500 y 502: errores temporales del proveedor.
+- HTTP 503: servicio temporalmente no disponible.
+- Timeout: tiempo de espera agotado.
+- Errores de conexión y respuestas JSON inválidas.
+
+Los errores HTTP 429, 500, 502 y 503, así como los timeout,
+permiten hasta tres intentos en total.
+
+Los reintentos utilizan pausas exponenciales de 2 y 4 segundos.
+Cuando corresponde, se considera el encabezado `Retry-After`,
+con un límite de espera de 60 segundos.
+
+### Pruebas automatizadas
+
+Los archivos de pruebas son:
+
+- `tests/test_cliente_gemini.py`: validación de errores HTTP,
+  timeout, reintentos y encabezado `Retry-After`.
+- `tests/test_cliente_modular.py`: validación de la interfaz
+  pública y propagación de errores.
+
+Para ejecutar las pruebas desde la raíz del proyecto:
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+**Resultado local del 23 de octubre de 2026:**
+
+- 11 pruebas ejecutadas.
+- 11 pruebas aprobadas.
+- 0 errores.
+
+Las pruebas automatizadas utilizan mocks y no realizan
+solicitudes reales a Gemini.
+
+### Alcance
+
+Este bloque implementa un cliente modular reutilizable.
+No incorpora todavía recuperación documental RAG,
+herramientas externas ni funcionalidades multiempresa.
+
+Estas capacidades se abordarán progresivamente
+en las siguientes etapas del proyecto.
+
+## 13. Próximas etapas
 
 Tras completar la evaluación del Gate 1, el proyecto continuará incorporando nuevas capacidades según los requisitos del programa.
 
@@ -289,7 +390,7 @@ Entre las funcionalidades previstas se encuentran la recuperación documental me
 
 Estas funcionalidades no forman parte de la implementación actual de la Unidad 1.
 
-## 13. Contexto académico
+## 14. Contexto académico
 
 VyOps se desarrolla como proyecto práctico de la **Especialización en Desarrollo con IA Generativa — Accenture / SkillNest**.
 

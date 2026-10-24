@@ -1,4 +1,3 @@
-
 """Cliente HTTP de Google Gemini para el proyecto VyOps.
 
 Proyecto académico — Especialización en Desarrollo con IA Generativa.
@@ -174,8 +173,8 @@ def enviar_peticion(
     los encabezados de autenticación y el cuerpo proporcionados.
 
     Cada intento tiene un tiempo de espera máximo de 30 segundos.
-    Ante errores HTTP 429, HTTP 503 o tiempos de espera agotados,
-    realiza hasta dos reintentos adicionales.
+    Ante errores HTTP 429, 500, 502 y 503, o tiempos de espera
+    agotados, realiza hasta dos reintentos adicionales.
 
     Los reintentos utilizan una espera exponencial de 2 y 4 segundos.
     Cuando el proveedor devuelve Retry-After en segundos, se considera
@@ -203,7 +202,7 @@ def enviar_peticion(
 
     try:
         # Reintentamos hasta tres veces cuando Gemini responde
-        # con HTTP 429, HTTP 503 o supera el tiempo de espera.
+        # con HTTP 429, 500, 502 o 503, o supera el tiempo de espera.
         for intento in range(MAX_INTENTOS):
             try:
                 respuesta = requests.post(
@@ -234,9 +233,10 @@ def enviar_peticion(
             except requests.exceptions.HTTPError as error:
                 codigo = error.response.status_code
 
-                # Solo reintentamos ante límites de solicitudes
-                # o indisponibilidad temporal del proveedor.
-                if codigo not in (429, 503):
+                # Reintentamos ante límites de solicitudes (429),
+                # errores internos o de intermediarios (500, 502)
+                # e indisponibilidad temporal del proveedor (503).
+                if codigo not in (429, 500, 502, 503):
                     raise
 
                 # Si agotamos los intentos, el error pasa
@@ -284,9 +284,13 @@ def enviar_peticion(
         # entregar mensajes comprensibles al usuario.
         codigo = error.response.status_code
         if codigo == 400:
+            # Gemini puede devolver HTTP 400 tanto por parámetros
+            # incorrectos como por una API key inválida.
+            # Evitamos mostrar credenciales o detalles sensibles.
             mensaje = (
-                "La solicitud enviada a Gemini no es válida. "
-                "Revisa los parámetros y el formato de los datos."
+                "Gemini rechazó la solicitud (HTTP 400). "
+                "Verifica que la API key sea válida y que "
+                "los parámetros enviados sean correctos."
             )
         elif codigo in (401, 403):
             mensaje = "La API rechazó la autenticación o el acceso."
