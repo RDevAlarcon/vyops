@@ -1,4 +1,3 @@
-
 """Pruebas unitarias del cliente HTTP de Gemini para VyOps.
 
 Bloque 12 — SkillNest.
@@ -87,6 +86,31 @@ class TestClienteGemini(unittest.TestCase):
         # Los errores de autenticación no deben reintentarse.
         peticion.assert_called_once()
 
+    @patch("src.consumir_gemini.requests.post")
+    def test_error_403_no_reintenta(self, peticion):
+        """Comprueba que HTTP 403 rechace el acceso sin reintentos."""
+
+        respuesta = Mock(spec=requests.Response)
+        respuesta.status_code = 403
+        respuesta.raise_for_status.side_effect = requests.HTTPError(
+            "403 Forbidden",
+            response=respuesta,
+        )
+
+        peticion.return_value = respuesta
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "La API rechazó la autenticación o el acceso",
+        ):
+            enviar_peticion(
+                "https://ejemplo.invalid",
+                {"x-goog-api-key": "clave_simulada"},
+                {"contents": []},
+            )
+
+        peticion.assert_called_once()
+
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
     def test_error_429_reintenta(self, peticion, espera):
@@ -129,10 +153,14 @@ class TestClienteGemini(unittest.TestCase):
         # Verificamos la recuperación y el backoff exponencial.
         self.assertEqual(resultado, {"resultado": "OK"})
         self.assertEqual(peticion.call_count, 3)
-        self.assertEqual(
-            [llamada.args[0] for llamada in espera.call_args_list],
-            [2, 4],
-        )
+        # Comprobamos el backoff exponencial con jitter de hasta el 10 %.
+        pausas = [llamada.args[0] for llamada in espera.call_args_list]
+
+        self.assertEqual(len(pausas), 2)
+        self.assertGreaterEqual(pausas[0], 2)
+        self.assertLessEqual(pausas[0], 2.2)
+        self.assertGreaterEqual(pausas[1], 4)
+        self.assertLessEqual(pausas[1], 4.4)
 
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
@@ -169,7 +197,11 @@ class TestClienteGemini(unittest.TestCase):
 
         self.assertEqual(resultado, {"resultado": "OK"})
         self.assertEqual(peticion.call_count, 2)
-        espera.assert_called_once_with(2)
+        # Verificamos una única pausa con jitter de hasta el 10 %.
+        espera.assert_called_once()
+        duracion = espera.call_args.args[0]
+        self.assertGreaterEqual(duracion, 2)
+        self.assertLessEqual(duracion, 2.2)
 
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
@@ -199,7 +231,11 @@ class TestClienteGemini(unittest.TestCase):
 
         self.assertEqual(resultado, {"resultado": "OK"})
         self.assertEqual(peticion.call_count, 2)
-        espera.assert_called_once_with(2)
+        # Verificamos una única pausa con jitter de hasta el 10 %.
+        espera.assert_called_once()
+        duracion = espera.call_args.args[0]
+        self.assertGreaterEqual(duracion, 2)
+        self.assertLessEqual(duracion, 2.2)
 
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
@@ -236,7 +272,12 @@ class TestClienteGemini(unittest.TestCase):
 
         self.assertEqual(resultado, {"resultado": "OK"})
         self.assertEqual(peticion.call_count, 2)
-        espera.assert_called_once_with(10.0)
+        # Retry-After establece una espera base de 10 segundos.
+        # El jitter puede añadir hasta un 10 % adicional.
+        espera.assert_called_once()
+        duracion = espera.call_args.args[0]
+        self.assertGreaterEqual(duracion, 10)
+        self.assertLessEqual(duracion, 11)
 
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
@@ -272,10 +313,14 @@ class TestClienteGemini(unittest.TestCase):
             )
 
         self.assertEqual(peticion.call_count, 3)
-        self.assertEqual(
-            [llamada.args[0] for llamada in espera.call_args_list],
-            [2, 4],
-        )
+        # Comprobamos el backoff exponencial con jitter de hasta el 10 %.
+        pausas = [llamada.args[0] for llamada in espera.call_args_list]
+
+        self.assertEqual(len(pausas), 2)
+        self.assertGreaterEqual(pausas[0], 2)
+        self.assertLessEqual(pausas[0], 2.2)
+        self.assertGreaterEqual(pausas[1], 4)
+        self.assertLessEqual(pausas[1], 4.4)
 
     @patch("src.consumir_gemini.time.sleep")
     @patch("src.consumir_gemini.requests.post")
@@ -335,8 +380,50 @@ class TestClienteGemini(unittest.TestCase):
 
         self.assertEqual(resultado, {"resultado": "OK"})
         self.assertEqual(peticion.call_count, 2)
-        espera.assert_called_once_with(2)
+        # Validamos el backoff con jitter de hasta el 10 %.
+        espera.assert_called_once()
+        duracion = espera.call_args.args[0]
+        self.assertGreaterEqual(duracion, 2)
+        self.assertLessEqual(duracion, 2.2)
 
+    @patch("src.consumir_gemini.time.sleep")
+    @patch("src.consumir_gemini.random.uniform")
+    @patch("src.consumir_gemini.requests.post")
+    def test_error_429_aplica_jitter(self, peticion, aleatorio, espera):
+        """Verifica que el backoff incorpore una variación controlada.
+
+        Simula un error HTTP 429 seguido de una respuesta exitosa.
+        Comprueba que se agregue jitter sin realizar pausas reales.
+        """
+
+        respuesta_error = Mock(spec=requests.Response)
+        respuesta_error.status_code = 429
+        respuesta_error.headers = {}
+        respuesta_error.raise_for_status.side_effect = requests.HTTPError(
+            "429 Too Many Requests",
+            response=respuesta_error,
+        )
+
+        respuesta_ok = Mock(spec=requests.Response)
+        respuesta_ok.status_code = 200
+        respuesta_ok.raise_for_status.return_value = None
+        respuesta_ok.json.return_value = {"resultado": "OK"}
+
+        peticion.side_effect = [respuesta_error, respuesta_ok]
+
+        # Simulamos un jitter de 0,15 segundos.
+        aleatorio.return_value = 0.15
+
+        resultado = enviar_peticion(
+            "https://ejemplo.invalid",
+            {"x-goog-api-key": "clave_simulada"},
+            {"contents": []},
+        )
+
+        self.assertEqual(resultado, {"resultado": "OK"})
+        self.assertEqual(peticion.call_count, 2)
+        aleatorio.assert_called_once_with(0, 0.2)
+        espera.assert_called_once_with(2.15)
 
 if __name__ == "__main__":
     unittest.main()

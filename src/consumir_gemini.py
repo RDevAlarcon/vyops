@@ -26,6 +26,7 @@ Seguridad:
 import json
 import math
 import os
+import random
 import re
 import time
 
@@ -220,7 +221,10 @@ def enviar_peticion(
                 if intento == MAX_INTENTOS - 1:
                     raise
 
-                espera = 2 ** (intento + 1)
+                # Aplicamos backoff exponencial con jitter y límite de 60 segundos.
+                espera_base = min(2 ** (intento + 1), 60)
+                jitter = random.uniform(0, espera_base * 0.1)
+                espera = min(espera_base + jitter, 60)
 
                 print(
                     f"Gemini tardó demasiado en responder. "
@@ -257,8 +261,11 @@ def enviar_peticion(
                     except ValueError:
                         pass
 
-                # Evitamos esperas indefinidas.
-                espera = min(espera, 60)
+                # Incorporamos una variación aleatoria de hasta el 10 %.
+                # El límite máximo incluye también el jitter.
+                espera_base = min(espera, 60)
+                jitter = random.uniform(0, espera_base * 0.1)
+                espera = min(espera_base + jitter, 60)
 
                 print(
                     f"Gemini respondió HTTP {codigo}. "

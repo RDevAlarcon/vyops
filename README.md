@@ -382,19 +382,159 @@ herramientas externas ni funcionalidades multiempresa.
 Estas capacidades se abordarán progresivamente
 en las siguientes etapas del proyecto.
 
-## 13. Próximas etapas
+## Unidad 2 — Bloque 13: Reintentos avanzados y control de costos
 
-Tras completar la evaluación del Gate 1, el proyecto continuará incorporando nuevas capacidades según los requisitos del programa.
+### Objetivo
 
-Entre las funcionalidades previstas se encuentran la recuperación documental mediante RAG, la integración de herramientas y el desarrollo de componentes de backend.
+Mejorar la resiliencia del cliente Gemini y permitir el seguimiento
+de costos estimados por operación y por sesión.
 
-Estas funcionalidades no forman parte de la implementación actual de la Unidad 1.
+### Backoff exponencial con jitter
 
-## 14. Contexto académico
+El cliente HTTP incorpora reintentos ante errores transitorios:
 
-VyOps se desarrolla como proyecto práctico de la **Especialización en Desarrollo con IA Generativa — Accenture / SkillNest**.
+- HTTP 429, 500, 502 y 503.
+- Timeout de la solicitud.
+- Máximo de tres intentos en total.
+- Esperas exponenciales de 2 y 4 segundos.
+- Jitter aleatorio de hasta un 10 % de la espera base.
+- Respeto del encabezado `Retry-After` como espera mínima.
+- Límite configurado de 60 segundos para las esperas.
 
-El repositorio evoluciona progresivamente, reutilizando los componentes implementados en cada unidad y Gate.
+La implementación se encuentra en `src/consumir_gemini.py`.
+
+### Cálculo de costos por operación
+
+Se reutiliza la función `calcular_costo()` para estimar el costo
+de cada respuesta a partir de los tokens informados por Gemini.
+
+El modelo configurado es `gemini-3.5-flash-lite`.
+
+Las tarifas configuradas son:
+
+| Concepto | Precio por millón de tokens |
+|---|---:|
+| Entrada | USD 0,30 |
+| Salida | USD 2,50 |
+
+Los tokens de razonamiento se consideran dentro del cálculo
+de salida, según la información de uso disponible.
+
+Los costos son estimaciones y no reemplazan la facturación
+oficial del proveedor.
+
+### Registro de costos por sesión
+
+El archivo `src/registro_costos.py` implementa
+`RegistroCostosSesion`.
+
+Permite:
+
+- Registrar el costo estimado de cada operación exitosa.
+- Consultar el historial de operaciones.
+- Obtener el costo total acumulado.
+- Mantener registros independientes entre instancias.
+- Rechazar costos negativos, infinitos o inválidos.
+
+El registro funciona en memoria. No incorpora persistencia
+en base de datos ni recuperación después de reiniciar el proceso.
+
+### Integración con el cliente modular
+
+El archivo `src/cliente_api.py` incorpora
+`consultar_modelo_con_costos()`.
+
+Esta función consulta Gemini, extrae el texto, calcula el costo
+estimado y lo registra en la sesión proporcionada.
+
+La función original `consultar_modelo()` se mantiene disponible
+sin cambios en su interfaz pública.
+
+Los reintentos internos no generan registros adicionales por sí
+mismos. El registro se realiza una vez después de procesar
+correctamente la respuesta.
+
+Si falla el envío, la extracción o el cálculo del costo,
+no se registra una nueva operación.
+
+Esto describe el registro local: una solicitud enviada al
+proveedor podría consumir cuota o generar cargos incluso si
+posteriormente falla su procesamiento.
+
+### Pruebas automatizadas
+
+Se utilizan los siguientes archivos:
+
+- `tests/test_cliente_gemini.py`
+- `tests/test_cliente_modular.py`
+- `tests/test_registro_costos.py`
+
+Para ejecutar todas las pruebas:
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+**Resultado local del 24 de octubre de 2026:**
+
+- 22 pruebas ejecutadas.
+- 22 pruebas aprobadas.
+- 0 errores.
+
+Las pruebas utilizan simulaciones y no requieren llamadas
+reales a Gemini.
+
+## Unidad 2 — Bloque 14: Pruebas unitarias con pytest y mocks
+
+### Objetivo
+
+Validar el funcionamiento del cliente de Google Gemini mediante pruebas automatizadas, sin realizar solicitudes reales al proveedor.
+
+Se utiliza `pytest` como ejecutor de pruebas, manteniendo la compatibilidad con las pruebas existentes desarrolladas con `unittest`.
+
+### Escenarios verificados
+
+- Respuestas HTTP 400, 401 y 403 sin reintentos.
+- Reintentos ante errores HTTP 429, 500, 502 y 503.
+- Agotamiento de reintentos y propagación de errores.
+- Manejo de timeouts, espera exponencial, jitter y `Retry-After`.
+- Ejecución de consultas mediante la API modular.
+- Registro y acumulación de costos por sesión.
+- Prevención del registro de costos cuando falla una consulta o su procesamiento.
+- Validación de costos inválidos e independencia entre sesiones.
+- Cálculo exacto del costo estimado a partir de tokens de entrada, salida y razonamiento.
+
+### Archivos de pruebas
+
+- `tests/test_cliente_gemini.py`
+- `tests/test_cliente_modular.py`
+- `tests/test_registro_costos.py`
+- `tests/test_calculo_costos.py`
+
+Las pruebas utilizan `unittest.mock` para simular respuestas y errores, evitando conexiones reales a Gemini.
+
+### Ejecución
+
+Con el entorno virtual activado:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+### Resultados de validación
+
+**Ejecución local del 25 de octubre de 2026:**
+
+- 24 pruebas principales aprobadas.
+- 5 subpruebas aprobadas.
+- 0 errores.
+- Tiempo de ejecución: 0,20 segundos.
+
+La suite completa se ejecutó correctamente con Python 3.13.10 y pytest 9.1.1.
+
+### Compatibilidad
+
+Se conservan las pruebas existentes de `unittest`, ejecutables tanto con `unittest` como con `pytest`. No fue necesario reemplazar la arquitectura modular de VyOps.
 
 ## Derechos de autor y propiedad intelectual
 
