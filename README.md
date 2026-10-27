@@ -536,6 +536,107 @@ La suite completa se ejecutó correctamente con Python 3.13.10 y pytest 9.1.1.
 
 Se conservan las pruebas existentes de `unittest`, ejecutables tanto con `unittest` como con `pytest`. No fue necesario reemplazar la arquitectura modular de VyOps.
 
+## Unidad 2 — Bloque 15: Pipeline de texto y evaluación de respuestas
+
+### Objetivo
+
+Implementar un pipeline de procesamiento de texto para normalizar, tokenizar y vectorizar respuestas generadas por inteligencia artificial.
+
+Evaluar la coincidencia de vocabulario entre respuestas de Google Gemini y textos de referencia, comparando los resultados antes y después de la normalización.
+
+### Implementación
+
+**Archivo principal:** `src/pipeline_texto.py`
+
+Se implementaron cinco funciones:
+
+- `limpiar_texto()`: convierte el texto a minúsculas, elimina signos de puntuación y normaliza espacios.
+- `tokenizar()`: separa el texto en palabras, conservando su orden y repeticiones.
+- `procesar_texto()`: integra las etapas de limpieza y tokenización.
+- `vectorizar()`: utiliza `collections.Counter` para contar la frecuencia de las palabras.
+- `calcular_coincidencia()`: calcula la proporción de palabras únicas de referencia presentes en una respuesta, con o sin normalización.
+
+El pipeline utiliza únicamente componentes de la biblioteca estándar de Python.
+
+### Evaluación de respuestas reales
+
+**Script:** `evaluar_respuestas.py`
+
+Se realizaron tres consultas reales a Gemini mediante la función `consultar_modelo()` del cliente modular existente.
+
+Para cada consulta se comparó la respuesta generada con un texto de referencia.
+
+**Resultados del 27 de octubre de 2026:**
+
+| Caso | Sin normalización | Con normalización |
+|---|---:|---:|
+| Capital de Chile | 83,33 % | 100,00 % |
+| Multiplicación de 5 por 4 | 50,00 % | 50,00 % |
+| Función `print()` | 57,14 % | 85,71 % |
+| **Promedio** | **63,49 %** | **78,57 %** |
+
+La normalización aumentó la coincidencia promedio en aproximadamente 15,08 puntos porcentuales.
+
+### Limitaciones de la métrica
+
+La coincidencia de vocabulario no equivale a una evaluación de exactitud factual o similitud semántica.
+
+Entre sus limitaciones:
+
+- No reconoce automáticamente que `20` y `veinte` representan el mismo valor.
+- No considera el orden de las palabras.
+- No considera la frecuencia de las palabras repetidas.
+- No penaliza directamente las palabras adicionales de una respuesta.
+- Una coincidencia alta no garantiza que la información sea correcta.
+
+Por lo tanto, esta métrica constituye una primera aproximación a la evaluación automática de respuestas.
+
+### Ejecución de la evaluación
+
+Desde la raíz del proyecto, con el entorno virtual activado y la clave API configurada:
+
+```powershell
+python evaluar_respuestas.py
+```
+
+Este comando realiza tres consultas reales a Gemini y puede consumir cuota de API o generar costos.
+
+### Pruebas automatizadas
+
+**Archivo:** `tests/test_pipeline_texto.py`
+
+Se incorporaron nueve pruebas para validar:
+
+- Limpieza de mayúsculas, puntuación y espacios.
+- Tokenización y conservación de palabras repetidas.
+- Integración del pipeline.
+- Procesamiento de textos vacíos.
+- Conteo de frecuencias.
+- Vectorización de listas vacías.
+- Comparación con y sin normalización.
+- Manejo de referencias vacías.
+
+Para ejecutar todas las pruebas del proyecto:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+**Resultado local del 27 de octubre de 2026:**
+
+- 33 pruebas principales aprobadas.
+- 5 subpruebas aprobadas.
+- 0 errores.
+- Tiempo de ejecución: 0,21 segundos.
+
+Las pruebas automatizadas no realizan consultas reales a Gemini.
+
+### Alcance
+
+Este bloque incorpora herramientas básicas de procesamiento y evaluación textual, reutilizando la arquitectura modular existente de VyOps.
+
+No incluye todavía métricas semánticas avanzadas, embeddings ni evaluación mediante modelos jueces.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
