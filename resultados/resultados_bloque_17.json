@@ -1,0 +1,183 @@
+[
+  {
+    "consulta": "¿Qué es Python?",
+    "respuesta": "**Python** es un lenguaje de programación de alto nivel, interpretado y de propósito general. Fue creado por Guido van Rossum y lanzado por primera vez en 1991. \n\nSu filosofía se centra en la legibilidad del código y su sintaxis es muy limpia y parecida al idioma inglés, lo que lo hace ideal para principiantes y muy eficiente para programadores experimentados.\n\nAquí te detallo sus características principales:\n\n1. **Fácil de aprender y leer:** Su sintaxis es sencilla. No utiliza llaves `{}` ni punto y coma `;` obligatorios, sino que se basa en la indentación (espacios en blanco), lo que obliga a escribir código ordenado.\n2. **Interpretado:** No necesitas compilar el código antes de ejecutarlo (como en C o C++), sino que se ejecuta línea por línea mediante un intérprete, lo que facilita las pruebas.\n3. **Multiparadigma:** Soporta la programación orientada a objetos, la programación imperativa y la programación funcional.\n4. **Multiplatormforma:** Funciona en Windows, macOS, Linux, Raspberry Pi, entre otros sistemas operativos.\n5. **Tipado dinámico:** No es necesario declarar el tipo de dato de una variable antes de usarlo (por ejemplo, puedes asignar un número a una variable y luego una cadena de texto sin problemas).\n6. **Gran ecosistema de librerías:** Tiene miles de bibliotecas y frameworks gratuitos creados por su comunidad, lo que acelera el desarrollo en casi cualquier área.\n\n### ¿Para qué se usa Python?\nPython es uno de los lenguajes más populares del mundo debido a su versatilidad. Se utiliza en:\n* **Inteligencia Artificial y Machine Learning:** Es el rey indiscutible en este campo gracias a librerías como TensorFlow, PyTorch y Scikit-learn.\n* **Ciencia de datos y Análisis:** Para procesar y visualizar grandes cantidades de datos (con Pandas, NumPy, Matplotlib).\n* **Desarrollo Web:** Para crear el \"backend\" (la lógica detrás de las páginas web) usando frameworks como Django o Flask.\n* **Automatización y Scripts:** Para automatizar tareas repetitivas, web scraping o administración de sistemas.\n* **Desarrollo de videojuegos y aplicaciones de escritorio.**\n\nEn resumen, Python es una herramienta poderosa pero accesible, útil tanto para automatizar una tarea casera como para entrenar modelos complejos de inteligencia artificial.",
+    "precision": 0.020588235294117647,
+    "cobertura": 1.0,
+    "f1": 0.040345821325648415
+  },
+  {
+    "consulta": "¿Cuándo se creó Python?",
+    "respuesta": "Python fue creado oficialmente en **1991**. \n\nSu creador, **Guido van Rossum**, comenzó a trabajar en él a finales de la década de 1980 (en diciembre de 1989 empezó a escribir el código) como un sucesor del lenguaje ABC, y lanzó la primera versión pública (la 0.9.0) en **febrero de 1991**.",
+    "precision": 0.1,
+    "cobertura": 1.0,
+    "f1": 0.18181818181818182
+  },
+  {
+    "consulta": "¿Qué es una lista en Python?",
+    "respuesta": "Una **lista** en Python es una estructura de datos fundamental que permite almacenar **una colección ordenada de elementos**. \n\nImagina una lista como una \"caja\" con compartimentos numerados, donde puedes guardar cualquier tipo de dato: números, textos, booleanos e incluso otras listas.\n\n### Características principales de las listas:\n\n1. **Ordenadas:** Los elementos mantienen el orden en el que fueron introducidos. Cada elemento tiene una posición fija llamada **índice** (que empieza a contar desde el **0**).\n2. **Modificables (Mutables):** A diferencia de otros tipos de datos (como las cadenas de texto o las tuplas), una vez creada una lista puedes cambiar, añadir o eliminar sus elementos.\n3. **Permiten duplicados:** Puedes tener el mismo valor repetido varias veces dentro de una misma lista.\n4. **Heterogéneas:** No necesitas que todos los elementos sean del mismo tipo; puedes mezclar textos y números en la misma lista.\n\n---\n\n### ¿Cómo se crea una lista?\n\nLas listas se definen utilizando corchetes `[ ]` y separando sus elementos con comas `,`.\n\n```python\n# Una lista de números enteros\nnumeros = [1, 2, 3, 4, 5]\n\n# Una lista de textos (strings)\nfrutas = [\"manzana\", \"banana\", \"cereza\"]\n\n# Una lista mixta (diferentes tipos de datos)\nmi_lista = [10, \"Hola\", True, 3.14]\n\n# Una lista vacía\nlista_vacia = []\n```\n\n---\n\n### ¿Cómo se accede a los elementos?\n\nSe utilizan los corchetes `[ ]` indicando el índice del elemento que quieres consultar.\n\n```python\nfrutas = [\"manzana\", \"banana\", \"cereza\"]\n\nprint(frutas[0])  # Imprime \"manzana\" (el primer elemento)\nprint(frutas[1])  # Imprime \"banana\" (el segundo elemento)\nprint(frutas[-1]) # Imprime \"cereza\" (el índice -1 se refiere al último elemento)\n```\n\n---\n\n### Operaciones comunes con listas\n\nPython incluye muchas funciones integradas (métodos) para trabajar con listas fácilmente:\n\n* **Añadir un elemento al final (`append`):**\n  ```python\n  frutas.append(\"naranja\")\n  # Ahora la lista es: [\"manzana\", \"banana\", \"cereza\", \"naranja\"]\n  ```\n\n* **Insertar un elemento en una posición específica (`insert`):**\n  ```python\n  frutas.insert(1, \"pera\") \n  # Inserta \"pera\" en el índice 1\n  ```\n\n* **Eliminar un elemento (`remove` o `pop`):**\n  ```python\n  frutas.remove(\"banana\") # Elimina por valor\n  eliminado = frutas.pop(0) # Elimina por índice y guarda el elemento eliminado\n  ```\n\n* **Saber cuántos elementos tiene (`len`):**\n  ```python\n  print(len(frutas)) # Muestra la cantidad de elementos\n  ```\n\n* **Ordenar la lista (`sort`):**\n  ```python\n  numeros = [4, 1, 7, 3]\n  numeros.sort()\n  print(numeros) # Imprime [1, 3, 4, 7]\n  ```\n\nEn resumen, las listas en Python son herramientas sumamente versátiles y esenciales para cualquier programador que necesite agrupar y manipular datos.",
+    "precision": 0.019498607242339833,
+    "cobertura": 0.875,
+    "f1": 0.03814713896457765
+  },
+  {
+    "consulta": "¿En qué año llegó el ser humano a la Luna?",
+    "referencia": "El ser humano llegó a la Luna en 1969.",
+    "respuesta": "El ser humano llegó a la Luna en **1969**, específicamente el **20 de julio** de ese año, durante la misión Apolo 11 de la NASA. El astronauta Neil Armstrong fue el primer ser humano en pisar la superficie lunar.",
+    "precision": 0.23076923076923078,
+    "cobertura": 1.0,
+    "f1": 0.375
+  },
+  {
+    "consulta": "¿Cuál es la capital de Chile?",
+    "referencia": "La capital de Chile es Santiago.",
+    "respuesta": "La capital de Chile es **Santiago** (también conocida como Santiago de Chile).",
+    "precision": 0.5,
+    "cobertura": 1.0,
+    "f1": 0.6666666666666666
+  },
+  {
+    "consulta": "¿Cuánto es 15 multiplicado por 8?",
+    "referencia": "15 multiplicado por 8 es 120.",
+    "respuesta": "15 multiplicado por 8 es **120**.",
+    "precision": 1.0,
+    "cobertura": 1.0,
+    "f1": 1.0
+  },
+  {
+    "consulta": "¿Qué es una variable en programación?",
+    "referencia": "Una variable es un nombre asociado a un valor.",
+    "respuesta": "En programación, una **variable** es como una **caja o contenedor** donde puedes guardar un dato para usarlo más tarde en tu programa. \n\nImagínate que estás llenando un formulario. Tienes casillas para el \"Nombre\", la \"Edad\" y la \"Altura\". En programación, cada una de esas casillas sería una variable.\n\nAquí te detallo los conceptos clave para entenderlas:\n\n### 1. Tienen un nombre (Identificador)\nPara poder usar una variable, le das un nombre único. Por ejemplo: `edad`, `nombre_usuario`, `precio_total`. \n\n### 2. Guardan un tipo de dato\nDependiendo del lenguaje de programación, las variables pueden almacenar diferentes tipos de información:\n*   **Texto** (Strings): `\"Hola mundo\"`, `\"Juan\"`\n*   **Números enteros** (Integers): `25`, `-3`, `1000`\n*   **Números con decimales** (Floats): `19.99`, `3.14`\n*   **Valores verdaderos o falsos** (Booleans): `True`, `False`\n\n### 3. Su valor puede cambiar (\"varían\")\nComo su nombre lo indica, el valor dentro de la variable puede cambiar a medida que se ejecuta el programa. \n* *Ejemplo:* Puedes empezar con una variable `vidas = 3`. Si el personaje pierde, actualizas la variable a `vidas = 2`.\n\n---\n\n### Un ejemplo sencillo (en código):\n\nImagina que estás programando un videojuego:\n\n```python\n# Creamos la variable 'puntuacion' y le asignamos el valor 0\npuntuacion = 0\n\n# El jugador recoge una moneda, así que sumamos 10 puntos a la variable\npuntuacion = puntuacion + 10\n\n# Ahora la variable 'puntuacion' vale 10\n```\n\n### ¿Cuál es la diferencia con una constante?\nUna **variable** puede cambiar su valor, mientras que una **constante** es un contenedor cuyo valor se define una sola vez y no puede cambiar durante todo el programa (por ejemplo, el valor de $\\pi$ que es `3.1416`).",
+    "precision": 0.03162055335968379,
+    "cobertura": 0.8888888888888888,
+    "f1": 0.061068702290076333
+  },
+  {
+    "consulta": "¿Python exige declarar el tipo de cada variable?",
+    "referencia": "No, Python no exige declarar el tipo de cada variable.",
+    "respuesta": "**No, Python no exige declarar el tipo de las variables.** \n\nPython es un lenguaje de **tipado dinámico**, lo que significa que el intérprete determina el tipo de datos de una variable automáticamente en tiempo de ejecución, basándose en el valor que se le asigna.\n\nPor ejemplo, puedes hacer esto sin especificar si es texto o número:\n\n```python\nx = 10  # Python sabe que 'x' es un entero (int)\nx = \"Hola\"  # Ahora 'x' pasa a ser una cadena de texto (str) sin ningún problema\n```\n\n### Opcional: Anotaciones de tipo (Type Hints)\nAunque no es obligatorio, Python (a partir de la versión 3.5) permite añadir **anotaciones de tipo** opcionales. Esto sirve para mejorar la legibilidad del código y para que herramientas como editores de código o analizadores estáticos puedan detectar errores, **pero Python no detendrá la ejecución si no las cumples.**\n\nEjemplo:\n\n```python\nedad: int = 25\nnombre: str = \"Ana\"\n```\n\nEn resumen: **No estás obligado** a declarar tipos, puedes escribir código funcional sin usarlos, pero Python ofrece la flexibilidad de usarlos si lo deseas.",
+    "precision": 0.05325443786982249,
+    "cobertura": 0.9,
+    "f1": 0.10055865921787709
+  },
+  {
+    "consulta": "¿Cuántos días tiene una semana?",
+    "referencia": "Una semana tiene siete días.",
+    "respuesta": "Una semana tiene **7** días. Estos días son: lunes, martes, miércoles, jueves, viernes, sábado y domingo.",
+    "precision": 0.25,
+    "cobertura": 0.8,
+    "f1": 0.38095238095238093
+  },
+  {
+    "consulta": "¿Qué es la fotosíntesis?",
+    "referencia": "La fotosíntesis permite convertir energía luminosa en energía química.",
+    "respuesta": "La **fotosíntesis** es el proceso químico que realizan las plantas, las algas y algunas bacterias (cianobacterias) para **convertir la luz del sol, el agua y el dióxido de carbono en energía química (alimento)**. \n\nDurante este proceso, los organismos absorben dióxido de carbono del aire y agua de la tierra, y gracias a la energía de la luz solar (capturada por un pigmento verde llamado **clorofila**), los transforman en **glucosa** (su alimento y fuente de energía para crecer) y liberan **oxígeno** como subproducto.\n\n### ¿Por qué es tan importante?\n1. **Produce el oxígeno que respiramos:** Casi todo el oxígeno de la atmósfera terrestre es generado por la fotosíntesis de las plantas y el fitoplancton marino.\n2. **Es la base de la cadena alimentaria:** Los seres fotosintéticos son los productores primarios. De ellos se alimentan los herbívoros, y de estos los carnívoros.\n3. **Regula el clima:** Al absorber grandes cantidades de dióxido de carbono (un gas de efecto invernadero), ayuda a mitigar el cambio climático.\n\nEn resumen, la fotosíntesis es el motor de la vida en la Tierra; sin ella, la gran mayoría de la vida animal (incluidos los humanos) no podría existir.",
+    "precision": 0.03684210526315789,
+    "cobertura": 0.7777777777777778,
+    "f1": 0.07035175879396985
+  },
+  {
+    "consulta": "¿En qué año comenzó la Segunda Guerra Mundial?",
+    "referencia": "La Segunda Guerra Mundial comenzó en 1939.",
+    "respuesta": "La Segunda Guerra Mundial comenzó en **1939**, específicamente el **1 de septiembre**, con la invasión de Alemania a Polonia.",
+    "precision": 0.3684210526315789,
+    "cobertura": 1.0,
+    "f1": 0.5384615384615384
+  },
+  {
+    "consulta": "¿Qué representa un booleano en Python?",
+    "referencia": "Un booleano representa verdadero o falso.",
+    "respuesta": "En Python, un **booleano** (`bool`) es un tipo de dato lógico que representa **dos únicos estados posibles**: \n\n1. **`True`** (Verdadero)\n2. **`False`** (Falso)\n\nEste tipo de dato es fundamental en programación porque permite tomar decisiones, evaluar condiciones y controlar el flujo de un programa (por ejemplo, usando estructuras como `if`, `while`).\n\n### ¿Cómo se obtienen los booleanos?\n\nLos booleanos se pueden obtener principalmente de dos formas:\n\n1. **Asignación directa:**\n   ```python\n   usuario_conectado = True\n   permiso_admin = False\n```\n\n2. **Evaluando expresiones (Comparaciones):**\n   Python evalúa comparaciones y devuelve un resultado booleano.\n   ```python\n   print(5 > 3)  # Devuelve True, porque 5 es mayor que 3\n   print(10 == 2)  # Devuelve False, porque 10 no es igual a 2\n```\n\n### Operadores lógicos\n\nLos booleanos se pueden combinar utilizando tres operadores lógicos principales:\n* **`and` (Y):** Devuelve `True` si *ambas* condiciones son verdaderas.\n  ```python\n  True and False  # Devuelve False\n```\n* **`or` (O):** Devuelve `True` si *al menos una* de las condiciones es verdadera.\n  ```python\n  True or False  # Devuelve True\n```\n* **`not` (NO):** Invierte el valor booleano.\n  ```python\n  not True  # Devuelve False\n```\n\n### El concepto de \"Truthy\" y \"Falsy\"\n\nEn Python, cualquier objeto puede ser evaluado en un contexto booleano (por ejemplo, dentro de un `if`). \n\n* **Valores que se consideran Falsos (`False`):**\n  * El número `0`\n  * Cadenas de texto vacías `\"\"`\n  * Colecciones vacías (listas `[]`, tuplas `()`, diccionarios `{}`)\n  * El valor especial `None`\n\n* **Valores que se consideran Verdaderos (`True`):**\n  * Cualquier número diferente de cero (ej. `1`, `-5`)\n  * Cualquier cadena de texto con contenido (ej. `\"Hola\"`)\n  * Cualquier lista, tupla o diccionario con elementos.",
+    "precision": 0.025210084033613446,
+    "cobertura": 1.0,
+    "f1": 0.049180327868852465
+  },
+  {
+    "consulta": "¿Cuál es la raíz cuadrada de 144?",
+    "referencia": "La raíz cuadrada principal de 144 es 12.",
+    "respuesta": "La raíz cuadrada de 144 es **12**. \n\nEsto es porque $12 \\times 12 = 144$.",
+    "precision": 0.5,
+    "cobertura": 0.875,
+    "f1": 0.6363636363636364
+  },
+  {
+    "consulta": "¿Qué es una clave primaria en una base de datos?",
+    "referencia": "Una clave primaria identifica de forma única cada registro de una tabla.",
+    "respuesta": "Una **clave primaria** (en inglés, *Primary Key*) es un campo (o grupo de campos) en una tabla de una base de datos que identifica de manera única a cada fila o registro. \n\nPiénsalo como el **DNI**, el número de pasaporte o la huella dactilar de cada registro: no puede haber dos personas con el mismo DNI, y ninguna persona puede quedarse sin él.\n\n### Características principales de una clave primaria:\n\n1. **Unicidad:** No puede haber dos filas en la misma tabla con el mismo valor en la clave primaria. Si intentas insertar un registro con un valor que ya existe, la base de datos rechazará la operación.\n2. **No Nula (*Not Null*):** Una clave primaria **nunca puede estar vacía** (NULL). Cada registro debe tener obligatoriamente un valor asignado.\n3. **Inmutabilidad:** Idealmente, una vez que se crea un registro y se le asigna una clave primaria, ese valor no debería cambiar nunca.\n\n### Ejemplos prácticos:\n\n* **En una tabla de \"Clientes\":** La clave primaria podría ser el `ID_Cliente` (un número autoincremental como 1, 2, 3...) o el `Correo_Electronico` (siempre que el sistema obligue a que sea único y obligatorio).\n* **En una tabla de \"Productos\":** La clave primaria podría ser el `Codigo_De_Barras` o el `SKU` (Código Único de Producto).\n\n### ¿Para qué sirve?\n\n* **Garantizar la integridad de los datos:** Asegura que no tengamos registros duplicados o confusos.\n* **Relacionar tablas:** Las claves primarias se utilizan para conectarse con otras tablas mediante las llamadas **claves foráneas** (o *Foreign Keys*). Por ejemplo, la tabla `Pedidos` puede usar el `ID_Cliente` (que es clave primaria en la tabla `Clientes`) para saber exactamente qué cliente hizo qué compra.",
+    "precision": 0.041353383458646614,
+    "cobertura": 0.9166666666666666,
+    "f1": 0.07913669064748202
+  },
+  {
+    "consulta": "¿El Sol es un planeta?",
+    "referencia": "No, el Sol es una estrella.",
+    "respuesta": "**No, el Sol no es un planeta.** \n\nEl Sol es una **estrella**. Es el objeto más grande de nuestro sistema solar y es una esfera de gas caliente y luminoso que produce su propia luz y energía a través de reacciones nucleares en su interior.\n\nLos planetas (como la Tierra, Marte o Júpiter) son cuerpos celestes mucho más pequeños que no producen su propia luz, sino que giran alrededor de una estrella, en nuestro caso, alrededor del Sol.",
+    "precision": 0.07692307692307693,
+    "cobertura": 1.0,
+    "f1": 0.14285714285714288
+  },
+  {
+    "consulta": "¿Cuál es el océano más grande de la Tierra?",
+    "referencia": "El océano Pacífico es el más grande de la Tierra.",
+    "respuesta": "El océano más grande de la Tierra es el **océano Pacífico**. \n\nEs tan inmenso que su superficie (aproximadamente 165 millones de kilómetros cuadrados) es mayor que la de todos los continentes juntos.",
+    "precision": 0.3125,
+    "cobertura": 1.0,
+    "f1": 0.47619047619047616
+  },
+  {
+    "consulta": "¿Qué es un diccionario en Python?",
+    "referencia": "Un diccionario almacena asociaciones entre claves y valores.",
+    "respuesta": "Un **diccionario** en Python es una estructura de datos que permite almacenar información en formato de **clave-valor (key-value)**. \n\nA diferencia de las listas (que guardan elementos ordenados por un índice numérico de 0 en adelante), los diccionarios permiten acceder a sus elementos utilizando una **clave** personalizada, que puede ser un texto (string), un número o incluso una tupla.\n\nImagina un diccionario de la vida real: buscas una palabra específica (la clave) para encontrar su definición (el valor).\n\n### Características principales de un diccionario:\n1. **Es mutable:** Puedes agregar, modificar y eliminar elementos después de haberlo creado.\n2. **Es dinámico:** Puede crecer o disminuir según lo necesites.\n3. **Claves únicas:** No puede haber dos claves iguales en un mismo diccionario. Si repites una clave, el último valor asignado sobrescribirá al anterior.\n4. **No ordenado (desde Python 3.7+ mantienen el orden de inserción):** Aunque ahora recuerdan el orden en que fueron creados, no se accede a ellos por su posición numérica, sino por su clave.\n\n---\n\n### ¿Cómo se crea un diccionario?\nSe definen utilizando llaves `{}` y separando la clave del valor con dos puntos `:`, y los pares entre comas `,`.\n\n```python\n# Ejemplo de un diccionario que guarda información de una persona\npersona = {\n    \"nombre\": \"Ana\",\n    \"edad\": 28,\n    \"ciudad\": \"Madrid\",\n    \"es_estudiante\": False,\n}\n```\n\n---\n\n### Operaciones comunes con diccionarios:\n\n#### 1. Acceder a un valor\nPuedes obtener el valor de una clave usándola entre corchetes `[]` o con el método `.get()`.\n\n```python\nprint(persona[\"nombre\"])  # Salida: Ana\nprint(persona.get(\"edad\"))  # Salida: 28\n```\n\n#### 2. Modificar o agregar un elemento\nSi la clave ya existe, se actualiza su valor. Si no existe, se crea un nuevo par clave-valor.\n\n```python\npersona[\"edad\"] = 29  # Modifica la edad existente\npersona[\"profesion\"] = \"Ingeniera\"  # Agrega una nueva clave-valor\n```\n\n#### 3. Eliminar un elemento\nPuedes usar `del` o el método `.pop()`.\n\n```python\ndel persona[\"es_estudiante\"]  # Elimina esa clave y su valor\n```\n\n#### 4. Recorrer un diccionario (Bucles)\nPuedes recorrer sus claves, sus valores o ambos a la vez.\n\n```python\n# Recorrer claves y valores\nfor clave, valor in persona.items():\n  print(f\"{clave}: {valor}\")\n```\n\n### ¿Cuándo deberías usar un diccionario?\n* Cuando necesitas representar un objeto con propiedades con nombre (ej. un usuario, un producto, una configuración).\n* Cuando necesitas hacer búsquedas rápidas de datos basados en un identificador único (ej. buscar el precio de un producto usando su código de barras).",
+    "precision": 0.01639344262295082,
+    "cobertura": 0.75,
+    "f1": 0.0320855614973262
+  },
+  {
+    "consulta": "¿Cuánto es 100 dividido por 4?",
+    "referencia": "100 dividido por 4 es 25.",
+    "respuesta": "100 dividido por 4 es **25**.",
+    "precision": 1.0,
+    "cobertura": 1.0,
+    "f1": 1.0
+  },
+  {
+    "consulta": "¿Qué significa HTTP?",
+    "referencia": "HTTP significa Protocolo de Transferencia de Hipertexto.",
+    "respuesta": "**HTTP** son las siglas en inglés de **Hypertext Transfer Protocol** (que en español se traduce como *Protocolo de Transferencia de Hipertexto*).\n\nEs el protocolo de comunicación que se utiliza en la **World Wide Web** (la Internet) para la transmisión de información entre un **navegador** (como Chrome, Firefox o Safari) y un **servidor web** (donde está alojada una página web).\n\nAquí te explico sus puntos clave de forma sencilla:\n\n1. **¿Cómo funciona?** Funciona mediante un sistema de **petición y respuesta**:\n   * **Tú (el cliente):** Escribes una dirección web (URL) o haces clic en un enlace. Tu navegador envía una *petición* HTTP al servidor de esa página.\n   * **El servidor:** Recibe la petición, busca los archivos de la página web y envía una *respuesta* HTTP de vuelta a tu navegador, el cual se encarga de mostrarte el texto, las imágenes y los colores que ves en la pantalla.\n\n2. **¿Qué es el \"Hipertexto\"?** Es el texto que contiene enlaces (hipervínculos) que te permiten saltar de una página web a otra con un solo clic.\n\n3. **HTTP vs. HTTPS:** Probablemente hayas visto que muchas direcciones empiezan por **HTTPS**. La \"S\" al final significa *Secure* (Seguro). Esto indica que la conexión entre tu navegador y el servidor está cifrada, lo que evita que terceras personas puedan leer o robar tus datos (como contraseñas o tarjetas de crédito). Hoy en día, casi todas las páginas web utilizan HTTPS.",
+    "precision": 0.030303030303030304,
+    "cobertura": 1.0,
+    "f1": 0.05882352941176471
+  },
+  {
+    "consulta": "¿Cuál es la fórmula química del agua?",
+    "referencia": "La fórmula química del agua es H2O.",
+    "respuesta": "La fórmula química del agua es **H₂O**. \n\nEsto significa que cada molécula de agua está compuesta por dos átomos de hidrógeno (H) y un átomo de oxígeno (O).",
+    "precision": 0.21428571428571427,
+    "cobertura": 0.8571428571428571,
+    "f1": 0.34285714285714286
+  },
+  {
+    "consulta": "¿Qué hace la función len() en Python?",
+    "referencia": "La función len devuelve la cantidad de elementos de un objeto.",
+    "respuesta": "En Python, la función **`len()`** sirve para **contar el número de elementos** que contiene un objeto (como una cadena de texto, una lista, un diccionario, etc.). \n\nSu nombre viene de la palabra en inglés *length*, que significa \"longitud\".\n\nAquí te muestro cómo se usa con diferentes tipos de datos:\n\n### 1. Con cadenas de texto (Strings)\nCuenta la cantidad de caracteres (incluyendo espacios y signos de puntuación).\n```python\ntexto = \"Hola\"\nprint(len(texto))  # Salida: 4\n```\n\n### 2. Con listas\nCuenta cuántos elementos hay dentro de la lista.\n```python\nfrutas = [\"manzana\", \"pera\", \"plátano\"]\nprint(len(frutas))  # Salida: 3\n```\n\n### 3. Con diccionarios\nCuenta el número de pares \"clave:valor\" que tiene el diccionario.\n```python\nusuario = {\"nombre\": \"Ana\", \"edad\": 28, \"activo\": True}\nprint(len(usuario))  # Salida: 3\n```\n\n### 4. Con tuplas y conjuntos (Sets)\nFunciona igual que con las listas.\n```python\nnumeros = (1, 2, 3, 4, 5)\nprint(len(numeros))  # Salida: 5\n```\n\n### ¿Por qué es tan útil?\nSe usa mucho en bucles y condicionales cuando no sabes cuántos elementos tiene una estructura de datos de antemano. Por ejemplo, para saber cuándo terminar de recorrer una lista.",
+    "precision": 0.05847953216374269,
+    "cobertura": 0.9090909090909091,
+    "f1": 0.10989010989010989
+  },
+  {
+    "consulta": "¿En qué año se declaró la independencia de Chile?",
+    "referencia": "La independencia de Chile se declaró en 1818.",
+    "respuesta": "La independencia de Chile se declaró el **12 de febrero de 1818**. \n\nAunque la **Declaración de Independencia** se firmó y promulgó en esa fecha en la ciudad de Talca (con fecha retroactiva al 1 de enero de 1818 en Concepción), los procesos de emancipación comenzaron años antes, siendo el hito inicial el **18 de septiembre de 1810** con la formación de la Primera Junta Nacional de Gobierno.",
+    "precision": 0.11940298507462686,
+    "cobertura": 1.0,
+    "f1": 0.21333333333333335
+  },
+  {
+    "consulta": "¿Qué es el aprendizaje supervisado?",
+    "referencia": "El aprendizaje supervisado entrena modelos utilizando ejemplos etiquetados.",
+    "respuesta": "El **aprendizaje supervisado** (o *supervised learning*) es una de las ramas principales del **aprendizaje automático (Machine Learning)** y de la inteligencia artificial. \n\nPara entenderlo de forma sencilla: es un método en el que **le enseñamos a una computadora usando ejemplos**. \n\nImagina que le estás enseñando a un niño pequeño a reconocer animales. Le muestras muchas fotos y le dices: *\"Este es un perro, este es un gato, este es un elefante\"*. Después de ver muchos ejemplos, el niño (con suerte) será capaz de ver una foto nueva y decir correctamente qué animal es. El aprendizaje supervisado funciona exactamente igual, pero con algoritmos.\n\n### ¿Cómo funciona?\n\nEl proceso consta de dos elementos principales:\n1. **Los datos de entrenamiento:** Se le alimenta al algoritmo un conjunto de datos que ya ha sido etiquetado por humanos. Esto significa que cada dato viene con su \"respuesta correcta\".\n   * *Ejemplo:* Si queremos predecir el precio de una casa, los datos incluirán características de la casa (metros cuadrados, número de habitaciones, ubicación) **y** el precio real por el que se vendió.\n2. **El modelo:** El algoritmo analiza estos datos para encontrar patrones y relaciones matemáticas entre las características (metros cuadrados) y la etiqueta (precio). Una vez entrenado, puede hacer predicciones sobre datos nuevos que nunca antes había visto.\n\n---\n\n### Tipos de aprendizaje supervisado\n\nDependiendo de qué tipo de respuesta (etiqueta) estemos buscando, el aprendizaje supervisado se divide en dos grandes categorías:\n\n#### 1. Clasificación (La respuesta es una categoría)\nEl objetivo es asignar los datos de entrada a una categoría o etiqueta específica.\n* **Ejemplo 1:** Detectar si un correo electrónico es **\"Spam\"** o **\"No Spam\"**.\n* **Ejemplo 2:** Diagnosticar si una radiografía muestra un tumor **\"Maligno\"** o **\"Benigno\"**.\n\n#### 2. Regresión (La respuesta es un número continuo)\nEl objetivo es predecir un valor numérico continuo.\n* **Ejemplo 1:** Predecir el **precio de una vivienda** en función de su tamaño.\n* **Ejemplo 2:** Estimar cuántas **ventas** tendrá una empresa el próximo mes.\n\n---\n\n### Algoritmos comunes de aprendizaje supervisado\n\nAlgunos de los algoritmos más utilizados para resolver estos problemas son:\n* **Regresión Lineal y Logística:** Muy usados para problemas simples de regresión y clasificación.\n* **Árboles de Decisión y Random Forest:** Modelos basados en hacer preguntas lógicas (como un diagrama de flujo).\n* **Máquinas de Soporte Vectorial (SVM):** Excelentes para clasificación compleja.\n* **Redes Neuronales:** Inspiradas en el cerebro humano, ideales para tareas complejas como reconocimiento de voz o imágenes.\n\n---\n\n### Ventajas y Desventajas\n\n**Ventajas:**\n* Es muy preciso cuando se cuenta con una buena cantidad de datos limpios y etiquetados.\n* Los resultados son fáciles de evaluar y medir (puedes comparar la predicción del modelo con la etiqueta real).\n\n**Desventajas:**\n* **Requiere intervención humana:** Etiquetar los datos a mano suele ser costoso, tedioso y requiere mucho tiempo.\n* **Sobreajuste (*Overfitting*):** Si el modelo se \"aprende de memoria\" los datos de entrenamiento en lugar de aprender los patrones generales, funcionará mal con datos nuevos.",
+    "precision": 0.01282051282051282,
+    "cobertura": 0.75,
+    "f1": 0.02521008403361345
+  }
+]

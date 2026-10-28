@@ -1,0 +1,83 @@
+
+[
+  {
+    "consulta": "¿Qué es el aprendizaje supervisado?",
+    "f1": 0.0252,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "La respuesta explica correctamente el entrenamiento con datos etiquetados, la clasificación y la regresión. El F1 extremadamente bajo se relaciona con la extensión de la respuesta frente a una referencia breve."
+  },
+  {
+    "consulta": "¿Qué es un diccionario en Python?",
+    "f1": 0.0321,
+    "correccion_factual": "parcialmente",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "Explica correctamente las asociaciones clave-valor y las operaciones habituales. Sin embargo, la descripción inicial de los diccionarios como no ordenados resulta confusa, aunque después aclara que desde Python 3.7 se conserva el orden de inserción."
+  },
+  {
+    "consulta": "¿Qué es una lista en Python?",
+    "f1": 0.0381,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "La respuesta identifica correctamente las listas como colecciones ordenadas y modificables. Incluye ejemplos y operaciones adicionales. El F1 bajo no refleja un error conceptual."
+  },
+  {
+    "consulta": "¿Qué es Python?",
+    "f1": 0.0403,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "La respuesta identifica Python como lenguaje de programación interpretado y explica sus características y aplicaciones. Contiene una errata en la palabra Multiplatormforma, que la métrica no identifica como problema de redacción."
+  },
+  {
+    "consulta": "¿Qué representa un booleano en Python?",
+    "f1": 0.0492,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "Explica correctamente los valores True y False, los operadores lógicos y los contextos booleanos. Su extensión reduce el F1 pese a cubrir la referencia."
+  },
+  {
+    "consulta": "¿Cuánto es 100 dividido por 4?",
+    "f1": 1.0,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "La respuesta 25 es matemáticamente correcta y coincide prácticamente palabra por palabra con la referencia. El F1 del 100 % es consistente con esta coincidencia léxica."
+  },
+  {
+    "consulta": "¿Cuánto es 15 multiplicado por 8?",
+    "f1": 1.0,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "La respuesta 120 es correcta y reproduce el contenido de la referencia. La coincidencia léxica alcanza el 100 %."
+  },
+  {
+    "consulta": "¿Cuál es la capital de Chile?",
+    "f1": 0.6667,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "Identifica correctamente Santiago como capital de Chile. La información adicional modifica la coincidencia de tokens, pero no la corrección factual."
+  },
+  {
+    "consulta": "¿Cuál es la raíz cuadrada de 144?",
+    "f1": 0.6364,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "Identifica correctamente 12 como raíz cuadrada principal de 144 y justifica el resultado mediante la multiplicación 12 por 12. No contradice la referencia."
+  },
+  {
+    "consulta": "¿En qué año comenzó la Segunda Guerra Mundial?",
+    "f1": 0.5385,
+    "correccion_factual": "sí",
+    "completitud": "sí",
+    "contradiccion": "no",
+    "nota": "Indica correctamente 1939 y agrega el 1 de septiembre como fecha de inicio convencional, asociada a la invasión alemana de Polonia. La información adicional reduce la coincidencia léxica."
+  }
+]

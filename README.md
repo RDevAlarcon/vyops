@@ -763,6 +763,72 @@ El Bloque 16 incorpora una evaluación cuantitativa reproducible basada en coinc
 
 No incorpora todavía embeddings, métricas semánticas avanzadas ni evaluación mediante modelos jueces.
 
+
+## Unidad 2 — Bloque 17: Interpretación cualitativa y límites del pipeline
+
+En este bloque se evaluaron respuestas reales de Gemini para analizar las limitaciones de las métricas de precisión, cobertura y F1.
+
+### Objetivos
+
+- Evaluar al menos 20 respuestas generadas por un modelo de lenguaje.
+- Comparar respuestas con referencias mediante métricas léxicas.
+- Seleccionar casos con puntuaciones F1 altas y bajas.
+- Realizar una revisión cualitativa de al menos 10 respuestas.
+- Documentar las limitaciones de las métricas.
+
+### Implementación
+
+Se configuraron 23 casos de evaluación:
+
+- 3 respuestas recuperadas del Bloque 16.
+- 20 respuestas nuevas generadas durante el Bloque 17.
+
+El sistema permite guardar los resultados progresivamente y reanudar las consultas pendientes sin repetir las ya registradas.
+
+### Ejecución
+
+Para ejecutar o reanudar la evaluación:
+
+```powershell
+python ejecutar_bloque_17.py
+```
+
+Para ejecutar las pruebas automatizadas:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+### Resultados
+
+Se revisaron cualitativamente 10 respuestas:
+
+- 5 con los valores F1 más bajos.
+- 5 con los valores F1 más altos.
+
+La revisión mostró que algunas respuestas correctas y extensas obtuvieron puntuaciones F1 inferiores al 5 %.
+
+Las respuestas matemáticas breves alcanzaron F1 del 100 % cuando coincidieron con las referencias.
+
+Esto demuestra que una coincidencia léxica elevada no garantiza por sí sola la corrección factual y que un F1 bajo no implica necesariamente una respuesta incorrecta.
+
+### Archivos principales
+
+| Archivo | Descripción |
+|---|---|
+| `src/casos_evaluacion_bloque_17.py` | Banco de preguntas y referencias |
+| `src/evaluacion_bloque_17.py` | Evaluación y selección de casos |
+| `ejecutar_bloque_17.py` | Ejecución y reanudación |
+| `tests/test_evaluacion_bloque_17.py` | Pruebas automatizadas |
+| `resultados/resultados_bloque_17.json` | Respuestas y métricas |
+| `resultados/revision_manual_bloque_17.json` | Evaluaciones cualitativas |
+| `docs/limites_metrica.md` | Análisis de limitaciones |
+
+### Conclusión
+
+Las métricas de precisión, cobertura y F1 son útiles para comparar coincidencias textuales, pero deben complementarse con revisión humana cuando se necesita evaluar veracidad, significado o contradicciones.
+
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
