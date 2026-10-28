@@ -637,6 +637,132 @@ Este bloque incorpora herramientas básicas de procesamiento y evaluación textu
 
 No incluye todavía métricas semánticas avanzadas, embeddings ni evaluación mediante modelos jueces.
 
+## Unidad 2 — Bloque 16: Métricas de precisión, cobertura y F1
+
+### Objetivo
+
+Implementar métricas cuantitativas para evaluar respuestas generadas por Google Gemini mediante comparación de tokens con textos de referencia.
+
+Ampliar el pipeline desarrollado en el Bloque 15, incorporando precisión, cobertura (*recall*) y F1, con registro de resultados en formato JSON.
+
+### Implementación
+
+**Archivo principal:** `src/pipeline_texto.py`
+
+Se incorporaron tres funciones:
+
+- `contar_coincidencias()`: calcula las coincidencias entre tokens, considerando su frecuencia y evitando contabilizar repeticiones en exceso.
+- `calcular_precision_cobertura_f1()`: calcula precisión, cobertura y F1 a partir de dos listas de tokens.
+- `calcular_metricas()`: integra la normalización, tokenización y evaluación de dos textos.
+
+Las métricas se calculan mediante las siguientes fórmulas:
+
+**Precisión:**
+
+`precision = coincidencias / tokens_respuesta`
+
+**Cobertura:**
+
+`cobertura = coincidencias / tokens_referencia`
+
+**F1:**
+
+`F1 = 2 × (precision × cobertura) / (precision + cobertura)`
+
+Se contemplan casos de listas vacías y divisiones por cero.
+
+### Evaluación automatizada de Gemini
+
+**Script:** `evaluar_respuestas.py`
+
+Se incorporaron las siguientes funciones:
+
+- `evaluar_casos_bloque_16()`: consulta Gemini y calcula las métricas para cada caso.
+- `guardar_resultados_metricas()`: guarda las evaluaciones en JSON.
+- `resumir_metricas()`: calcula los promedios de las métricas.
+- `obtener_peores_casos()`: identifica los casos con menor F1.
+- `ejecutar_evaluacion_bloque_16()`: coordina la evaluación completa.
+
+Para ejecutar exclusivamente el Bloque 16:
+
+```powershell
+python evaluar_respuestas.py --bloque-16
+```
+
+La evaluación original del Bloque 15 permanece disponible:
+
+```powershell
+python evaluar_respuestas.py
+```
+
+Ambos comandos realizan consultas reales a Gemini y pueden consumir cuota de API o generar costos.
+
+### Resultados de la evaluación real
+
+**Fecha:** 28 de octubre de 2026.
+
+Se evaluaron tres consultas utilizando referencias breves.
+
+| Consulta | Precisión | Cobertura | F1 |
+|---|---:|---:|---:|
+| ¿Qué es Python? | 2,06 % | 100,00 % | 4,03 % |
+| ¿Cuándo se creó Python? | 10,00 % | 100,00 % | 18,18 % |
+| ¿Qué es una lista en Python? | 1,95 % | 87,50 % | 3,81 % |
+| **Promedio** | **4,67 %** | **95,83 %** | **8,68 %** |
+
+Los resultados se almacenaron en:
+
+`resultados/resultados_metricas.json`
+
+### Interpretación de resultados
+
+La cobertura promedio elevada indica que las respuestas de Gemini incluyeron la mayoría de los tokens presentes en los textos de referencia.
+
+La precisión promedio fue baja porque las respuestas generadas contenían considerablemente más información que las referencias utilizadas.
+
+En consecuencia, el F1 promedio de 8,68 % representa una coincidencia léxica limitada bajo esta metodología, no una calificación general de la calidad del modelo.
+
+### Limitaciones identificadas
+
+- Las métricas no evalúan directamente la exactitud factual.
+- No identifican automáticamente sinónimos o expresiones semánticamente equivalentes.
+- Pueden asignar valores elevados a respuestas que contienen datos incorrectos.
+- No interpretan adecuadamente las negaciones.
+- Las respuestas extensas pueden obtener una precisión baja frente a referencias breves.
+- No detectan de manera fiable errores ortográficos o de redacción.
+
+Estas limitaciones deberán considerarse al incorporar evaluaciones semánticas en etapas posteriores.
+
+### Pruebas automatizadas
+
+**Archivos:**
+
+- `tests/test_pipeline_texto.py`
+- `tests/test_evaluacion_bloque_16.py`
+
+Se verificaron cálculos de métricas, palabras repetidas, textos vacíos, limitaciones semánticas, almacenamiento JSON, promedios, ordenamiento por F1 e integración completa sin llamadas reales a Gemini.
+
+Para ejecutar todas las pruebas:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+**Resultado local del 28 de octubre de 2026:**
+
+- 46 pruebas principales aprobadas.
+- 5 subpruebas aprobadas.
+- 0 errores.
+- Tiempo de ejecución: 0,33 segundos.
+
+Las pruebas automatizadas utilizan simulaciones para evitar solicitudes reales a Gemini.
+
+### Alcance
+
+El Bloque 16 incorpora una evaluación cuantitativa reproducible basada en coincidencias léxicas y conserva los resultados obtenidos como evidencia técnica.
+
+No incorpora todavía embeddings, métricas semánticas avanzadas ni evaluación mediante modelos jueces.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**

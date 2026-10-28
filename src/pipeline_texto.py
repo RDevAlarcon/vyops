@@ -203,3 +203,170 @@ def calcular_coincidencia(
     )
 
     return coincidencia
+
+def contar_coincidencias(
+    tokens_referencia: list[str],
+    tokens_respuesta: list[str],
+) -> int:
+    """Cuenta las coincidencias entre dos listas de tokens.
+
+    Compara las frecuencias de aparición de cada palabra
+    en la referencia y en la respuesta generada.
+
+    A diferencia de una comparación mediante conjuntos,
+    esta función considera cuántas veces aparece cada token.
+
+    Args:
+        tokens_referencia: Lista de palabras de la respuesta
+            considerada como referencia.
+        tokens_respuesta: Lista de palabras de la respuesta
+            que se desea evaluar.
+
+    Returns:
+        Número total de coincidencias, considerando
+        las repeticiones de cada palabra.
+
+        Si alguna lista está vacía, devuelve cero.
+
+    Nota:
+        La intersección de dos objetos Counter utiliza
+        la frecuencia mínima de cada palabra compartida.
+        No evalúa el significado ni el orden de los tokens.
+    """
+
+    # Contamos cuántas veces aparece cada palabra
+    # en el texto de referencia.
+    conteo_referencia = Counter(tokens_referencia)
+
+    # Contamos las apariciones de cada palabra
+    # en la respuesta que estamos evaluando.
+    conteo_respuesta = Counter(tokens_respuesta)
+
+    # Calculamos la intersección de frecuencias.
+    # Para cada palabra compartida, Counter conserva
+    # la menor cantidad de apariciones entre ambos textos.
+    interseccion = conteo_referencia & conteo_respuesta
+
+    # Sumamos todas las frecuencias compartidas
+    # para obtener el número total de coincidencias.
+    coincidencias = sum(interseccion.values())
+
+    return coincidencias
+
+def calcular_precision_cobertura_f1(
+    tokens_referencia: list[str],
+    tokens_respuesta: list[str],
+) -> dict[str, float]:
+    """Calcula precisión, cobertura y F1 entre dos listas de tokens.
+
+    Utiliza las coincidencias obtenidas mediante Counter,
+    considerando la frecuencia de aparición de cada palabra.
+
+    Args:
+        tokens_referencia: Lista de tokens del texto esperado.
+        tokens_respuesta: Lista de tokens del texto generado.
+
+    Returns:
+        Diccionario con tres métricas:
+            precision: Proporción de tokens generados coincidentes.
+            cobertura: Proporción de tokens de referencia encontrados.
+            f1: Media armónica de precisión y cobertura.
+
+        Todos los valores están comprendidos entre 0.0 y 1.0.
+
+    Nota:
+        Si alguna lista está vacía, las tres métricas
+        se establecen en 0.0 para evitar divisiones por cero.
+
+        Estas métricas comparan coincidencias léxicas,
+        pero no evalúan significado ni exactitud factual.
+    """
+
+    # Calculamos las coincidencias considerando las
+    # repeticiones de palabras en ambos textos.
+    coincidencias = contar_coincidencias(
+        tokens_referencia,
+        tokens_respuesta,
+    )
+
+    # Si alguna lista está vacía, no podemos calcular
+    # las proporciones de manera convencional.
+    if not tokens_respuesta or not tokens_referencia:
+        return {
+            "precision": 0.0,
+            "cobertura": 0.0,
+            "f1": 0.0,
+        }
+
+    # La precisión mide qué parte de la respuesta
+    # generada coincide con el texto de referencia.
+    precision = coincidencias / len(tokens_respuesta)
+
+    # La cobertura mide qué parte del texto de
+    # referencia aparece en la respuesta generada.
+    cobertura = coincidencias / len(tokens_referencia)
+
+    # Calculamos F1 mediante la media armónica.
+    # Controlamos el caso en que ambas métricas sean cero.
+    if precision + cobertura == 0:
+        f1 = 0.0
+    else:
+        f1 = 2 * precision * cobertura / (precision + cobertura)
+
+    # Devolvemos las tres métricas para que otros
+    # componentes de VyOps puedan reutilizarlas.
+    resultado = {
+        "precision": precision,
+        "cobertura": cobertura,
+        "f1": f1,
+    }
+
+    return resultado
+
+def calcular_metricas(
+    texto_referencia: str,
+    texto_respuesta: str,
+) -> dict[str, float]:
+    """Calcula métricas de evaluación a partir de dos textos.
+
+    Integra las funciones de limpieza, tokenización
+    y evaluación desarrolladas en los bloques 15 y 16.
+
+    Args:
+        texto_referencia: Respuesta considerada correcta
+            o esperada para una consulta.
+        texto_respuesta: Respuesta generada por el modelo
+            de inteligencia artificial.
+
+    Returns:
+        Diccionario que contiene:
+            precision: Proporción de tokens generados
+                que coinciden con la referencia.
+            cobertura: Proporción de tokens de referencia
+                presentes en la respuesta.
+            f1: Media armónica de precisión y cobertura.
+
+    Nota:
+        Esta función evalúa coincidencias léxicas.
+        No determina si una respuesta es semánticamente
+        equivalente ni si contiene información verdadera.
+    """
+
+    # Normalizamos y tokenizamos la respuesta de referencia
+    # utilizando el pipeline desarrollado en el Bloque 15.
+    tokens_referencia = procesar_texto(texto_referencia)
+
+    # Aplicamos exactamente el mismo procesamiento
+    # a la respuesta generada por el modelo.
+    tokens_respuesta = procesar_texto(texto_respuesta)
+
+    # Calculamos las métricas del Bloque 16
+    # utilizando las listas de tokens obtenidas.
+    metricas = calcular_precision_cobertura_f1(
+        tokens_referencia,
+        tokens_respuesta,
+    )
+
+    # Devolvemos el resultado para que pueda utilizarse
+    # desde otros módulos, pruebas o scripts de VyOps.
+    return metricas
