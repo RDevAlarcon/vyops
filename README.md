@@ -828,6 +828,82 @@ Esto demuestra que una coincidencia léxica elevada no garantiza por sí sola la
 
 Las métricas de precisión, cobertura y F1 son útiles para comparar coincidencias textuales, pero deben complementarse con revisión humana cuando se necesita evaluar veracidad, significado o contradicciones.
 
+## Unidad 2 — Bloque 18: LangChain y cadenas de tres etapas
+
+En este bloque se implementó una cadena de procesamiento de texto utilizando LangChain y LangChain Expression Language (LCEL), integrando Gemini como modelo de lenguaje.
+
+### Objetivos
+
+- Comprender el uso de `PromptTemplate` para crear instrucciones parametrizadas.
+- Conectar componentes mediante el operador `|`.
+- Construir una cadena con tres etapas dependientes.
+- Utilizar `StrOutputParser` para obtener respuestas en texto.
+- Validar la cadena mediante modelos simulados y pruebas automatizadas.
+- Ejecutar una prueba de integración real con Gemini.
+
+### Implementación
+
+Se desarrolló una cadena compuesta por tres etapas:
+
+1. **Extracción:** identifica tres hallazgos principales de un informe.
+2. **Simplificación:** transforma los hallazgos en explicaciones comprensibles.
+3. **Formato:** presenta los resultados en tres viñetas Markdown.
+
+Cada etapa recibe la salida de la anterior.
+
+La función `construir_cadena(modelo)` permite inyectar un modelo real o simulado, facilitando las pruebas sin consumir cuota de la API.
+
+### Ejecución
+
+Para ejecutar la cadena con Gemini:
+
+```powershell
+python ejecutar_cadena_langchain.py
+```
+
+Se requiere configurar `GEMINI_API_KEY` mediante las variables de entorno o un archivo `.env` que no debe incorporarse a Git.
+
+Para ejecutar las pruebas automatizadas:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+### Resultados
+
+Se validó la cadena mediante pruebas con `MagicMock`, `RunnableLambda` y `AIMessage`.
+
+Las pruebas comprobaron que:
+
+- El modelo se invoca tres veces.
+- Cada etapa recibe correctamente la información de la anterior.
+- La cadena devuelve el resultado esperado.
+
+También se realizaron dos ejecuciones reales con Gemini, obteniendo tres viñetas Markdown que conservaron los datos originales del informe.
+
+La batería completa de VyOps finalizó con **56 pruebas y 5 subpruebas aprobadas**, sin fallos.
+
+### Limitaciones identificadas
+
+El modelo `gemini-3.5-flash-lite` utiliza parámetros de muestreo fijos, por lo que la integración ignora el parámetro `temperature`.
+
+Por este motivo, se eliminó `temperature=0` de la configuración de ejecución.
+
+Las respuestas pueden presentar variaciones de redacción entre ejecuciones. Además, las pruebas con modelos simulados verifican la orquestación, pero no garantizan la exactitud factual de futuras respuestas reales.
+
+### Archivos principales
+
+| Archivo | Descripción |
+|---|---|
+| `src/plantillas_langchain.py` | Plantillas de extracción, simplificación y formato |
+| `src/cadena_langchain.py` | Orquestación de las tres etapas mediante LCEL |
+| `ejecutar_cadena_langchain.py` | Integración y ejecución real con Gemini |
+| `tests/test_cadena_langchain.py` | Prueba automatizada de la cadena |
+| `requirements.txt` | Dependencias de LangChain y del proyecto |
+
+### Conclusión
+
+LangChain permite construir flujos modulares en los que cada etapa tiene una responsabilidad definida. La separación entre plantillas, orquestación y modelo facilita las pruebas, el mantenimiento y la incorporación de nuevas etapas de procesamiento.
 
 ## Derechos de autor y propiedad intelectual
 
