@@ -905,6 +905,84 @@ Las respuestas pueden presentar variaciones de redacción entre ejecuciones. Ade
 
 LangChain permite construir flujos modulares en los que cada etapa tiene una responsabilidad definida. La separación entre plantillas, orquestación y modelo facilita las pruebas, el mantenimiento y la incorporación de nuevas etapas de procesamiento.
 
+## Bloque 19 — Enrutamiento condicional con LangChain
+
+### Objetivo
+
+Implementar un sistema capaz de clasificar mensajes y seleccionar automáticamente una cadena de respuesta según la intención detectada.
+
+### Arquitectura
+
+El sistema utiliza los siguientes componentes de LangChain:
+
+- `PromptTemplate`: define las instrucciones de clasificación y respuesta.
+- `StrOutputParser`: convierte las respuestas del modelo en texto.
+- `RunnablePassthrough.assign`: conserva el mensaje original y agrega la categoría y la respuesta.
+- `RunnableBranch`: selecciona la cadena correspondiente según la categoría.
+- `Runnable`: permite inyectar modelos reales o simulados.
+
+### Rutas disponibles
+
+| Categoría | Comportamiento |
+|---|---|
+| `pregunta` | Responde consultas técnicas, administrativas y sobre procedimientos. |
+| `queja` | Orienta sobre problemas, inconvenientes y posibles soluciones. |
+| `sugerencia` | Analiza propuestas de mejora. |
+| `defecto` | Gestiona mensajes cuya categoría no coincide con las anteriores. |
+
+La clasificación se normaliza mediante `strip().lower()` para eliminar espacios exteriores y convertir el texto a minúsculas.
+
+Si Gemini devuelve una categoría desconocida, se ejecuta la ruta por defecto y se conserva la categoría original normalizada.
+
+### Estructura de salida
+
+```python
+{
+    "mensaje": "Mensaje original",
+    "categoria": "pregunta",
+    "respuesta": "Respuesta generada por el modelo"
+}
+```
+
+### Archivos principales
+
+- `src/enrutamiento_langchain.py`: clasificación, plantillas, rutas y cadena de enrutamiento.
+- `ejecutar_enrutamiento.py`: integración real con Gemini.
+- `tests/test_enrutamiento_langchain.py`: pruebas unitarias con modelos simulados.
+
+### Ejecución
+
+```powershell
+python ejecutar_enrutamiento.py
+```
+
+Requiere configurar `GEMINI_API_KEY` en el entorno.
+
+### Pruebas
+
+```powershell
+python -m pytest tests/test_enrutamiento_langchain.py -v
+```
+
+Resultado: 5 pruebas aprobadas.
+
+Suite completa:
+
+```powershell
+python -m pytest -v
+```
+
+Resultado: 61 pruebas y 5 subpruebas aprobadas.
+
+### Consideraciones
+
+- Cada mensaje requiere normalmente dos llamadas al modelo: clasificación y respuesta.
+- Las pruebas unitarias utilizan modelos simulados para evitar consumo de API.
+- La clasificación depende de la respuesta generada por Gemini.
+- La ruta por defecto gestiona categorías desconocidas, pero no sustituye el manejo de errores de ejecución.
+- La información sobre trámites, permisos y normativas debe verificarse mediante fuentes oficiales actualizadas.
+- El sistema no dispone todavía de herramientas para consultar fuentes oficiales en tiempo real.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
