@@ -983,6 +983,42 @@ Resultado: 61 pruebas y 5 subpruebas aprobadas.
 - La información sobre trámites, permisos y normativas debe verificarse mediante fuentes oficiales actualizadas.
 - El sistema no dispone todavía de herramientas para consultar fuentes oficiales en tiempo real.
 
+## Bloque 20 — Manejo de errores en cadenas LangChain
+
+Se implementaron mecanismos de recuperación ante errores para mejorar la robustez del enrutamiento condicional desarrollado en el Bloque 19.
+
+### Funcionalidades implementadas
+
+- `with_fallbacks()`: activa una respuesta alternativa cuando falla la cadena principal.
+- `try/except`: captura excepciones durante la ejecución.
+- `logging`: registra errores técnicos para facilitar su diagnóstico.
+- Recuperación ante errores de clasificación y generación de respuestas.
+- Conservación del mensaje original y devolución de respuestas seguras.
+
+### Pruebas automatizadas
+
+El material de SkillNest utiliza `test_orquestacion.py` como ejemplo de pruebas de orquestación. En VyOps, estas verificaciones se organizan por funcionalidad, principalmente en `tests/test_manejo_errores_langchain.py`.
+
+Ejecutar las pruebas del Bloque 20:
+
+```powershell
+python -m pytest tests/test_manejo_errores_langchain.py -v
+```
+
+Resultado verificado: **9 pruebas aprobadas**.
+
+Ejecutar la suite completa:
+
+```powershell
+python -m pytest -v
+```
+
+Resultado verificado: **70 pruebas aprobadas y 5 subpruebas aprobadas**.
+
+Las pruebas utilizan modelos simulados y no requieren llamadas reales a la API de Gemini.
+
+**Nota:** Las pruebas de VyOps cubren los mecanismos implementados en este bloque. No se afirma una equivalencia exacta con los casos de `test_orquestacion.py` del curso.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
