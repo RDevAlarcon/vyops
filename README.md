@@ -1112,6 +1112,48 @@ Adicionalmente, se realizaron pruebas manuales de integración con Gemini para v
 - Las respuestas generadas deben verificarse antes de utilizarse en decisiones administrativas.
 - Las futuras integraciones deberán incorporar controles de acceso, protección de datos y auditoría.
 
+## Bloque 22 — Herramienta personalizada y memoria conversacional
+
+Se amplió el agente municipal VyOps con una herramienta estructurada y memoria conversacional por sesión.
+
+### Herramienta personalizada
+
+Se implementó `consultar_estado_solicitud` utilizando `@tool` y un esquema Pydantic (`ArgumentosConsultaSolicitud`).
+
+Permite:
+- Consultar el estado de solicitudes municipales simuladas.
+- Recuperar opcionalmente el historial de estados.
+- Validar automáticamente los argumentos recibidos.
+- Responder cuando una solicitud no existe en los datos de prueba.
+
+La herramienta se integró al agente municipal junto con las tres herramientas del Bloque 21.
+
+### Memoria conversacional
+
+Se implementó memoria temporal mediante `InMemoryChatMessageHistory` y `RunnableWithMessageHistory`.
+
+Características:
+- Historial independiente por identificador de sesión.
+- Recuperación de mensajes anteriores.
+- Eliminación de historiales.
+- Integración con `AgentExecutor`.
+- Compatibilidad con consultas sin memoria.
+
+La información permanece únicamente en memoria RAM y no persiste entre reinicios del proceso.
+
+### Verificación
+
+La suite completa finalizó con **106 pruebas aprobadas, 5 subpruebas aprobadas y 0 fallos**.
+
+Las pruebas del agente y su memoria utilizaron modelos simulados, sin llamadas reales a Gemini.
+
+### Limitaciones y mejoras pendientes
+
+- Las solicitudes municipales son datos ficticios.
+- El aislamiento por sesión no reemplaza los mecanismos de autenticación y autorización.
+- La memoria no es persistente.
+- `InMemoryChatMessageHistory` y `RunnableWithMessageHistory` generan advertencias de obsolescencia. Se planifica migrar a la persistencia de LangGraph antes de su eliminación en versiones futuras.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**

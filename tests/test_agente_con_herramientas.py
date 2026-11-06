@@ -570,3 +570,52 @@ def test_ejecucion_segura_detecta_limite_iteraciones() -> None:
         "dentro del límite de ejecución."
     )
     assert resultado["intermediate_steps"] == []
+
+def test_agente_consulta_solicitud_municipal() -> None:
+    """Verifica la integración de la herramienta municipal."""
+    modelo_simulado = FakeToolCallingModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "consultar_estado_solicitud",
+                        "args": {
+                            "numero_solicitud": "SOL-12345",
+                            "incluir_historial": True,
+                        },
+                        "id": "llamada_solicitud_1",
+                        "type": "tool_call",
+                    }
+                ],
+            ),
+            AIMessage(
+                content=(
+                    "La solicitud SOL-12345 está en revisión "
+                    "por la unidad municipal."
+                )
+            ),
+        ]
+    )
+
+    agente = construir_agente_municipal(
+        modelo=modelo_simulado
+    )
+
+    resultado = ejecutar_agente_seguro(
+        agente=agente,
+        entrada=(
+            "Consulta el estado y el historial "
+            "de la solicitud SOL-12345."
+        ),
+    )
+
+    assert "SOL-12345" in resultado["output"]
+    assert len(resultado["intermediate_steps"]) == 1
+
+    accion, observacion = resultado["intermediate_steps"][0]
+
+    assert accion.tool == "consultar_estado_solicitud"
+    assert "Solicitud recibida." in observacion
+    assert "Documentación validada." in observacion
+    assert "error" not in resultado

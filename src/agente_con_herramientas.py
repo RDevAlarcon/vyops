@@ -9,6 +9,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableWithFallbacks
 from langchain_core.language_models import BaseChatModel
 import logging
+from src.herramienta_solicitudes import consultar_estado_solicitud
 
 @tool
 def calcular_metricas(
@@ -115,8 +116,14 @@ prompt_agente = ChatPromptTemplate.from_messages(
             "Cuando una solicitud requiera herramientas "
             "que todavía no existen, informa esa limitación. "
             "Para preguntas generales, responde directamente."
+            "Utiliza consultar_estado_solicitud para consultar "
+            "el estado y el historial de solicitudes municipales simuladas. "
         ),
     ),
+        MessagesPlaceholder(
+            variable_name="chat_history",
+            optional=True,
+        ),
         ("human", "{entrada}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
@@ -145,6 +152,7 @@ def construir_agente_municipal(
         calcular_metricas,
         consultar_documentacion,
         analizar_datos,
+        consultar_estado_solicitud,
     ]
 
     if modelo is None:
