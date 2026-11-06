@@ -1019,6 +1019,99 @@ Las pruebas utilizan modelos simulados y no requieren llamadas reales a la API d
 
 **Nota:** Las pruebas de VyOps cubren los mecanismos implementados en este bloque. No se afirma una equivalencia exacta con los casos de `test_orquestacion.py` del curso.
 
+
+## Bloque 21 — Agente municipal con herramientas
+
+Se implementó un agente inteligente para VyOps, orientado al apoyo de la gestión municipal en Chile mediante LangChain, Gemini y herramientas especializadas.
+
+El agente puede seleccionar herramientas según la solicitud del usuario, realizar cálculos, analizar indicadores y consultar documentación local.
+
+### Herramientas implementadas
+
+- `calcular_metricas`: calcula suma, promedio, máximo y mínimo sobre una lista de valores numéricos.
+- `analizar_datos`: compara dos valores, calcula variaciones absolutas y porcentuales e identifica tendencias.
+- `consultar_documentacion`: consulta información interna disponible sobre VyOps, LangChain y agentes.
+
+La documentación consultada es local y estática. No existe todavía una conexión con documentos o sistemas municipales reales.
+
+### Arquitectura del agente
+
+Se utilizan los componentes de LangChain:
+
+- `ChatPromptTemplate`: define las instrucciones del asistente municipal.
+- `MessagesPlaceholder`: incorpora el historial de ejecución de herramientas.
+- `create_tool_calling_agent`: construye el agente con capacidad de invocar herramientas.
+- `AgentExecutor`: administra la ejecución y conserva la trazabilidad mediante `intermediate_steps`.
+- `ChatGoogleGenerativeAI`: proporciona acceso a los modelos Gemini.
+- `with_fallbacks()`: configura un modelo de respaldo ante excepciones del modelo principal.
+
+El agente utiliza un máximo de cinco iteraciones y configura un límite de ejecución de 60 segundos.
+
+Este límite no garantiza la interrupción inmediata de llamadas externas bloqueadas.
+
+### Manejo seguro de errores
+
+Se implementó `ejecutar_agente_seguro()` para controlar errores de ejecución.
+
+El sistema contempla:
+
+- Errores de conexión.
+- Excepciones de tiempo de espera.
+- Errores inesperados.
+- Detección del mensaje de detención por límite de iteraciones.
+- Registro técnico mediante `logging`.
+- Respuestas de error comprensibles en español.
+
+La detección del límite de iteraciones depende actualmente del mensaje específico devuelto por LangChain.
+
+Los registros técnicos deben protegerse porque pueden incluir detalles de las excepciones.
+
+### Normalización de respuestas
+
+La función `normalizar_respuesta_agente()` convierte las respuestas del agente a texto plano.
+
+Permite procesar respuestas que llegan como cadenas de texto o listas de bloques, excluyendo metadatos internos del contenido visible.
+
+La ejecución segura conserva la trazabilidad de las herramientas utilizadas.
+
+### Archivos principales
+
+- `src/agente_con_herramientas.py`: herramientas, configuración del agente, ejecución segura y normalización.
+- `tests/test_agente_con_herramientas.py`: pruebas automatizadas del agente.
+- `requirements.txt`: dependencias necesarias para el funcionamiento del proyecto.
+
+### Pruebas automatizadas
+
+Ejecutar las pruebas del Bloque 21:
+
+```powershell
+python -m pytest tests/test_agente_con_herramientas.py -v
+```
+
+Resultado verificado: **23 pruebas aprobadas**.
+
+Ejecutar la suite completa:
+
+```powershell
+python -m pytest -v
+```
+
+Resultado verificado: **93 pruebas aprobadas y 5 subpruebas aprobadas**.
+
+Las pruebas automatizadas utilizan modelos simulados y no requieren llamadas reales a Gemini.
+
+Adicionalmente, se realizaron pruebas manuales de integración con Gemini para verificar la selección de herramientas y la ejecución de cálculos.
+
+### Consideraciones y limitaciones
+
+- El agente es un prototipo de aprendizaje y no constituye un sistema municipal en producción.
+- No dispone de acceso a expedientes, bases de datos municipales ni sistemas institucionales.
+- No consulta normativa oficial actualizada en tiempo real.
+- El modelo de respaldo se activa ante excepciones, no por la calidad de las respuestas.
+- Las pruebas automatizadas no garantizan el comportamiento de todos los modelos reales.
+- Las respuestas generadas deben verificarse antes de utilizarse en decisiones administrativas.
+- Las futuras integraciones deberán incorporar controles de acceso, protección de datos y auditoría.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
