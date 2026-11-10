@@ -10,6 +10,8 @@ from langchain_core.runnables import RunnableWithFallbacks
 from langchain_core.language_models import BaseChatModel
 import logging
 from src.herramienta_solicitudes import consultar_estado_solicitud
+from collections.abc import Callable
+from src.herramienta_cancelacion import construir_herramienta_cancelacion
 
 @tool
 def calcular_metricas(
@@ -146,6 +148,7 @@ def construir_modelo_agente(
 
 def construir_agente_municipal(
     modelo: BaseChatModel | None = None,
+    solicitar_aprobacion_cancelacion: Callable[[], bool] | None = None,
 ) -> AgentExecutor:
     """Construye el agente municipal con herramientas y trazabilidad."""
     herramientas = [
@@ -154,6 +157,12 @@ def construir_agente_municipal(
         analizar_datos,
         consultar_estado_solicitud,
     ]
+    if solicitar_aprobacion_cancelacion is not None:
+        herramientas.append(
+            construir_herramienta_cancelacion(
+                solicitar_decision=solicitar_aprobacion_cancelacion,
+            )
+        )
 
     if modelo is None:
         modelo = construir_modelo_agente()

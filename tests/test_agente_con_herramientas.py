@@ -619,3 +619,147 @@ def test_agente_consulta_solicitud_municipal() -> None:
     assert "Solicitud recibida." in observacion
     assert "Documentación validada." in observacion
     assert "error" not in resultado
+
+def test_agente_sin_supervisor_expone_cuatro_herramientas() -> None:
+    """Mantiene deshabilitada la cancelación sin supervisor."""
+    modelo_simulado = FakeToolCallingModel(
+        responses=[AIMessage(content="Consulta disponible.")]
+    )
+
+    agente = construir_agente_municipal(
+        modelo=modelo_simulado,
+    )
+
+    nombres = {herramienta.name for herramienta in agente.tools}
+
+    assert nombres == {
+        "calcular_metricas",
+        "consultar_documentacion",
+        "analizar_datos",
+        "consultar_estado_solicitud",
+    }
+
+
+def test_agente_con_supervisor_expone_cinco_herramientas() -> None:
+    """Habilita la cancelación solo con supervisor configurado."""
+    modelo_simulado = FakeToolCallingModel(
+        responses=[AIMessage(content="Supervisor configurado.")]
+    )
+
+    agente = construir_agente_municipal(
+        modelo=modelo_simulado,
+        solicitar_aprobacion_cancelacion=lambda: False,
+    )
+
+    nombres = {herramienta.name for herramienta in agente.tools}
+
+    assert nombres == {
+        "calcular_metricas",
+        "consultar_documentacion",
+        "analizar_datos",
+        "consultar_estado_solicitud",
+        "cancelar_solicitud_simulada",
+    }
+
+    herramienta_cancelacion = next(
+        herramienta
+        for herramienta in agente.tools
+        if herramienta.name == "cancelar_solicitud_simulada"
+    )
+
+    assert set(herramienta_cancelacion.args) == {
+        "numero_solicitud",
+    }
+
+def test_agente_no_cancela_sin_aprobacion_humana() -> None:
+    """Bloquea una cancelación solicitada por el modelo sin aprobación."""
+    modelo_simulado = FakeToolCallingModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "cancelar_solicitud_simulada",
+                        "args": {
+                            "numero_solicitud": "SOL-12345",
+                        },
+                        "id": "llamada_cancelacion_1",
+                        "type": "tool_call",
+                    }
+                ],
+            ),
+            AIMessage(
+                content=(
+                    "La cancelación simulada fue bloqueada "
+                    "porque no recibió aprobación humana."
+                )
+            ),
+        ]
+    )
+
+    agente = construir_agente_municipal(
+        modelo=modelo_simulado,
+        solicitar_aprobacion_cancelacion=lambda: False,
+    )
+
+    resultado = agente.invoke({
+        "entrada": "Cancela la solicitud SOL-12345.",
+    })
+
+    pasos = resultado["intermediate_steps"]
+
+    assert len(pasos) == 1
+    assert pasos[0][0].tool == "cancelar_solicitud_simulada"
+    assert pasos[0][1]["estado"] == "bloqueada"
+    assert "bloqueada" in resultado["output"]
+
+def test_agente_cancela_simulacion_con_aprobacion_humana() -> None:
+    """Permite una cancelación ficticia con aprobación externa."""
+    modelo_simulado = FakeToolCallingModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "cancelar_solicitud_simulada",
+                        "args": {
+                            "numero_solicitud": "SOL-12345",
+                        },
+                        "id": "llamada_cancelacion_aprobada_1",
+                        "type": "tool_call",
+                    }
+                ],
+            ),
+            AIMessage(
+                content=(
+                    "La cancelación de SOL-12345 fue "
+                    "autorizada y simulada correctamente."
+                )
+            ),
+        ]
+    )
+
+    decisiones = []
+
+    def aprobar_cancelacion() -> bool:
+        """Simula una aprobación externa al agente."""
+        decisiones.append(True)
+        return True
+
+    agente = construir_agente_municipal(
+        modelo=modelo_simulado,
+        solicitar_aprobacion_cancelacion=aprobar_cancelacion,
+    )
+
+    resultado = agente.invoke({
+        "entrada": "Simula cancelar la solicitud SOL-12345.",
+    })
+
+    pasos = resultado["intermediate_steps"]
+
+    assert len(decisiones) == 1
+    assert len(pasos) == 1
+    assert pasos[0][0].tool == "cancelar_solicitud_simulada"
+    assert pasos[0][1]["estado"] == "simulada"
+    assert pasos[0][1]["numero_solicitud"] == "SOL-12345"
+    assert "autorizada" in resultado["output"]

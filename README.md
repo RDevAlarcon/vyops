@@ -1154,6 +1154,144 @@ Las pruebas del agente y su memoria utilizaron modelos simulados, sin llamadas r
 - La memoria no es persistente.
 - `InMemoryChatMessageHistory` y `RunnableWithMessageHistory` generan advertencias de obsolescencia. Se planifica migrar a la persistencia de LangGraph antes de su eliminación en versiones futuras.
 
+## Bloque 23 — Memoria de contexto y límites de autonomía
+
+VyOps incorpora mecanismos de supervisión humana, clasificación de riesgos y auditoría para controlar las acciones del agente municipal.
+
+### Clasificación de riesgos
+
+Las herramientas se clasifican en tres niveles:
+
+- **Bajo:** consultas de solo lectura. Ejecución autónoma.
+- **Medio:** modificaciones reversibles. Requieren controles adicionales.
+- **Alto:** operaciones irreversibles o de impacto económico. Requieren aprobación humana explícita.
+
+Las herramientas desconocidas permanecen restringidas hasta su clasificación. Actualmente no existen herramientas operativas de riesgo medio.
+
+### Supervisión humana de operaciones
+
+Se incorporó la herramienta `cancelar_solicitud_simulada`, que permite demostrar operaciones de alto riesgo bajo supervisión humana.
+
+El agente solicita ejecutar la operación y el supervisor presenta una pregunta en PowerShell:
+
+```text
+--- SUPERVISIÓN HUMANA ---
+Operación: cancelación ficticia de SOL-12345
+¿Autorizar esta operación? (s/n):
+```
+
+El operador decide:
+
+- **`s`:** autoriza la cancelación ficticia.
+- **`n`:** rechaza la operación, que permanece bloqueada.
+
+Las autorizaciones están vinculadas a una herramienta y solicitud específicas, tienen vigencia limitada y se consumen una sola vez.
+
+La herramienta solo está disponible cuando se configura un supervisor externo al agente. El agente no controla directamente los identificadores de autorización.
+
+**Importante:** la autorización interactiva fue validada con una persona operando PowerShell, pero todavía no existe autenticación de identidad del supervisor. La cancelación es exclusivamente simulada y no modifica solicitudes municipales reales.
+
+### Auditoría y trazabilidad
+
+El módulo `src/trazas_agente.py` permite:
+
+- Registrar ejecuciones en formato JSONL.
+- Conservar fecha UTC e identificador de sesión.
+- Registrar entradas, herramientas y argumentos.
+- Registrar observaciones y respuestas finales.
+- Detectar tres o más llamadas consecutivas a una misma herramienta dentro de una ejecución.
+
+Las trazas se generan explícitamente desde los scripts de validación. Todavía no existe registro automático de todas las ejecuciones del agente.
+
+### Evidencias del Bloque 23
+
+**1. Evidencia sintética**
+
+Archivo: `evidencias/trazas_bloque_23.jsonl`
+
+Contiene dos escenarios ficticios construidos para comprobar el formato de auditoría:
+
+1. Consulta municipal de bajo riesgo.
+2. Cancelación ficticia de alto riesgo bloqueada.
+
+Para generar esta evidencia desde cero:
+
+```powershell
+python -m scripts.generar_evidencia_auditoria
+```
+
+El generador impide sobrescribir un archivo existente.
+
+**2. Ejecuciones con Gemini y autorizaciones programadas**
+
+Archivo: `evidencias/trazas_gemini_bloque_23.jsonl`
+
+Contiene tres escenarios ejecutados con Gemini:
+
+1. Consulta de bajo riesgo.
+2. Cancelación ficticia rechazada.
+3. Cancelación ficticia aprobada.
+
+En estos escenarios, las decisiones de autorización fueron programadas.
+
+**3. Ejecuciones con Gemini y supervisión humana interactiva**
+
+Archivo: `evidencias/trazas_gemini_manual_bloque_23.jsonl`
+
+Contiene tres escenarios ejecutados con Gemini:
+
+1. Consulta de bajo riesgo sin autorización.
+2. Cancelación ficticia rechazada manualmente mediante `n`.
+3. Cancelación ficticia aprobada manualmente mediante `s`.
+
+En ambos escenarios de riesgo alto, el supervisor solicitó una decisión al operador desde PowerShell.
+
+Para ejecutar la validación interactiva:
+
+```powershell
+python -m scripts.validar_gemini_bloque_23
+```
+
+**Nota:** el script requiere configurar el acceso a Gemini y utiliza un archivo de evidencia que no debe existir previamente, porque evita sobrescribir registros. Las trazas conservan los efectos de las decisiones, pero no registran explícitamente la identidad del operador ni la respuesta introducida.
+
+### Pruebas automatizadas
+
+Para ejecutar todas las pruebas:
+
+```powershell
+python -m pytest -q
+```
+
+Última validación del Bloque 23:
+
+- **158 pruebas aprobadas.**
+- **5 subpruebas aprobadas.**
+- **0 fallos.**
+- **4 advertencias de deprecación de LangChain.**
+
+Las pruebas automatizadas utilizan modelos simulados. Adicionalmente, se realizaron pruebas de integración con Gemini y supervisión humana interactiva.
+
+### Limitaciones conocidas
+
+El prototipo todavía presenta las siguientes limitaciones:
+
+- No existe autenticación real del supervisor humano.
+- Las autorizaciones no cuentan con persistencia segura.
+- El timeout de autorización no garantiza interrumpir un `input()` que permanece esperando en otro hilo.
+- Las trazas no incluyen anonimización automática de información sensible.
+- La detección de patrones sospechosos es limitada.
+- No existe monitoreo continuo ni alertas automáticas.
+
+Estas limitaciones deben resolverse antes de utilizar el sistema en un entorno municipal real.
+
+### Documentación técnica
+
+Consultar [`docs/limites_autonomia_agente.md`](docs/limites_autonomia_agente.md).
+
+Incluye clasificación de riesgos, supervisión humana, auditoría, frecuencia propuesta de revisión, patrones sospechosos, respuesta ante incidentes y limitaciones pendientes.
+
+**Estado:** Bloque 23 implementado y validado como prototipo educativo. No apto todavía para operar sobre datos municipales reales.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
