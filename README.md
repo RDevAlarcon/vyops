@@ -1384,6 +1384,66 @@ respuestas fundamentadas en los resultados recuperados.
 
 No utiliza documentos municipales oficiales ni datos reales.
 
+## Bloque 25 — Réplica guiada de indexación y persistencia
+
+### Objetivo
+
+Reproducir el proceso de indexación vectorial aprendido en el Bloque 24 utilizando un corpus independiente, verificando la integridad de los fragmentos, la generación de embeddings y la persistencia de los datos en ChromaDB.
+
+### Implementación
+
+Se creó el archivo `practicas/bloque_25/replica_ejemplo.py`, que implementa:
+
+1. Un corpus de cinco documentos ficticios sobre pedidos, devoluciones y reembolsos.
+2. División mediante `RecursiveCharacterTextSplitter`, configurado con `chunk_size=150` y `chunk_overlap=20`.
+3. Validación de fragmentos vacíos, duplicados y conservación del contenido.
+4. Generación de embeddings con `models/gemini-embedding-001`.
+5. Almacenamiento persistente en ChromaDB, utilizando la colección `corpus_ejemplo`.
+6. Comprobación de registros existentes para evitar una nueva indexación accidental.
+
+### Ejecución
+
+Desde la raíz del proyecto, con el entorno virtual activo:
+
+```powershell
+python practicas/bloque_25/replica_ejemplo.py
+```
+
+La ejecución requiere la variable `GEMINI_API_KEY` configurada en el archivo `.env` para generar nuevos embeddings.
+
+### Resultados obtenidos
+
+| Validación | Resultado |
+|---|---|
+| Documentos originales | 5 |
+| Chunks generados | 5 |
+| Chunks vacíos | 0 |
+| Chunks duplicados | 0 |
+| Caracteres originales | 490 |
+| Caracteres en los chunks | 490 |
+| Registros almacenados en ChromaDB | 5 |
+
+### Verificación de persistencia
+
+Se comprobó que los registros permanecen disponibles desde un proceso independiente de Python:
+
+```powershell
+python -c "from langchain_chroma import Chroma; db = Chroma(collection_name='corpus_ejemplo', persist_directory='vectorstore_ejemplo'); print('Registros recuperados:', db._collection.count())"
+```
+
+Resultado:
+
+```text
+Registros recuperados: 5
+```
+
+### Consideraciones
+
+- La base vectorial se almacena en `vectorstore_ejemplo/`.
+- El directorio está excluido del control de versiones mediante `.gitignore`.
+- La base municipal del Bloque 24, ubicada en `vectorstore/`, permanece independiente.
+- Este ejercicio valida indexación y persistencia; todavía no implementa recuperación semántica ni generación de respuestas mediante RAG.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
