@@ -1292,6 +1292,98 @@ Incluye clasificación de riesgos, supervisión humana, auditoría, frecuencia p
 
 **Estado:** Bloque 23 implementado y validado como prototipo educativo. No apto todavía para operar sobre datos municipales reales.
 
+
+## Bloque 24 — RAG: chunking, embeddings y ChromaDB
+
+Se implementó la primera etapa de recuperación documental
+de VyOps mediante la preparación e indexación de un corpus
+municipal ficticio.
+
+### Corpus documental
+
+El archivo `src/corpus_municipal.py` contiene cinco documentos
+breves relacionados con:
+
+- Registro de solicitudes municipales.
+- Estados de solicitudes.
+- Consulta mediante identificadores.
+- Supervisión humana de cancelaciones.
+- Auditoría de decisiones del asistente.
+
+Los documentos son ficticios y se utilizan exclusivamente
+con fines educativos.
+
+### Estrategias de chunking
+
+El script `scripts/comparar_chunking.py` permite comparar:
+
+- `CharacterTextSplitter`: división por caracteres.
+- `RecursiveCharacterTextSplitter`: división que prioriza
+  los límites naturales del texto.
+
+Para la indexación se utiliza:
+
+- `chunk_size=200`
+- `chunk_overlap=30`
+
+El corpus genera cinco chunks, uno por documento.
+
+### Embeddings y almacenamiento vectorial
+
+El archivo `indexar_corpus.py` utiliza:
+
+- `GoogleGenerativeAIEmbeddings`
+- Modelo `models/gemini-embedding-001`
+- `ChromaDB` mediante `langchain-chroma`
+
+Los embeddings se almacenan localmente en `vectorstore/`.
+
+Esta carpeta está excluida de Git mediante `.gitignore`.
+
+### Ejecución
+
+Con el entorno virtual activo y `GEMINI_API_KEY`
+configurada en `.env`:
+
+```powershell
+python indexar_corpus.py
+```
+
+La ejecución genera embeddings mediante la API de Gemini
+y puede consumir cuota o generar costos.
+
+El script agrega registros a ChromaDB. No debe ejecutarse
+repetidamente sobre la misma colección sin controlar
+los identificadores, para evitar duplicados.
+
+### Validación
+
+Se verificó:
+
+- Preparación de cinco documentos y cinco chunks.
+- Generación de embeddings mediante Gemini.
+- Almacenamiento de cinco registros en ChromaDB.
+- Recuperación de los cinco registros desde otro proceso,
+  sin volver a indexar.
+- Ejecución de la suite completa de pruebas.
+
+Resultado de las pruebas:
+
+- **158 pruebas aprobadas.**
+- **5 subpruebas aprobadas.**
+- **0 fallos.**
+- **4 advertencias de deprecación de LangChain.**
+
+### Limitaciones
+
+Esta implementación constituye una etapa inicial de RAG.
+
+Todavía no incorpora búsqueda semántica integrada al agente,
+recuperación automática de documentos ni generación de
+respuestas fundamentadas en los resultados recuperados.
+
+No utiliza documentos municipales oficiales ni datos reales.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
