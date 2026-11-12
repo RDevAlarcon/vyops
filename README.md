@@ -1444,6 +1444,59 @@ Registros recuperados: 5
 - La base municipal del Bloque 24, ubicada en `vectorstore/`, permanece independiente.
 - Este ejercicio valida indexación y persistencia; todavía no implementa recuperación semántica ni generación de respuestas mediante RAG.
 
+## Bloque 26 — Recuperación semántica y prompt dinámico
+
+Se implementó un flujo RAG (Retrieval-Augmented Generation)
+para responder preguntas sobre un corpus municipal ficticio.
+
+### Funcionamiento
+
+1. Recibe una pregunta del usuario.
+2. Genera su embedding mediante Gemini.
+3. Recupera los 3 documentos más similares desde ChromaDB.
+4. Construye un prompt dinámico con contenido y fuentes.
+5. Genera una respuesta mediante Gemini.
+6. Comprueba que las citas numéricas correspondan a documentos recuperados.
+
+### Archivo principal
+
+`recuperacion.py`
+
+Funciones implementadas:
+
+- `recuperar_documentos()`: búsqueda semántica.
+- `construir_contexto()`: contexto numerado con fuentes.
+- `construir_prompt()`: instrucciones para responder con evidencia.
+- `generar_respuesta()`: generación mediante Gemini.
+- `validar_citas()`: comprobación de numeración de citas.
+
+### Pruebas realizadas
+
+- Consulta sobre cancelación: respuesta correcta con cita [1].
+- Consulta sobre identificador: recuperación del documento pertinente.
+- Consulta sobre horarios: abstención por falta de información.
+- Validación automática: citas válidas, inexistentes y ausencia de citas.
+
+### Limitaciones
+
+- Las citas se validan por numeración, no por respaldo semántico automático.
+- ChromaDB puede recuperar documentos aunque no respondan la pregunta.
+- El corpus y las fuentes son ficticios.
+- Las etiquetas `.md` de las fuentes son identificadores lógicos;
+  no representan necesariamente archivos físicos.
+
+### Ejecución
+
+```powershell
+python recuperacion.py
+python -m pytest -q
+```
+
+### Resultado de pruebas
+
+161 pruebas aprobadas, 5 subtests aprobados y
+4 advertencias conocidas de LangChain.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
