@@ -1548,6 +1548,87 @@ Suite completa: 167 pruebas aprobadas.
 python -m pytest -q
 ```
 
+## Bloque 28 — Observabilidad del sistema RAG
+
+Este bloque incorpora medición de rendimiento, seguimiento del consumo de tokens, estimación de costos y persistencia de métricas para el sistema RAG municipal de VyOps.
+
+### Funcionalidades implementadas
+
+- **Medición de latencia:** registro de tiempos de recuperación documental, construcción del prompt, generación de respuestas, conteo de tokens de embedding y validación de citas.
+- **Consumo de tokens:** extracción de tokens de entrada, salida y total desde los metadatos de Gemini.
+- **Tokens de razonamiento y caché:** conservación de los valores informados por el proveedor, diferenciando los datos no disponibles de los valores cero.
+- **Costos estimados:** cálculo del costo de generación y embedding utilizando tarifas configurables.
+- **Persistencia JSONL:** almacenamiento local de las métricas de cada ejecución registrada.
+- **Protección de registros:** exclusión de `resultados_rag.jsonl` mediante `.gitignore`.
+
+### Archivos principales
+
+| Archivo | Responsabilidad |
+|---|---|
+| `latencia_rag.py` | Medición de tiempos por etapa |
+| `configuracion_modelos.py` | Configuración de modelos y tarifas |
+| `costos_rag.py` | Estimación de costos |
+| `tokens_embedding.py` | Conteo de tokens de embedding |
+| `registro_rag.py` | Integración de métricas con el flujo RAG |
+| `persistencia_rag.py` | Almacenamiento de registros JSONL |
+| `tests/test_persistencia_rag.py` | Prueba automatizada de persistencia |
+
+### Ejecutar el sistema RAG con métricas
+
+Desde la raíz del proyecto, con el entorno virtual activado y las credenciales de Gemini configuradas:
+
+```powershell
+python registro_rag.py
+```
+
+La ejecución muestra la respuesta generada, las fuentes utilizadas, la validación de citas, los tiempos, los tokens consumidos y los costos estimados.
+
+También guarda un registro en:
+
+```text
+resultados_rag.jsonl
+```
+
+Este archivo se mantiene local y no se incorpora al repositorio.
+
+### Ejecutar las pruebas automatizadas
+
+```powershell
+python -m pytest tests/ -v
+```
+
+**Última validación del Bloque 28:**
+
+- 168 pruebas aprobadas.
+- 5 subtests aprobados.
+- 0 fallos.
+- 4 advertencias de deprecación relacionadas con componentes de memoria de LangChain.
+
+### Resultado de referencia
+
+En una ejecución real con `gemini-3.5-flash-lite` se obtuvieron:
+
+| Métrica | Resultado |
+|---|---|
+| Latencia RAG | 4,47 segundos |
+| Latencia completa | 6,12 segundos |
+| Tokens de generación | 227 |
+| Tokens de embedding contabilizados | 12 |
+| Costo total estimado | US$0,0001073 |
+| Validación de numeración de citas | Correcta |
+
+Estos valores corresponden a una ejecución de referencia y pueden variar entre consultas.
+
+Los costos son estimaciones basadas en las tarifas configuradas.
+
+### Consideraciones técnicas
+
+- El conteo de tokens de embedding realiza una consulta adicional al proveedor.
+- La validación de citas comprueba la numeración, pero no garantiza que el contenido generado esté respaldado semánticamente por los documentos.
+- Los registros JSONL se escriben cuando se ejecuta `registro_rag.py` como programa principal.
+- Las tarifas deben revisarse cuando cambien los precios del proveedor.
+- La migración de las API de memoria obsoletas de LangChain queda pendiente como mejora futura.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**

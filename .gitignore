@@ -24,3 +24,6 @@ Thumbs.db
 vectorstore/
 vectorstore_ejemplo/
 vectorstore_respaldo_b26/
+
+# Registros locales de métricas RAG
+resultados_rag.jsonl
