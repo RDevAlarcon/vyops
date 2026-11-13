@@ -1,0 +1,18 @@
+BLOQUE 27 - EVALUACIÓN DE RECUPERACIÓN RAG
+Corpus: municipal ficticio VyOps
+Casos evaluados: 5
+
+--- EVALUACIÓN K=1 ---
+Precisión media: 1.000
+Recall medio: 1.000
+F1 medio: 1.000
+
+--- EVALUACIÓN K=3 ---
+Precisión media: 0.333
+Recall medio: 1.000
+F1 medio: 0.500
+
+--- EVALUACIÓN K=5 ---
+Precisión media: 0.200
+Recall medio: 1.000
+F1 medio: 0.333

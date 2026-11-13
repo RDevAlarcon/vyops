@@ -1497,6 +1497,57 @@ python -m pytest -q
 161 pruebas aprobadas, 5 subtests aprobados y
 4 advertencias conocidas de LangChain.
 
+
+## Bloque 27 — Evaluación de recuperación RAG
+
+Se evaluó la recuperación semántica de VyOps utilizando
+un corpus municipal ficticio de cinco documentos.
+
+### Metodología
+
+- Motor vectorial: ChromaDB.
+- Embeddings: Gemini (`models/gemini-embedding-001`).
+- Casos evaluados: 5 preguntas.
+- Documentos relevantes: definidos previamente.
+- Configuraciones comparadas: k=1, k=3 y k=5.
+- Métricas: precisión@k, recall@k y F1.
+
+### Resultados
+
+| k | Precisión media | Recall medio | F1 medio |
+|---|---|---|---|
+| 1 | 1.000 | 1.000 | 1.000 |
+| 3 | 0.333 | 1.000 | 0.500 |
+| 5 | 0.200 | 1.000 | 0.333 |
+
+### Conclusión
+
+En los cinco casos evaluados, el documento relevante
+apareció en primera posición.
+
+La configuración k=1 obtuvo el mejor F1 para este
+conjunto de evaluación.
+
+Estos resultados no garantizan el mismo comportamiento
+con corpus más grandes o preguntas que requieran
+combinar varios documentos.
+
+### Archivos
+
+- `metricas_recuperacion.py`: cálculo de métricas.
+- `conjunto_evaluacion.py`: preguntas y relevancia esperada.
+- `evaluar_recuperacion.py`: evaluación real con ChromaDB.
+- `resultados_evaluacion.txt`: resultados registrados.
+- `tests/test_metricas_recuperacion.py`: pruebas unitarias.
+
+### Validación
+
+Suite completa: 167 pruebas aprobadas.
+
+```powershell
+python -m pytest -q
+```
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
