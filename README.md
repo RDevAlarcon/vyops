@@ -1629,6 +1629,89 @@ Los costos son estimaciones basadas en las tarifas configuradas.
 - Las tarifas deben revisarse cuando cambien los precios del proveedor.
 - La migración de las API de memoria obsoletas de LangChain queda pendiente como mejora futura.
 
+## Bloque 29 — Laboratorio de personalización de modelos
+
+### Objetivo
+
+Preparar un dataset para personalización de modelos y estudiar las estrategias RAG, fine-tuning, PEFT y soft-prompting.
+
+En VyOps se utiliza como caso práctico la clasificación de solicitudes municipales mediante salidas JSON estructuradas.
+
+### Dataset de entrenamiento
+
+Archivo principal: `dataset_tuning.py`
+
+Se construyeron 12 ejemplos ficticios distribuidos equitativamente entre cuatro intenciones:
+
+| Intención | Ejemplos |
+|---|---:|
+| `consulta_estado` | 3 |
+| `nueva_solicitud` | 3 |
+| `cancelacion` | 3 |
+| `reclamo` | 3 |
+
+Cada ejemplo contiene un texto de entrada y una salida JSON con los campos `intencion` y `prioridad`.
+
+Las prioridades permitidas son `baja`, `media` y `alta`.
+
+### Validación del dataset
+
+Se implementaron funciones para:
+
+- Analizar el balance de las categorías.
+- Detectar entradas y salidas vacías.
+- Identificar entradas duplicadas.
+- Detectar JSON inválido.
+- Comprobar campos obligatorios.
+- Rechazar intenciones y prioridades no permitidas.
+
+El dataset original superó la validación con **0 problemas**.
+
+La prueba negativa detectó correctamente cuatro errores introducidos intencionalmente.
+
+### Seguimiento de trabajos de tuning
+
+Se implementó `esperar_a_que_termine()` para consultar periódicamente el estado de un trabajo de tuning.
+
+Se verificó mediante pruebas simuladas el comportamiento ante los estados:
+
+- `RUNNING`
+- `SUCCEEDED`
+- `FAILED`
+- `CANCELLED`
+- `PARTIALLY_SUCCEEDED`
+
+No se ejecutó un entrenamiento real. El seguimiento se validó sin llamadas a la API de Gemini.
+
+### Ejecutar el laboratorio
+
+```powershell
+python dataset_tuning.py
+```
+
+### Ejecutar las pruebas
+
+Pruebas específicas:
+
+```powershell
+python -m pytest tests/test_dataset_tuning.py -v
+```
+
+Batería completa:
+
+```powershell
+python -m pytest tests/ -v
+```
+
+**Resultado de validación:** 181 pruebas aprobadas, 5 subtests aprobados y 4 advertencias de deprecación de LangChain.
+
+### Consideraciones
+
+- El dataset es ficticio y tiene fines educativos.
+- Clasificar una solicitud de cancelación no autoriza su ejecución; VyOps mantiene la aprobación humana para operaciones sensibles.
+- La preparación del dataset no equivale a entrenar un modelo.
+- El entrenamiento PEFT real queda sujeto a disponibilidad técnica, compatibilidad del modelo y evaluación de costos.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
