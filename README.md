@@ -1712,6 +1712,97 @@ python -m pytest tests/ -v
 - La preparación del dataset no equivale a entrenar un modelo.
 - El entrenamiento PEFT real queda sujeto a disponibilidad técnica, compatibilidad del modelo y evaluación de costos.
 
+## Bloque 30 — Decisión fundamentada de personalización
+
+En este bloque se compararon tres estrategias de personalización
+de modelos de lenguaje: RAG, fine-tuning completo y PEFT.
+
+### 1. Estimación de costos
+
+Se implementó `costos_personalizacion.py` para estimar el tiempo
+y costo de etiquetar ejemplos de entrenamiento.
+
+Escenario educativo:
+- 500 ejemplos, 4 minutos por ejemplo y USD 20 por hora.
+- Etiquetado inicial: 33,33 horas y USD 666,67.
+- Segunda revisión del 20 %: 3,33 horas y USD 66,67.
+- Total estimado: 36,67 horas y USD 733,33.
+
+Estos valores son supuestos del ejercicio, no gastos reales de VyOps.
+
+### 2. Comparación de estrategias
+
+Se implementó `comparar_estrategias.py`, que utiliza cinco criterios:
+
+1. Frecuencia de actualización de la información.
+2. Necesidad de mejorar formato o tono.
+3. Disponibilidad de un dataset grande y de calidad.
+4. Limitaciones de presupuesto o necesidad de iterar rápidamente.
+5. Necesidad de múltiples variantes del modelo.
+
+El algoritmo calcula puntuaciones, identifica empates y permite
+realizar análisis de sensibilidad.
+
+### 3. Decisión para VyOps
+
+La estrategia seleccionada es RAG.
+
+Resultados:
+- RAG: 5 puntos.
+- PEFT: 1 punto.
+- Fine-tuning completo: 0 puntos.
+
+La elección responde a la prioridad de entregar información
+municipal actualizada, verificable y respaldada por fuentes.
+
+Las respuestas del método representan una evaluación inicial
+del proyecto y deberán revisarse con evidencia operativa.
+
+### 4. Análisis de sensibilidad
+
+Al cambiar el criterio de información cambiante de verdadero
+a falso, las puntuaciones fueron:
+
+- RAG: 2 puntos.
+- PEFT: 1 punto.
+- Fine-tuning completo: 0 puntos.
+
+RAG continúa siendo la estrategia recomendada, aunque su
+ventaja disminuye.
+
+### 5. Documento de decisión
+
+El archivo `decision_personalizacion.md` contiene:
+
+1. Definición del problema.
+2. Resultados del método de decisión.
+3. Justificación de la estrategia seleccionada.
+4. Recursos necesarios para ejecutarla.
+
+El documento se generó inicialmente mediante
+`generar_esqueleto_decision()` y posteriormente se completó
+con la justificación y el plan de implementación.
+
+### 6. Pruebas automatizadas
+
+Se incorporaron ocho pruebas con pytest:
+
+- `tests/test_comparar_estrategias.py`: 4 pruebas.
+- `tests/test_costos_personalizacion.py`: 4 pruebas.
+
+Resultado de la batería completa:
+
+- 189 pruebas aprobadas.
+- 5 subtests aprobados.
+- 4 advertencias de deprecacion de LangChain.
+- Sin pruebas fallidas.
+
+Para ejecutar las pruebas:
+
+```powershell
+python -m pytest -q
+```
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
