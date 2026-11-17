@@ -5,6 +5,7 @@ from pathlib import Path
 
 from recuperacion import BASE_DIR
 
+from traza_contexto import trace_id_var
 
 def guardar_registro_jsonl(resultado, ruta=None):
     """Guarda las métricas de una ejecución RAG en JSONL."""
@@ -17,9 +18,10 @@ def guardar_registro_jsonl(resultado, ruta=None):
 
     registro = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "trace_id": resultado.get("trace_id") or trace_id_var.get(),
         "modelo_generacion": resultado["modelo_generacion"],
         "modelo_embedding": resultado["modelo_embedding"],
-        "pregunta": resultado["pregunta"],
+        "pregunta_longitud": len(resultado["pregunta"]),
         "fuentes": resultado["fuentes"],
         "latencia_rag_segundos": tiempos["total_rag"],
         "latencia_completa_segundos": tiempos["total_completo"],

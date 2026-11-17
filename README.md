@@ -1803,6 +1803,181 @@ Para ejecutar las pruebas:
 python -m pytest -q
 ```
 
+## Bloque 31 — Logging estructurado y mitigación de inyección de prompt
+
+En este bloque se incorporaron mecanismos de observabilidad, trazabilidad y seguridad al sistema RAG de VyOps.
+
+El objetivo es reconstruir el procesamiento de una consulta mediante registros estructurados, detectar instrucciones sospechosas en documentos recuperados y evitar que estos documentos lleguen al modelo de generación.
+
+### 1. Logging estructurado en JSON
+
+Se implementó `logs_json.py`, que utiliza un formateador personalizado para generar registros JSON.
+
+Los registros incluyen:
+
+- Fecha y hora del evento.
+- Nivel del registro.
+- Mensaje y tipo de evento.
+- Identificador de trazabilidad (`trace_id`).
+- Metadatos relevantes para la ejecución.
+
+El sistema evita registrar preguntas completas y contenido íntegro de documentos sospechosos.
+
+### 2. Trazabilidad de consultas
+
+Se implementó `traza_contexto.py`, utilizando `ContextVar` y UUID para generar identificadores únicos.
+
+Cada consulta mantiene el mismo `trace_id` durante sus diferentes etapas.
+
+El contexto de trazabilidad se restablece al finalizar la ejecución, incluso cuando se produce una excepción.
+
+### 3. Huellas digitales y callbacks
+
+Se desarrollaron dos ejercicios complementarios:
+
+- `huellas_documentos.py`: generación de huellas SHA-256 abreviadas para identificar documentos.
+- `callbacks_trazas.py`: demostración de callbacks de LangChain para observar eventos de recuperación y generación.
+
+Estos componentes se implementaron como ejercicios de observabilidad y no sustituyen el registro principal del pipeline RAG.
+
+### 4. Registro de consumo de Gemini
+
+Se incorporó `registrar_consumo()` en `registro_rag.py`.
+
+Esta función registra:
+
+- `input_tokens`.
+- `output_tokens`.
+- `total_tokens`.
+
+Los eventos de consumo quedan asociados al `trace_id` de la consulta.
+
+También se mantienen las métricas de latencia, estimación de costos y validación de citas.
+
+### 5. Detección y mitigación de inyección de prompt
+
+Se implementó `inyeccion_prompt.py`, que identifica patrones sospechosos en documentos recuperados.
+
+Entre los patrones evaluados se encuentran:
+
+- Instrucciones para ignorar reglas anteriores.
+- Intentos de modificar el comportamiento del asistente.
+- Referencias a nuevos prompts de sistema.
+- Solicitudes para revelar instrucciones internas.
+
+Los documentos sospechosos se descartan antes de construir el prompt.
+
+Los eventos de seguridad registran el índice del documento, la cantidad de patrones detectados y el identificador de trazabilidad, sin almacenar el contenido completo del ataque.
+
+También se incorporó una función para separar documentos aceptados y descartados.
+
+Si todos los documentos recuperados son rechazados, el sistema bloquea la generación de la respuesta.
+
+**Limitación:** el filtrado mediante expresiones regulares es una primera medida de protección y no garantiza detectar todas las variantes de inyección de prompt.
+
+### 6. Protección del prompt RAG
+
+Se reforzó `construir_prompt()` en `recuperacion.py`.
+
+El prompt establece que los documentos recuperados contienen información no confiable y que sus instrucciones no deben modificar las reglas del asistente.
+
+También se incorporaron delimitadores para distinguir el contexto documental de las instrucciones principales.
+
+Se conservaron las reglas de generación basada en evidencia, citas verificables y prohibición de ejecutar acciones municipales.
+
+### 7. Demostración de trazabilidad
+
+Se implementó `demo_trazabilidad.py`.
+
+La demostración procesa dos documentos simulados:
+
+1. Un documento legítimo.
+2. Un documento que contiene una inyección de prompt.
+
+Resultados observados:
+
+- Una consulta recibida.
+- Dos documentos procesados.
+- Un documento aceptado.
+- Un documento descartado.
+- Tres patrones sospechosos detectados.
+- Un mismo `trace_id` en los eventos registrados.
+
+Para ejecutar la demostración:
+
+```powershell
+python demo_trazabilidad.py
+```
+
+### 8. Integración con el RAG real
+
+Se integraron los mecanismos de observabilidad y seguridad en `registro_rag.py`.
+
+El flujo comprende:
+
+1. Generación del identificador de consulta.
+2. Recuperación de documentos.
+3. Filtrado de seguridad.
+4. Construcción del prompt.
+5. Generación de respuesta mediante Gemini.
+6. Registro de consumo, latencia y costos.
+7. Validación de citas.
+
+Se realizaron dos ejecuciones reales con `gemini-3.5-flash-lite`.
+
+En la segunda ejecución se obtuvieron:
+
+- Documentos recuperados: 3.
+- Documentos aceptados: 3.
+- Documentos descartados: 0.
+- Tokens de entrada: 295.
+- Tokens de salida: 17.
+- Tokens totales: 312.
+- Tiempo completo: 9,73 segundos.
+- Costo estimado: USD 0,0001328.
+- Citas inválidas: 0.
+
+Los seis eventos de la consulta compartieron el mismo `trace_id`.
+
+La prueba real verificó la integración del filtro, pero no produjo descartes porque los documentos recuperados fueron aceptados. El bloqueo de documentos maliciosos se validó mediante pruebas automatizadas.
+
+Para ejecutar el RAG real:
+
+```powershell
+python registro_rag.py
+```
+
+Esta operación requiere la configuración local correspondiente y puede consumir tokens de la API de Gemini.
+
+### 9. Pruebas automatizadas
+
+Se incorporaron y actualizaron pruebas para verificar:
+
+- Generación y propagación de `trace_id`.
+- Formato JSON de los registros.
+- Detección de variantes de inyección.
+- Descarte de documentos sospechosos.
+- Separación de documentos aceptados y descartados.
+- Bloqueo de generación sin documentos seguros.
+- Registro de consumo del modelo.
+- Persistencia de métricas sin registrar preguntas completas.
+
+Resultado de la batería completa:
+
+- 204 pruebas aprobadas.
+- 11 subpruebas aprobadas.
+- 4 advertencias de deprecación de LangChain.
+- Sin pruebas fallidas.
+
+Para ejecutar las pruebas:
+
+```powershell
+python -m pytest -q
+```
+
+Las advertencias corresponden a componentes de memoria de LangChain utilizados en ejercicios anteriores y no impiden la ejecución del proyecto.
+
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**

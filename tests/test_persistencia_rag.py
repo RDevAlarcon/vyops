@@ -11,6 +11,7 @@ class TestPersistenciaRAG(unittest.TestCase):
 
     def test_guardar_y_acumular_registros(self):
         resultado = {
+            "trace_id": "traza-prueba-001",
             "modelo_generacion": "gemini-3.5-flash-lite",
             "modelo_embedding": "gemini-embedding-001",
             "pregunta": "¿Cómo consultar una solicitud?",
@@ -69,7 +70,54 @@ class TestPersistenciaRAG(unittest.TestCase):
                 "gemini-3.5-flash-lite",
             )
             self.assertIn("timestamp", registros[0])
+            self.assertEqual(
+                registros[0]["trace_id"],
+                "traza-prueba-001",
+            )
+            self.assertEqual(
+                registros[1]["trace_id"],
+                "traza-prueba-001",
+            )
 
+    def test_no_guardar_pregunta_completa(self):
+        pregunta = "Mi RUT es 12345678-9"
+
+        resultado = {
+            "modelo_generacion": "modelo-prueba",
+            "modelo_embedding": "embedding-prueba",
+            "pregunta": pregunta,
+            "fuentes": [],
+            "tiempos": {
+                "total_rag": 0.5,
+                "total_completo": 0.6,
+            },
+            "tokens_entrada": 10,
+            "tokens_salida": 5,
+            "tokens_totales": 15,
+            "tokens_razonamiento": None,
+            "tokens_cache": None,
+            "tokens_embedding": 3,
+            "uso_original": {},
+            "costo_generacion_usd": 0.0,
+            "costo_embedding_usd": 0.0,
+            "costo_total_usd": 0.0,
+            "validacion_citas": {},
+        }
+
+        with tempfile.TemporaryDirectory() as carpeta:
+            ruta = Path(carpeta) / "privacidad.jsonl"
+
+            guardar_registro_jsonl(resultado, ruta)
+
+            contenido = ruta.read_text(encoding="utf-8")
+            registro = json.loads(contenido)
+
+            self.assertNotIn(pregunta, contenido)
+            self.assertNotIn("pregunta", registro)
+            self.assertEqual(
+                registro["pregunta_longitud"],
+                len(pregunta),
+            )
 
 if __name__ == "__main__":
     unittest.main()
