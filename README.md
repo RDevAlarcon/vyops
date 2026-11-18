@@ -1978,6 +1978,171 @@ python -m pytest -q
 Las advertencias corresponden a componentes de memoria de LangChain utilizados en ejercicios anteriores y no impiden la ejecución del proyecto.
 
 
+## Bloque 32 — Versionado de prompts y supervisión humana
+
+Se implementaron mecanismos de control de versiones de prompts,
+supervisión humana de cambios y evaluación de riesgos para VyOps.
+
+El objetivo es mejorar la trazabilidad y evitar la activación
+de nuevas versiones de prompts sin autorización.
+
+### 1. Registro y versionado de prompts
+
+Archivo: `registro_prompts.py`
+
+Se registraron dos versiones reales del prompt RAG:
+
+- **V1:** prompt municipal original con citas, commit `7c3c204`.
+- **V2:** prompt reforzado contra inyección, commit `04706ff`.
+
+El registro incluye:
+
+- Identificador de versión y commit.
+- Autor y fecha UTC de registro.
+- Descripción del cambio.
+- Huella SHA-256 del contenido.
+- Modelo utilizado y parámetros configurados.
+- Comparación de versiones mediante `difflib`.
+
+La clase `RegistroDePrompts` permite registrar versiones,
+impedir duplicados y consultar la última versión.
+
+Las huellas identifican el contenido del prompt extraído
+del código histórico y permiten detectar modificaciones.
+
+Ejecutar:
+
+```powershell
+python registro_prompts.py
+```
+
+### 2. Supervisión humana con LangGraph
+
+Archivo: `grafo_supervision.py`
+
+Se implementó un flujo de tres etapas:
+
+1. `proponer`: presenta la versión candidata.
+2. `supervisar`: interrumpe la ejecución para solicitar una decisión.
+3. `aplicar`: procesa la aprobación o el rechazo.
+
+Se utilizan:
+
+- `StateGraph` para definir el flujo.
+- `interrupt()` para detener la ejecución.
+- `Command(resume=True)` para aprobar.
+- `Command(resume=False)` para rechazar.
+- `InMemorySaver` para conservar el estado temporal.
+
+La demostración comprueba ambos escenarios:
+aprobación y rechazo, utilizando identificadores
+de ejecución independientes.
+
+Ejecutar:
+
+```powershell
+python grafo_supervision.py
+```
+
+**Limitación:** es una simulación educativa. No modifica
+la configuración real de VyOps ni incorpora autenticación
+del supervisor o persistencia duradera de las aprobaciones.
+
+### 3. Matriz de riesgos
+
+Archivo: `matriz_riesgos.py`
+
+Se documentaron cinco riesgos asociados a VyOps:
+
+1. Inyección de prompt en documentos recuperados.
+2. Exposición de datos personales en logs.
+3. Respuestas municipales sin respaldo documental.
+4. Documentos municipales desactualizados.
+5. Cambios de prompt sin aprobación humana.
+
+Cada riesgo incluye probabilidad, impacto,
+puntaje, categoría, mitigación, detección de
+casos límite y necesidad de supervisión humana.
+
+El puntaje se calcula mediante:
+
+**Riesgo = Probabilidad × Impacto**
+
+Las categorías utilizadas son:
+
+| Puntaje | Categoría |
+|---|---|
+| 15 a 25 | CRÍTICO |
+| 9 a 14 | ALTO |
+| 4 a 8 | MEDIO |
+| 1 a 3 | BAJO |
+
+La función `esta_en_el_limite()` comprueba si
+una variación de un punto en probabilidad o impacto
+puede modificar la categoría asignada.
+
+Resultados:
+
+- 2 riesgos críticos.
+- 2 riesgos altos.
+- 1 riesgo medio.
+- 5 riesgos identificados como casos límite.
+
+La salida incluye una vista detallada y una
+tabla comparativa mediante `tabulate`.
+
+Ejecutar:
+
+```powershell
+python matriz_riesgos.py
+```
+
+### 4. Pruebas automatizadas
+
+Se incorporaron 22 pruebas nuevas:
+
+| Archivo | Pruebas |
+|---|---:|
+| `tests/test_registro_prompts.py` | 5 |
+| `tests/test_grafo_supervision.py` | 3 |
+| `tests/test_matriz_riesgos.py` | 14 |
+| **Total** | **22** |
+
+Ejecutar las pruebas específicas:
+
+```powershell
+python -m pytest tests/test_registro_prompts.py tests/test_grafo_supervision.py tests/test_matriz_riesgos.py -q
+```
+
+Ejecutar la suite completa:
+
+```powershell
+python -m pytest -q
+```
+
+**Resultado verificado:**
+
+- 226 pruebas aprobadas.
+- 11 subpruebas aprobadas.
+- 4 advertencias conocidas de LangChain.
+- 0 pruebas fallidas.
+- Tiempo total: 3,70 segundos.
+
+### 5. Consideraciones y trabajo pendiente
+
+- El versionado registra los prompts, pero no constituye
+  todavía un sistema de despliegue automatizado.
+- La supervisión humana se demuestra mediante decisiones
+  programadas, no mediante una interfaz autenticada.
+- `InMemorySaver` no ofrece persistencia entre reinicios.
+- Las puntuaciones de riesgo son estimaciones iniciales
+  del ejercicio y requieren revisión periódica.
+- Los controles de seguridad implementados no garantizan
+  la eliminación de todos los riesgos.
+
+**Estado:** Bloque 32 implementado y validado
+como prototipo educativo.
+
 ## Derechos de autor y propiedad intelectual
 
 **Copyright © 2026 Ricardo Alarcón. Todos los derechos reservados.**
