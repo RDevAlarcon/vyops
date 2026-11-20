@@ -109,8 +109,7 @@ if __name__ == "__main__":
     for linea in diferencias:
         print(linea)
 
-        registro_prompts = RegistroDePrompts()
-
+    registro_prompts = RegistroDePrompts()
     registro_prompts.agregar(registrar_version("v1"))
     registro_prompts.agregar(registrar_version("v2"))
 

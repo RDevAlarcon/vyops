@@ -2,23 +2,23 @@
 CASOS_EVALUACION = [
     {
         "pregunta": "¿Cómo se registra una solicitud municipal?",
-        "relevantes": {"solicitudes_registro.md"},
+        "relevantes": {"atencion_ciudadana/ingreso_solicitudes.md"},
     },
     {
         "pregunta": "¿Cuáles son los estados de una solicitud?",
-        "relevantes": {"solicitudes_estados.md"},
+        "relevantes": {"gestion_solicitudes/estados_transiciones.md"},
     },
     {
         "pregunta": "¿Qué necesito para consultar una solicitud?",
-        "relevantes": {"solicitudes_consulta.md"},
+        "relevantes": {"atencion_ciudadana/seguimiento_solicitudes.md"},
     },
     {
         "pregunta": "¿Puedo cancelar una solicitud sin autorización humana?",
-        "relevantes": {"solicitudes_cancelacion.md"},
+        "relevantes": {"gestion_solicitudes/cancelacion_solicitudes.md"},
     },
     {
         "pregunta": "¿Para qué se registran las decisiones del asistente?",
-        "relevantes": {"solicitudes_auditoria.md"},
+        "relevantes": {"procedimientos_internos/auditoria_trazabilidad.md"},
     },
 ]
 

@@ -1,7 +1,10 @@
 
-from tabulate import tabulate
 """Matriz de riesgos del asistente municipal VyOps."""
 
+from tabulate import tabulate
+
+
+# Riesgos identificados durante el Bloque 32 de SkillNest.
 RIESGOS = [
     {
         "riesgo": "Inyección de prompt en documentos recuperados",
@@ -35,6 +38,7 @@ RIESGOS = [
     },
 ]
 
+
 def clasificar_riesgo(probabilidad: int, impacto: int):
     """Calcula el puntaje y la categoría de un riesgo."""
 
@@ -56,6 +60,7 @@ def clasificar_riesgo(probabilidad: int, impacto: int):
         categoria = "BAJO"
 
     return puntaje, categoria
+
 
 def esta_en_el_limite(probabilidad: int, impacto: int) -> bool:
     """Detecta si un cambio de un punto altera la categoría."""
@@ -90,33 +95,43 @@ def esta_en_el_limite(probabilidad: int, impacto: int) -> bool:
     return False
 
 
+def obtener_riesgos_ordenados():
+    """Ordena los riesgos de mayor a menor puntuación."""
 
-
-if __name__ == "__main__":
-    print("=== MATRIZ DE RIESGOS VYOPS ===")
-
-    riesgos_ordenados = sorted(
+    return sorted(
         RIESGOS,
-        key=lambda item: item["probabilidad"] * item["impacto"],
+        key=lambda riesgo: (
+            riesgo["probabilidad"] * riesgo["impacto"]
+        ),
         reverse=True,
     )
 
-    for riesgo in riesgos_ordenados:
+
+def mostrar_detalle_riesgos():
+    """Muestra los riesgos y sus controles individualmente."""
+
+    print("=== DETALLE DE RIESGOS VYOPS ===")
+
+    for riesgo in obtener_riesgos_ordenados():
+        probabilidad = riesgo["probabilidad"]
+        impacto = riesgo["impacto"]
+
         puntaje, categoria = clasificar_riesgo(
-            riesgo["probabilidad"],
-            riesgo["impacto"],
+            probabilidad,
+            impacto,
+        )
+
+        en_limite = esta_en_el_limite(
+            probabilidad,
+            impacto,
         )
 
         print(f"\nRiesgo: {riesgo['riesgo']}")
-        print(f"Probabilidad: {riesgo['probabilidad']}")
-        print(f"Impacto: {riesgo['impacto']}")
+        print(f"Probabilidad: {probabilidad}")
+        print(f"Impacto: {impacto}")
         print(f"Puntaje: {puntaje}")
         print(f"Categoría: {categoria}")
         print(f"Mitigación: {riesgo['mitigacion']}")
-        en_limite = esta_en_el_limite(
-            riesgo["probabilidad"],
-            riesgo["impacto"],
-        )
 
         print(
             "Caso límite:",
@@ -124,32 +139,30 @@ if __name__ == "__main__":
             if en_limite
             else "NO",
         )
-        
+
         if categoria in ("ALTO", "CRÍTICO"):
             print("Supervisión humana: REQUERIDA")
         else:
             print("Supervisión humana: Según procedimiento")
 
 
-if __name__ == "__main__":
+def mostrar_tabla_riesgos():
+    """Construye y muestra la tabla comparativa de riesgos."""
+
     filas = []
 
-    riesgos_ordenados = sorted(
-        RIESGOS,
-        key=lambda r: r["probabilidad"] * r["impacto"],
-        reverse=True,
-    )
-
-    for riesgo in riesgos_ordenados:
+    for riesgo in obtener_riesgos_ordenados():
         probabilidad = riesgo["probabilidad"]
         impacto = riesgo["impacto"]
 
         puntaje, categoria = clasificar_riesgo(
-            probabilidad, impacto
+            probabilidad,
+            impacto,
         )
 
         limite = (
-            "SÍ" if esta_en_el_limite(probabilidad, impacto)
+            "SÍ"
+            if esta_en_el_limite(probabilidad, impacto)
             else "NO"
         )
 
@@ -183,11 +196,27 @@ if __name__ == "__main__":
 
     print("\n=== MATRIZ DE RIESGOS VYOPS ===\n")
 
-    print(tabulate(
-        filas,
-        headers=encabezados,
-        tablefmt="grid",
-        stralign="left",
-        numalign="center",
-        maxcolwidths=[35, None, None, None, None, 45, None, 20],
-    ))
+    print(
+        tabulate(
+            filas,
+            headers=encabezados,
+            tablefmt="grid",
+            stralign="left",
+            numalign="center",
+            maxcolwidths=[
+                35, None, None, None,
+                None, 45, None, 20,
+            ],
+        )
+    )
+
+
+def main():
+    """Ejecuta una sola vez el informe completo de riesgos."""
+
+    mostrar_detalle_riesgos()
+    mostrar_tabla_riesgos()
+
+
+if __name__ == "__main__":
+    main()

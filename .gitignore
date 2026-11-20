@@ -27,3 +27,9 @@ vectorstore_respaldo_b26/
 
 # Registros locales de métricas RAG
 resultados_rag.jsonl
+
+# Respaldos locales del desarrollo
+*.bak
+
+# Índice generado durante la instalación del profesor
+vectorstore_profesor/

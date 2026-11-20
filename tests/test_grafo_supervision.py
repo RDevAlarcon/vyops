@@ -57,7 +57,7 @@ def test_aprobacion_activa_version(capsys):
     assert app.get_state(config).next == ()
 
     salida = capsys.readouterr().out
-    assert f"Versión ACTIVADA: {HUELLA}" in salida
+    assert f"Versión APROBADA (simulación): {HUELLA}" in salida
 
 
 def test_rechazo_no_activa_version(capsys):
@@ -79,5 +79,5 @@ def test_rechazo_no_activa_version(capsys):
 
     salida = capsys.readouterr().out
 
-    assert f"Versión RECHAZADA: {HUELLA}" in salida
-    assert "Versión ACTIVADA" not in salida
+    assert f"Versión RECHAZADA (simulación): {HUELLA}" in salida
+    assert "Versión APROBADA (simulación)" not in salida

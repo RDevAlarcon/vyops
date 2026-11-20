@@ -36,3 +36,13 @@ def test_f1_equilibrado():
 
 def test_f1_sin_aciertos():
     assert f1(0.0, 0.0) == 0.0
+
+
+def test_recall_no_duplica_fuentes_relevantes():
+    from metricas_recuperacion import recall_at_k
+
+    recuperados = ["doc_a", "doc_a", "doc_a", "doc_b"]
+    relevantes = {"doc_a", "doc_c"}
+
+    assert recall_at_k(recuperados, relevantes) == 0.5
+    assert recall_at_k(["doc_a"] * 5, {"doc_a"}) == 1.0

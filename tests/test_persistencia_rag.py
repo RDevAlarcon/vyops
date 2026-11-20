@@ -119,5 +119,58 @@ class TestPersistenciaRAG(unittest.TestCase):
                 len(pregunta),
             )
 
+    def test_no_persistir_metadatos_sensibles(self):
+        pregunta = "Consulta municipal de prueba"
+        dato_sensible = "RUT-PRIVADO-12345678-9"
+
+        resultado = {
+            "trace_id": "traza-privacidad-001",
+            "modelo_generacion": "gemini-3.5-flash-lite",
+            "modelo_embedding": "gemini-embedding-001",
+            "pregunta": pregunta,
+            "fuentes": [f"documento_{dato_sensible}.md"],
+            "tiempos": {
+                "total_rag": 0.5,
+                "total_completo": 0.6,
+            },
+            "tokens_entrada": 10,
+            "tokens_salida": 5,
+            "tokens_totales": 15,
+            "tokens_razonamiento": None,
+            "tokens_cache": 0,
+            "tokens_embedding": 3,
+            "uso_original": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+                "dato_externo": dato_sensible,
+            },
+            "costo_generacion_usd": 0.0,
+            "costo_embedding_usd": 0.0,
+            "costo_total_usd": 0.0,
+            "validacion_citas": {
+                "citas_encontradas": 1,
+                "citas_invalidas": [],
+                "numeracion_valida": True,
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as carpeta:
+            ruta = Path(carpeta) / "privacidad_metadatos.jsonl"
+
+            guardar_registro_jsonl(resultado, ruta)
+
+            contenido = ruta.read_text(encoding="utf-8")
+            registro = json.loads(contenido)
+
+            self.assertNotIn(dato_sensible, contenido)
+            self.assertNotIn("dato_externo", registro["uso_original"])
+            self.assertEqual(
+                registro["uso_original"]["input_tokens"], 10
+            )
+
+
+
+
 if __name__ == "__main__":
     unittest.main()

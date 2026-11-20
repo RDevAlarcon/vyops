@@ -21,12 +21,12 @@ Construir una solución capaz de:
 - Procesar respuestas estructuradas.
 - Validar datos y manejar errores.
 - Evaluar modelos y prompts.
-- Integrar fuentes documentales mediante RAG en etapas posteriores.
+- Integrar fuentes documentales mediante RAG (implementado como prototipo en la Unidad 2).
 - Incorporar herramientas, controles de acceso y observabilidad progresivamente.
 
-Las funcionalidades futuras se implementarán durante las siguientes unidades.
+Las capacidades que aún no están implementadas se incorporarán progresivamente en las siguientes unidades. El cierre vigente de la Unidad 2 se documenta al final de este README.
 
-## 3. Estado actual — Unidad 1 / Gate 1
+## 3. Evidencia histórica — Unidad 1 / Gate 1
 
 La primera unidad incluye:
 
@@ -57,7 +57,7 @@ La primera unidad incluye:
 | Postman | Pruebas de API |
 | venv | Aislamiento de dependencias |
 
-## 5. Estructura del repositorio
+## 5. Estructura inicial del repositorio (Unidad 1)
 
 ```text
 vyops/
@@ -140,11 +140,50 @@ Abrir `.env` y reemplazar el valor de ejemplo por la clave API real:
 
 ```dotenv
 GEMINI_API_KEY=tu_clave_real
+VYOPS_VECTORSTORE_DIR=vectorstore_profesor
 ```
+VYOPS_VECTORSTORE_DIR define dónde se almacenará el índice ChromaDB generado localmente. El directorio vectorstore_profesor/ se encuentra excluido de Git. La configuración evita depender del índice original utilizado durante el desarrollo.
 
 Nunca publicar la clave ni incluir `.env` en Git.
 
-## 7. Ejecución de la aplicación
+### 6.7. Preparar e indexar el corpus municipal
+
+VyOps incluye 30 documentos municipales ficticios en el directorio `corpus/`, organizados por categorías.
+
+Primero, verificar la preparación documental:
+
+```powershell
+python indexar_corpus.py
+```
+
+El resultado esperado es:
+
+- 30 documentos originales.
+- 387 fragmentos preparados.
+- 387 identificadores únicos.
+- 0 duplicados.
+
+Este comando no genera embeddings ni realiza llamadas a Gemini.
+
+Para construir el índice ChromaDB desde cero:
+
+```powershell
+python -m src.indexacion_incremental --directorio vectorstore_profesor
+```
+
+Esta operación utiliza Gemini para generar embeddings y puede consumir cuota de la API. El índice se almacena localmente en `vectorstore_profesor/`.
+
+Para comprobar la instalación y ejecutar las pruebas automatizadas:
+
+```powershell
+python -m pytest -q
+```
+
+La indexación inicial e incremental se verificó previamente mediante pruebas locales aisladas con embeddings simulados. La reproducción completa desde un clon limpio utilizando Gemini sigue pendiente de validación.
+
+**Importante:** no utilizar `vectorstore/` como destino de indexación. Ese directorio corresponde al índice original del entorno de desarrollo y está protegido contra modificaciones por el módulo de indexación incremental.
+
+## 7. Ejecución del cliente inicial (Unidad 1)
 
 Desde la raíz del proyecto, con el entorno virtual activado y `.env` configurado:
 
@@ -270,7 +309,7 @@ El 9 de octubre de 2026 se realizó una petición HTTP autenticada a Gemini medi
 
 Posteriormente se implementó el cliente Python y se evaluaron otros modelos para seleccionar una alternativa apropiada para VyOps.
 
-### Arquitectura
+### Arquitectura RAG
 
 El diseño técnico y su evolución se documentan en `docs/`, incluyendo el diagrama de arquitectura y las decisiones de selección del modelo.
 El diagrama de arquitectura de la Unidad 1 está disponible en:
@@ -284,7 +323,6 @@ El 20 de octubre de 2026 se comprobó la ejecución de `src/consumir_gemini.py`:
 - 45 tokens totales.
 - Tiempo de respuesta: 10,606 segundos.
 - Costo estimado: USD 0,00008390.
-
 
 ## Unidad 2 — Bloque 12: Cliente de API modular
 
@@ -905,7 +943,7 @@ Las respuestas pueden presentar variaciones de redacción entre ejecuciones. Ade
 
 LangChain permite construir flujos modulares en los que cada etapa tiene una responsabilidad definida. La separación entre plantillas, orquestación y modelo facilita las pruebas, el mantenimiento y la incorporación de nuevas etapas de procesamiento.
 
-## Bloque 19 — Enrutamiento condicional con LangChain
+## Unidad 2 — Bloque 19: Enrutamiento condicional con LangChain
 
 ### Objetivo
 
@@ -983,7 +1021,7 @@ Resultado: 61 pruebas y 5 subpruebas aprobadas.
 - La información sobre trámites, permisos y normativas debe verificarse mediante fuentes oficiales actualizadas.
 - El sistema no dispone todavía de herramientas para consultar fuentes oficiales en tiempo real.
 
-## Bloque 20 — Manejo de errores en cadenas LangChain
+## Unidad 2 — Bloque 20: Manejo de errores en cadenas LangChain
 
 Se implementaron mecanismos de recuperación ante errores para mejorar la robustez del enrutamiento condicional desarrollado en el Bloque 19.
 
@@ -1020,7 +1058,7 @@ Las pruebas utilizan modelos simulados y no requieren llamadas reales a la API d
 **Nota:** Las pruebas de VyOps cubren los mecanismos implementados en este bloque. No se afirma una equivalencia exacta con los casos de `test_orquestacion.py` del curso.
 
 
-## Bloque 21 — Agente municipal con herramientas
+## Unidad 2 — Bloque 21: Agente municipal con herramientas
 
 Se implementó un agente inteligente para VyOps, orientado al apoyo de la gestión municipal en Chile mediante LangChain, Gemini y herramientas especializadas.
 
@@ -1112,7 +1150,7 @@ Adicionalmente, se realizaron pruebas manuales de integración con Gemini para v
 - Las respuestas generadas deben verificarse antes de utilizarse en decisiones administrativas.
 - Las futuras integraciones deberán incorporar controles de acceso, protección de datos y auditoría.
 
-## Bloque 22 — Herramienta personalizada y memoria conversacional
+## Unidad 2 — Bloque 22: Herramienta personalizada y memoria conversacional
 
 Se amplió el agente municipal VyOps con una herramienta estructurada y memoria conversacional por sesión.
 
@@ -1154,7 +1192,7 @@ Las pruebas del agente y su memoria utilizaron modelos simulados, sin llamadas r
 - La memoria no es persistente.
 - `InMemoryChatMessageHistory` y `RunnableWithMessageHistory` generan advertencias de obsolescencia. Se planifica migrar a la persistencia de LangGraph antes de su eliminación en versiones futuras.
 
-## Bloque 23 — Memoria de contexto y límites de autonomía
+## Unidad 2 — Bloque 23: Memoria de contexto y límites de autonomía
 
 VyOps incorpora mecanismos de supervisión humana, clasificación de riesgos y auditoría para controlar las acciones del agente municipal.
 
@@ -1293,15 +1331,16 @@ Incluye clasificación de riesgos, supervisión humana, auditoría, frecuencia p
 **Estado:** Bloque 23 implementado y validado como prototipo educativo. No apto todavía para operar sobre datos municipales reales.
 
 
-## Bloque 24 — RAG: chunking, embeddings y ChromaDB
+## Unidad 2 — Bloque 24: RAG: chunking, embeddings y ChromaDB
 
 Se implementó la primera etapa de recuperación documental
 de VyOps mediante la preparación e indexación de un corpus
-municipal ficticio.
+municipal ficticio. **Los resultados de esta sección son históricos:**
+la implementación vigente se describe en el cierre del Gate 2.
 
 ### Corpus documental
 
-El archivo `src/corpus_municipal.py` contiene cinco documentos
+El corpus inicial contenía cinco documentos
 breves relacionados con:
 
 - Registro de solicitudes municipales.
@@ -1321,44 +1360,43 @@ El script `scripts/comparar_chunking.py` permite comparar:
 - `RecursiveCharacterTextSplitter`: división que prioriza
   los límites naturales del texto.
 
-Para la indexación se utiliza:
+En el ejercicio original se utilizaron:
 
 - `chunk_size=200`
 - `chunk_overlap=30`
 
-El corpus genera cinco chunks, uno por documento.
+El corpus inicial generó cinco chunks, uno por documento.
+La configuración vigente es `chunk_size=800` y `chunk_overlap=120`.
 
 ### Embeddings y almacenamiento vectorial
 
-El archivo `indexar_corpus.py` utiliza:
+La indexación histórica utilizó:
 
 - `GoogleGenerativeAIEmbeddings`
 - Modelo `models/gemini-embedding-001`
 - `ChromaDB` mediante `langchain-chroma`
 
-Los embeddings se almacenan localmente en `vectorstore/`.
+Los embeddings persistentes se almacenan localmente en `vectorstore/`.
 
 Esta carpeta está excluida de Git mediante `.gitignore`.
 
 ### Ejecución
 
-Con el entorno virtual activo y `GEMINI_API_KEY`
-configurada en `.env`:
+Con el entorno virtual activo, la versión vigente permite preparar
+los documentos sin necesidad de llamar a Gemini:
 
 ```powershell
 python indexar_corpus.py
 ```
 
-La ejecución genera embeddings mediante la API de Gemini
-y puede consumir cuota o generar costos.
-
-El script agrega registros a ChromaDB. No debe ejecutarse
-repetidamente sobre la misma colección sin controlar
-los identificadores, para evitar duplicados.
+**Comportamiento vigente:** `indexar_corpus.py` solo carga, valida
+y fragmenta documentos. No genera embeddings ni escribe en ChromaDB.
+Las evidencias de indexación real que se enumeran a continuación
+corresponden a la ejecución histórica del Bloque 24.
 
 ### Validación
 
-Se verificó:
+Durante el ejercicio original se verificó:
 
 - Preparación de cinco documentos y cinco chunks.
 - Generación de embeddings mediante Gemini.
@@ -1376,15 +1414,13 @@ Resultado de las pruebas:
 
 ### Limitaciones
 
-Esta implementación constituye una etapa inicial de RAG.
-
-Todavía no incorpora búsqueda semántica integrada al agente,
-recuperación automática de documentos ni generación de
-respuestas fundamentadas en los resultados recuperados.
+En ese momento constituía una etapa inicial de RAG.
+La recuperación y la generación fundamentada se incorporaron
+en bloques posteriores; consultar el cierre vigente del Gate 2.
 
 No utiliza documentos municipales oficiales ni datos reales.
 
-## Bloque 25 — Réplica guiada de indexación y persistencia
+## Unidad 2 — Bloque 25: Réplica guiada de indexación y persistencia
 
 ### Objetivo
 
@@ -1444,7 +1480,7 @@ Registros recuperados: 5
 - La base municipal del Bloque 24, ubicada en `vectorstore/`, permanece independiente.
 - Este ejercicio valida indexación y persistencia; todavía no implementa recuperación semántica ni generación de respuestas mediante RAG.
 
-## Bloque 26 — Recuperación semántica y prompt dinámico
+## Unidad 2 — Bloque 26: Recuperación semántica y prompt dinámico
 
 Se implementó un flujo RAG (Retrieval-Augmented Generation)
 para responder preguntas sobre un corpus municipal ficticio.
@@ -1498,10 +1534,11 @@ python -m pytest -q
 4 advertencias conocidas de LangChain.
 
 
-## Bloque 27 — Evaluación de recuperación RAG
+## Unidad 2 — Bloque 27: Evaluación de recuperación RAG
 
-Se evaluó la recuperación semántica de VyOps utilizando
-un corpus municipal ficticio de cinco documentos.
+**Evaluación histórica del Bloque 27:** se evaluó la recuperación
+semántica de VyOps con un corpus municipal ficticio de cinco documentos.
+La evaluación actualizada con 30 documentos aparece en el cierre del Gate 2.
 
 ### Metodología
 
@@ -1548,7 +1585,7 @@ Suite completa: 167 pruebas aprobadas.
 python -m pytest -q
 ```
 
-## Bloque 28 — Observabilidad del sistema RAG
+## Unidad 2 — Bloque 28: Observabilidad del sistema RAG
 
 Este bloque incorpora medición de rendimiento, seguimiento del consumo de tokens, estimación de costos y persistencia de métricas para el sistema RAG municipal de VyOps.
 
@@ -1629,7 +1666,7 @@ Los costos son estimaciones basadas en las tarifas configuradas.
 - Las tarifas deben revisarse cuando cambien los precios del proveedor.
 - La migración de las API de memoria obsoletas de LangChain queda pendiente como mejora futura.
 
-## Bloque 29 — Laboratorio de personalización de modelos
+## Unidad 2 — Bloque 29: Laboratorio de personalización de modelos
 
 ### Objetivo
 
@@ -1712,7 +1749,7 @@ python -m pytest tests/ -v
 - La preparación del dataset no equivale a entrenar un modelo.
 - El entrenamiento PEFT real queda sujeto a disponibilidad técnica, compatibilidad del modelo y evaluación de costos.
 
-## Bloque 30 — Decisión fundamentada de personalización
+## Unidad 2 — Bloque 30: Decisión fundamentada de personalización
 
 En este bloque se compararon tres estrategias de personalización
 de modelos de lenguaje: RAG, fine-tuning completo y PEFT.
@@ -1803,7 +1840,7 @@ Para ejecutar las pruebas:
 python -m pytest -q
 ```
 
-## Bloque 31 — Logging estructurado y mitigación de inyección de prompt
+## Unidad 2 — Bloque 31: Logging estructurado y mitigación de inyección de prompt
 
 En este bloque se incorporaron mecanismos de observabilidad, trazabilidad y seguridad al sistema RAG de VyOps.
 
@@ -1978,7 +2015,7 @@ python -m pytest -q
 Las advertencias corresponden a componentes de memoria de LangChain utilizados en ejercicios anteriores y no impiden la ejecución del proyecto.
 
 
-## Bloque 32 — Versionado de prompts y supervisión humana
+## Unidad 2 — Bloque 32: Versionado de prompts y supervisión humana
 
 Se implementaron mecanismos de control de versiones de prompts,
 supervisión humana de cambios y evaluación de riesgos para VyOps.
@@ -2142,6 +2179,272 @@ python -m pytest -q
 
 **Estado:** Bloque 32 implementado y validado
 como prototipo educativo.
+
+
+## Cierre de Unidad 2 — Gate 2
+
+VyOps es un prototipo de asistente inteligente orientado a consultas documentales municipales. Utiliza recuperación aumentada por generación (RAG), modelos Gemini, LangChain y ChromaDB.
+
+El caso demostrativo corresponde a la **Municipalidad ficticia de Valle Claro**. Los documentos y procedimientos utilizados son simulados y tienen exclusivamente fines educativos.
+
+El proyecto está diseñado con una orientación modular y extensible. La arquitectura multiempresa, el aislamiento por organización y las integraciones futuras forman parte de su evolución prevista; no deben interpretarse como capacidades productivas ya desplegadas.
+
+### Estado actual y evidencia verificada
+
+**Fecha de referencia:** 19 de noviembre de 2026.
+
+El prototipo cuenta con un flujo RAG funcional que recupera documentos, filtra contenido sospechoso, genera respuestas fundamentadas, comprueba la estructura de las citas y registra métricas de ejecución.
+
+### Arquitectura
+
+```text
+Consulta del usuario
+        |
+        v
+Generación de embedding
+        |
+        v
+Recuperación en ChromaDB
+        |
+        v
+Filtrado de documentos sospechosos
+        |
+        v
+Construcción del prompt con fuentes
+        |
+        v
+Generación mediante Gemini
+        |
+        v
+Validación estructural de citas
+        |
+        v
+Respuesta y registro de métricas
+```
+
+El flujo incorpora trazabilidad mediante `trace_id`, medición de latencia, conteo de tokens y estimación de costos.
+
+### Corpus documental
+
+| Parámetro | Configuración |
+|---|---|
+| Documentos Markdown | 30 |
+| Fragmentos preparados | 387 |
+| Registros persistidos verificados | 387 |
+| Colección ChromaDB | `vyops_municipal_v1` |
+| Modelo de embeddings | `models/gemini-embedding-001` |
+| Modelo de generación | `gemini-3.5-flash-lite` |
+| Tamaño de fragmento | 800 |
+| Solapamiento | 120 |
+| Recuperación predeterminada | k=5 |
+
+Los documentos incluyen metadatos YAML, identificadores documentales y rutas de origen.
+
+La preparación genera identificadores deterministas a partir del documento, la posición del fragmento y una huella SHA-256 de su contenido.
+
+### Evaluación de recuperación
+
+Se evaluaron cinco preguntas con fuentes relevantes previamente definidas.
+
+| k | Precisión media | Recall medio | F1 medio |
+|---|---:|---:|---:|
+| 1 | 0,600 | 0,600 | 0,600 |
+| 3 | 0,600 | 0,800 | 0,660 |
+| 5 | 0,520 | 1,000 | 0,645 |
+
+La precisión contabiliza fragmentos recuperados y el recall contabiliza fuentes relevantes identificadas. Estas unidades diferentes limitan la interpretación conjunta de las métricas.
+
+La evaluación constituye una evidencia inicial, no una certificación de rendimiento general.
+
+### Ejecución real con Gemini
+
+En una ejecución documentada del 19 de noviembre de 2026 se obtuvieron:
+
+| Indicador | Resultado |
+|---|---:|
+| Fragmentos recuperados | 5 |
+| Latencia RAG | 4,707411 s |
+| Latencia completa | 5,785771 s |
+| Tokens de entrada | 1170 |
+| Tokens de salida | 51 |
+| Tokens totales de generación | 1221 |
+| Tokens de embedding contabilizados | 14 |
+| Costo total estimado | USD 0,0004806 |
+| Citas inválidas | 0 |
+
+Los valores corresponden a una ejecución individual. Las latencias pueden variar y los costos son estimaciones calculadas con las tarifas configuradas en el proyecto.
+
+### Demostración integral del Gate 2
+
+Se registraron dos consultas reales durante la demostración del servicio:
+
+- Una consulta sobre cancelación municipal obtuvo una respuesta con dos citas numéricas y cinco fragmentos recuperados y aceptados.
+- Una consulta sin respaldo suficiente produjo una abstención segura, sin citas, tras recuperar cinco fragmentos.
+
+En ambas consultas se registraron eventos de auditoría sanitizados con un `trace_id` compartido dentro de cada consulta y restablecido al finalizar. Las pruebas de filtrado de inyección y de supervisión humana incluyen demostraciones controladas; no equivalen a una autorización productiva.
+
+### Seguridad y observabilidad
+
+El sistema incluye:
+
+- Filtrado de documentos potencialmente afectados por prompt injection.
+- Tratamiento del contexto recuperado como información no confiable.
+- Respuesta de abstención cuando no existe evidencia suficiente.
+- Logs estructurados y sanitizados.
+- Identificadores de trazabilidad independientes por consulta.
+- Medición de tokens, latencia y costos.
+- Validación estructural de citas.
+
+La detección de inyecciones mediante patrones no garantiza cobertura completa. La validación de citas tampoco demuestra automáticamente que cada afirmación esté respaldada semánticamente.
+
+### Versionado y supervisión humana
+
+Se registraron dos versiones históricas del prompt RAG mediante Git y huellas SHA-256.
+
+El módulo de supervisión utiliza LangGraph con `interrupt()` y `Command(resume=...)` para demostrar decisiones de aprobación y rechazo.
+
+La supervisión es una simulación académica: no activa cambios reales ni incorpora autenticación de responsables.
+
+La matriz de riesgos documenta cinco escenarios, clasificados en dos críticos, dos altos y uno medio.
+
+### Instalación y ejecución local
+
+Requisitos:
+
+- Python y dependencias del proyecto.
+- Entorno virtual configurado.
+- Archivo `.env` con `GEMINI_API_KEY` para las operaciones que utilizan Gemini.
+- Índice ChromaDB previamente disponible para las consultas reales.
+
+Preparar el corpus sin generar embeddings:
+
+```powershell
+python indexar_corpus.py
+```
+
+Ejecutar la demostración integral:
+
+```powershell
+python servicio_vyops_rag.py
+```
+
+Evaluar la recuperación:
+
+```powershell
+python evaluar_recuperacion.py
+```
+
+Consultar el registro de prompts:
+
+```powershell
+python registro_prompts.py
+```
+
+Ejecutar la supervisión humana:
+
+```powershell
+python grafo_supervision.py
+```
+
+Mostrar la matriz de riesgos:
+
+```powershell
+python matriz_riesgos.py
+```
+
+Ejecutar las pruebas automatizadas:
+
+```powershell
+python -m pytest -q
+```
+
+**Último resultado registrado (19-11-2026):** 234 pruebas aprobadas y 11 subpruebas aprobadas, sin fallos. La ejecución reportó 0 advertencias.
+
+Las consultas y evaluaciones reales con Gemini pueden consumir cuota o generar costos.
+
+### Persistencia y reproducibilidad
+
+VyOps utiliza ChromaDB como almacenamiento vectorial local. El directorio original `vectorstore/` se mantiene protegido y excluido del repositorio mediante `.gitignore`.
+
+El corpus municipal ficticio contiene 30 documentos Markdown organizados en ocho categorías. La preparación determinista genera 387 fragmentos con identificadores únicos.
+
+El archivo `indexar_corpus.py` prepara y valida los documentos sin generar embeddings, modificar ChromaDB ni realizar llamadas a Gemini.
+
+El módulo `src/sincronizacion_vectorial.py` calcula las diferencias entre los identificadores almacenados y los deseados, determinando qué registros deben insertarse, conservarse o eliminarse.
+
+El módulo `src/indexacion_incremental.py` permite realizar la indexación inicial y sincronizaciones posteriores sobre un directorio vectorial alternativo, con bloqueo de operaciones concurrentes y controles para evitar eliminaciones accidentales.
+
+#### Reconstrucción del índice desde cero
+
+Después de instalar las dependencias y configurar `GEMINI_API_KEY` en `.env`, establecer:
+
+```dotenv
+VYOPS_VECTORSTORE_DIR=vectorstore_profesor
+```
+
+Ejecutar:
+
+```powershell
+python indexar_corpus.py
+python -m src.indexacion_incremental --directorio vectorstore_profesor
+```
+
+La primera instrucción valida la preparación documental. La segunda genera embeddings mediante Gemini y almacena los fragmentos en ChromaDB.
+
+La indexación con Gemini requiere conectividad, una clave válida y cuota disponible. Puede generar costos.
+
+#### Sincronización incremental
+
+Para sincronizar nuevamente el corpus:
+
+```powershell
+python -m src.indexacion_incremental --directorio vectorstore_profesor
+```
+
+El proceso identifica los fragmentos nuevos y conserva los existentes sin volver a insertarlos.
+
+La eliminación de registros obsoletos requiere una autorización explícita mediante:
+
+```powershell
+python -m src.indexacion_incremental --directorio vectorstore_profesor --aplicar-eliminaciones
+```
+
+La operación está sujeta a controles de integridad del corpus y límites de eliminación.
+
+#### Evidencia de validación
+
+Se realizaron pruebas locales aisladas utilizando `FakeEmbeddings`, sin consumir la API de Gemini ni modificar el índice original.
+
+Los resultados incluyeron:
+
+- Indexación inicial de 387 fragmentos.
+- Segunda ejecución idempotente, sin duplicados.
+- Incorporación de fragmentos nuevos.
+- Conservación de fragmentos existentes.
+- Eliminación controlada de registros obsoletos.
+- Bloqueo de eliminaciones que superan los límites de seguridad.
+- Verificación del directorio vectorial configurable.
+
+Estas pruebas acreditan el funcionamiento local de la indexación inicial e incremental. No constituyen todavía una validación completa desde un clon limpio utilizando embeddings reales de Gemini.
+
+### Limitaciones
+
+- Corpus municipal completamente ficticio.
+- Evaluación de recuperación limitada a cinco preguntas.
+- Validación numérica de citas, sin comprobación semántica automática.
+- Costos estimados, sujetos a cambios de tarifas.
+- Supervisión humana simulada, sin autenticación productiva.
+- Persistencia vectorial local no incluida en Git.
+- Reconstrucción inicial e indexación incremental verificadas con embeddings simulados en entornos aislados; pendiente validación integral desde un clon limpio con Gemini.
+- Sin despliegue productivo ni integración con sistemas municipales reales.
+
+### Resultado del Gate 2
+
+VyOps dispone de evidencia funcional de integración RAG, recuperación documental, medición de rendimiento, seguridad, trazabilidad, versionado de prompts y supervisión humana.
+
+La aprobación formal del Gate 2 corresponde a la evaluación de SkillNest.
+
+---
 
 ## Derechos de autor y propiedad intelectual
 

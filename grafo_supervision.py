@@ -33,9 +33,9 @@ def supervisar(estado: EstadoDespliegue):
 def aplicar(estado: EstadoDespliegue):
     """Simula la activación únicamente si existe aprobación."""
     if estado["aprobado"] is True:
-        print(f"Versión ACTIVADA: {estado['huella_nueva']}")
+        print(f"Versión APROBADA (simulación): {estado['huella_nueva']}")
     else:
-        print(f"Versión RECHAZADA: {estado['huella_nueva']}")
+        print(f"Versión RECHAZADA (simulación): {estado['huella_nueva']}")
 
     return {}
 

@@ -363,3 +363,137 @@ class TestTrazaRegistroRAG(unittest.TestCase):
         mock_modelo.assert_not_called()
 
         self.assertIsNone(trace_id_var.get())
+
+    @patch("registro_rag.contar_tokens_embedding", return_value=12)
+    @patch("registro_rag.ChatGoogleGenerativeAI")
+    @patch("registro_rag.recuperar_documentos")
+    def test_rechaza_respuesta_generada_sin_citas(
+        self,
+        mock_recuperar,
+        mock_modelo,
+        mock_tokens,
+    ):
+        mock_recuperar.return_value = [
+            Document(
+                page_content=(
+                    "La cancelación requiere autorización humana."
+                ),
+                metadata={"fuente": "solicitudes_cancelacion.md"},
+            )
+        ]
+
+        respuesta = MagicMock()
+        respuesta.content_blocks = [
+            {
+                "type": "text",
+                "text": "La cancelación requiere autorización humana.",
+            }
+        ]
+        respuesta.usage_metadata = {
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "total_tokens": 120,
+            "input_token_details": {"cache_read": 0},
+        }
+        respuesta.response_metadata = {
+            "model_name": "gemini-3.5-flash-lite",
+        }
+
+        mock_modelo.return_value.invoke.return_value = respuesta
+
+        resultado = ejecutar_rag_medido(
+            "¿Se puede cancelar una solicitud municipal?"
+        )
+
+        self.assertEqual(
+            resultado["estado"],
+            "abstencion_segura",
+        )
+        self.assertEqual(
+            resultado["respuesta"],
+            (
+                "No dispongo de información suficiente y verificada "
+                "en los documentos disponibles para responder esta consulta."
+            ),
+        )
+        self.assertEqual(
+            resultado["validacion_citas"]["citas_encontradas"],
+            0,
+        )
+        self.assertFalse(
+            resultado["validacion_citas"]["numeracion_valida"]
+        )
+
+        # La respuesta original sin citas nunca debe exponerse.
+        self.assertNotIn(
+            "La cancelación requiere autorización humana.",
+            resultado["respuesta"],
+        )
+
+        # La llamada real al modelo se simuló exactamente una vez.
+        mock_modelo.return_value.invoke.assert_called_once()
+
+        # El contexto debe quedar limpio.
+        self.assertIsNone(trace_id_var.get())
+
+
+    @patch("registro_rag.contar_tokens_embedding", return_value=12)
+    @patch("registro_rag.ChatGoogleGenerativeAI")
+    @patch("registro_rag.recuperar_documentos")
+    def test_abstencion_segura_ante_respuesta_generada_sin_citas(
+        self,
+        mock_recuperar,
+        mock_modelo,
+        mock_tokens,
+    ):
+        mock_recuperar.return_value = [
+            Document(
+                page_content=(
+                    "La atención municipal es de lunes a viernes."
+                ),
+                metadata={"fuente": "horarios.md"},
+            )
+        ]
+
+        respuesta = MagicMock()
+        respuesta.content_blocks = [
+            {
+                "type": "text",
+                "text": "ABSTENCION_SIN_EVIDENCIA",
+            }
+        ]
+        respuesta.usage_metadata = {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "total_tokens": 110,
+            "input_token_details": {"cache_read": 0},
+        }
+        respuesta.response_metadata = {
+            "model_name": "gemini-3.5-flash-lite",
+        }
+
+        mock_modelo.return_value.invoke.return_value = respuesta
+
+        resultado = ejecutar_rag_medido(
+            "¿Cuáles son los requisitos de una patente comercial?"
+        )
+
+        self.assertEqual(
+            resultado["estado"],
+            "abstencion_segura",
+        )
+        self.assertEqual(
+            resultado["respuesta"],
+            (
+                "No dispongo de información suficiente y verificada "
+                "en los documentos disponibles para responder esta consulta."
+            ),
+        )
+        self.assertEqual(
+            resultado["validacion_citas"]["citas_encontradas"],
+            0,
+        )
+        self.assertTrue(
+            resultado["validacion_citas"]["numeracion_valida"]
+        )
+        self.assertIsNone(trace_id_var.get())

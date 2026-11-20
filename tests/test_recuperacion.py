@@ -41,3 +41,4 @@ def test_respuesta_sin_citas():
 
     assert resultado["citas_encontradas"] == 0
     assert resultado["citas_invalidas"] == []
+    assert resultado["numeracion_valida"] is False

@@ -3,16 +3,16 @@ Corpus: municipal ficticio VyOps
 Casos evaluados: 5
 
 --- EVALUACIÓN K=1 ---
-Precisión media: 1.000
-Recall medio: 1.000
-F1 medio: 1.000
+Precisión media: 0.600
+Recall medio: 0.600
+F1 medio: 0.600
 
 --- EVALUACIÓN K=3 ---
-Precisión media: 0.333
-Recall medio: 1.000
-F1 medio: 0.500
+Precisión media: 0.600
+Recall medio: 0.800
+F1 medio: 0.660
 
 --- EVALUACIÓN K=5 ---
-Precisión media: 0.200
+Precisión media: 0.520
 Recall medio: 1.000
-F1 medio: 0.333
+F1 medio: 0.645

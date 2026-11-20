@@ -8,7 +8,7 @@ from metricas_recuperacion import (
 from recuperacion import recuperar_documentos
 from pathlib import Path
 
-def evaluar_caso(caso, k=3):
+def evaluar_caso(caso, k=5):
     """Evalúa la recuperación para una pregunta."""
 
     documentos = recuperar_documentos(

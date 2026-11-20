@@ -66,7 +66,7 @@ def registrar_consumo(respuesta):
         },
     )
 
-def ejecutar_rag_medido(pregunta, k=3):
+def ejecutar_rag_medido(pregunta, k=5):
     """Ejecuta el RAG y registra latencia y tokens."""
 
     trace_id = generar_trace_id()
@@ -220,8 +220,29 @@ def ejecutar_rag_medido(pregunta, k=3):
         with medir(tiempos, "validacion_citas"):
             resultado_citas = validar_citas(respuesta, documentos)
 
+        MARCADOR_ABSTENCION = "ABSTENCION_SIN_EVIDENCIA"
+
+        RESPUESTA_ABSTENCION = (
+            "No dispongo de información suficiente y verificada "
+            "en los documentos disponibles para responder esta consulta."
+        )
+
+        if respuesta.strip() == MARCADOR_ABSTENCION:
+            estado = "abstencion_segura"
+            respuesta = RESPUESTA_ABSTENCION
+
+        elif resultado_citas["numeracion_valida"]:
+            estado = "respuesta_generada"
+
+        else:
+            # La respuesta generada no cumple el contrato de citas.
+            # No se entrega al usuario; se aplica abstencion segura.
+            estado = "abstencion_segura"
+            respuesta = RESPUESTA_ABSTENCION
+
+
         tiempos["total_completo"] = time.perf_counter() - inicio_total
-        tiempos["total"] = tiempos["total_rag"]
+        tiempos["total"] = tiempos["total_completo"]
 
         return {
             "trace_id": trace_id,
@@ -231,6 +252,7 @@ def ejecutar_rag_medido(pregunta, k=3):
                 doc.metadata.get("fuente", "desconocida")
                 for doc in documentos
             ],
+            "estado": estado,
             "tokens_razonamiento": consumo["tokens_razonamiento"],
             "tokens_cache": consumo["tokens_cache"],
             "razonamiento_reportado": consumo["razonamiento_reportado"],

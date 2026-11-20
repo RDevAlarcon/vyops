@@ -1,9 +1,10 @@
+﻿"""Preparacion local del corpus documental de VyOps.
 
-"""Indexación del corpus municipal ficticio de VyOps."""
+Esta version NO genera embeddings ni modifica ChromaDB.
+"""
 
-from dotenv import load_dotenv
-from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from collections import Counter
+from hashlib import sha256
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -11,51 +12,93 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.corpus_municipal import obtener_corpus_municipal
 
 
-def preparar_documentos() -> list[Document]:
-    """Divide el corpus en fragmentos para su indexación."""
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 120
+
+SEPARADORES = ["\n\n", "\n", ". ", " ", ""]
+
+
+def preparar_documentos() -> tuple[list[Document], list[str]]:
+    """Prepara fragmentos con identificadores estables."""
+
     documentos = obtener_corpus_municipal()
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=200,
-        chunk_overlap=30,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        separators=SEPARADORES,
     )
 
-    return splitter.split_documents(documentos)
+    fragmentos = []
+    identificadores = []
 
+    for documento in documentos:
+        partes = splitter.split_documents([documento])
+
+        for posicion, fragmento in enumerate(partes, start=1):
+            huella = sha256(
+                fragmento.page_content.encode("utf-8")
+            ).hexdigest()
+
+            identificador = (
+                f"{documento.metadata['id']}"
+                f":{posicion:04d}"
+                f":{huella}"
+            )
+
+            fragmento.metadata["chunk_id"] = identificador
+            fragmento.metadata["chunk_index"] = posicion
+            fragmento.metadata["content_sha256"] = huella
+
+            fragmentos.append(fragmento)
+            identificadores.append(identificador)
+
+    return fragmentos, identificadores
 
 
 def main() -> None:
-    """Genera embeddings y persiste el corpus en ChromaDB."""
-    load_dotenv()
+    """Valida la preparacion documental sin indexar."""
 
-    fragmentos = preparar_documentos()
+    documentos = obtener_corpus_municipal()
+    fragmentos, identificadores = preparar_documentos()
 
-    print(f"Documentos originales: {len(obtener_corpus_municipal())}")
-    print(f"Chunks preparados: {len(fragmentos)}")
+    duplicados = [
+        identificador
+        for identificador, cantidad in Counter(
+            identificadores
+        ).items()
+        if cantidad > 1
+    ]
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-001",
-    )
+    documentos_representados = {
+        fragmento.metadata["id"]
+        for fragmento in fragmentos
+    }
 
-    print("Generando embeddings con Gemini...")
+    print("Documentos originales:", len(documentos))
+    print("Chunks preparados:", len(fragmentos))
+    print("IDs unicos:", len(set(identificadores)))
+    print("Documentos representados:", len(documentos_representados))
+    print("Duplicados:", len(duplicados))
 
-    base_vectorial = Chroma.from_documents(
-        documents=fragmentos,
-        embedding=embeddings,
-        persist_directory="vectorstore/",
-    )
-
-    total = base_vectorial._collection.count()
-
-    print(f"Registros almacenados en ChromaDB: {total}")
-
-    if total != len(fragmentos):
+    if duplicados:
         raise RuntimeError(
-            "La cantidad de registros no coincide con los chunks."
+            "Se detectaron identificadores duplicados."
         )
 
-    print("Indexación completada correctamente.")
+    if len(documentos_representados) != len(documentos):
+        raise RuntimeError(
+            "No todos los documentos estan representados."
+        )
 
+    if not fragmentos:
+        raise RuntimeError(
+            "No se generaron fragmentos."
+        )
+
+    print("PASS: Preparacion documental completada.")
+    print("ChromaDB: sin modificaciones.")
+    print("Gemini: sin llamadas.")
 
 
 if __name__ == "__main__":

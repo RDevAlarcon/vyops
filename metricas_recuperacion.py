@@ -25,7 +25,7 @@ def recall_at_k(ids_recuperados, ids_relevantes):
         if documento_id in ids_relevantes
     ]
 
-    return len(acertados) / len(ids_relevantes)
+    return len(set(acertados)) / len(set(ids_relevantes))
 
 def f1(precision, recall):
     """Calcula la media armónica de precisión y recall."""
