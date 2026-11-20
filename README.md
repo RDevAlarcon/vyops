@@ -183,6 +183,46 @@ La indexación inicial e incremental se verificó previamente mediante pruebas l
 
 **Importante:** no utilizar `vectorstore/` como destino de indexación. Ese directorio corresponde al índice original del entorno de desarrollo y está protegido contra modificaciones por el módulo de indexación incremental.
 
+
+#### Control de solicitudes durante la indexación
+
+La indexación reproducible utiliza `GoogleGenerativeAIEmbeddings`
+con el modelo `models/gemini-embedding-001`.
+
+Para reducir la frecuencia de solicitudes consecutivas a Gemini:
+
+- Se procesan hasta 10 fragmentos por lote.
+- Los lotes se procesan secuencialmente.
+- Se aplica una pausa de 10 segundos entre lotes.
+- No se aplica una pausa después del último lote.
+- La pausa puede configurarse mediante
+  `VYOPS_EMBEDDING_PAUSA_SEGUNDOS` en `.env`.
+- Se conservan los fragmentos previamente indexados para evitar
+  volver a generar embeddings innecesariamente.
+
+La pausa predeterminada es de 10 segundos y admite valores
+entre 0 y 300 segundos.
+
+Para 387 fragmentos nuevos se estiman 39 lotes y 38 pausas,
+equivalentes a 380 segundos de espera, además del tiempo
+de procesamiento del proveedor.
+
+Este mecanismo reduce la frecuencia de solicitudes, pero no
+garantiza evitar los límites de cuota de Gemini.
+
+Durante la indexación se utiliza `EmbeddingsConReintentos`, que
+realiza hasta tres intentos ante errores HTTP 429, 500, 502 y 503,
+con esperas progresivas de 2 y 4 segundos. Los errores 401 y 403
+no se reintentan. Los reintentos se aplican a la generación de
+embeddings, no a las escrituras de ChromaDB.
+
+Este comportamiento se verificó mediante pruebas simuladas.
+La integración con Gemini real y los posibles límites de cuota
+siguen pendientes de validación.
+
+Las pruebas de este mecanismo utilizan dependencias simuladas
+y no consumen la API de Gemini.
+
 ## 7. Ejecución del cliente inicial (Unidad 1)
 
 Desde la raíz del proyecto, con el entorno virtual activado y `.env` configurado:

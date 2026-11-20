@@ -3,12 +3,14 @@
 
 import argparse
 import os
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+from src.embeddings_con_reintentos import EmbeddingsConReintentos
 from indexar_corpus import preparar_documentos
 from recuperacion import (
     BASE_DIR,
@@ -70,13 +72,27 @@ def sincronizar(
             if identificador in plan.insertar
         ]
 
-        for inicio in range(0, len(nuevos), 25):
-            lote = nuevos[inicio:inicio + 25]
+        pausa_segundos = float(
+            os.environ.get("VYOPS_EMBEDDING_PAUSA_SEGUNDOS", "10")
+        )
+
+        if not 0 <= pausa_segundos <= 300:
+            raise ValueError(
+                "VYOPS_EMBEDDING_PAUSA_SEGUNDOS debe estar entre 0 y 300."
+            )
+
+        tamano_lote = 10
+
+        for inicio in range(0, len(nuevos), tamano_lote):
+            lote = nuevos[inicio:inicio + tamano_lote]
 
             db.add_documents(
                 documents=[documento for documento, _ in lote],
                 ids=[identificador for _, identificador in lote],
             )
+
+            if inicio + tamano_lote < len(nuevos):
+                time.sleep(pausa_segundos)
 
         eliminados = 0
 
@@ -136,9 +152,11 @@ def main() -> None:
         google_api_key=api_key,
     )
 
+    embeddings_controlados = EmbeddingsConReintentos(embeddings)
+
     resultado = sincronizar(
         directorio=directorio,
-        embeddings=embeddings,
+        embeddings=embeddings_controlados,
         aplicar_eliminaciones=args.aplicar_eliminaciones,
     )
 
