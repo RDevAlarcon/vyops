@@ -82,17 +82,72 @@ def sincronizar(
             )
 
         tamano_lote = 10
+        total_pendientes = len(nuevos)
+        total_lotes = (
+            (total_pendientes + tamano_lote - 1) // tamano_lote
+        )
 
-        for inicio in range(0, len(nuevos), tamano_lote):
+        procesados = 0
+        inicio_proceso = time.monotonic()
+
+        print(
+            f"[INICIO] Fragmentos del corpus: {len(fragmentos)}",
+            flush=True,
+        )
+        print(
+            f"[ESTADO] Conservados: {len(plan.conservar)} | "
+            f"Pendientes: {total_pendientes}",
+            flush=True,
+        )
+
+        if total_pendientes == 0:
+            print(
+                "[PASS] No hay fragmentos nuevos para indexar.",
+                flush=True,
+            )
+
+        for numero_lote, inicio in enumerate(
+            range(0, total_pendientes, tamano_lote),
+            start=1,
+        ):
             lote = nuevos[inicio:inicio + tamano_lote]
+
+            print(
+                f"[INDEXACION] Lote {numero_lote}/{total_lotes} "
+                f"| Fragmentos: {len(lote)}",
+                flush=True,
+            )
 
             db.add_documents(
                 documents=[documento for documento, _ in lote],
                 ids=[identificador for _, identificador in lote],
             )
 
-            if inicio + tamano_lote < len(nuevos):
+            procesados += len(lote)
+            porcentaje = procesados / total_pendientes * 100
+            transcurrido = time.monotonic() - inicio_proceso
+
+            print(
+                f"[PROGRESO] {procesados}/{total_pendientes} "
+                f"nuevos fragmentos persistidos "
+                f"| {porcentaje:.1f}% "
+                f"| Tiempo: {transcurrido:.1f}s",
+                flush=True,
+            )
+
+            if numero_lote < total_lotes and pausa_segundos > 0:
+                print(
+                    f"[ESPERA] Pausa preventiva: "
+                    f"{pausa_segundos:g} segundos",
+                    flush=True,
+                )
                 time.sleep(pausa_segundos)
+
+        print(
+            f"[FINALIZADO] Nuevos fragmentos: {procesados} "
+            f"| Conservados: {len(plan.conservar)}",
+            flush=True,
+)
 
         eliminados = 0
 

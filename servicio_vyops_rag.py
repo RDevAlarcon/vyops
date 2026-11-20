@@ -20,7 +20,7 @@ from langgraph.types import Command
 
 from grafo_supervision import construir_grafo
 from registro_rag import ejecutar_rag_medido
-from recuperacion import NOMBRE_COLECCION, VECTORSTORE_DIR
+from recuperacion import NOMBRE_COLECCION, obtener_directorio_vectorial
 from src.sincronizacion_vectorial import obtener_ids_existentes
 from traza_contexto import trace_id_var, generar_trace_id
 from inyeccion_prompt import filtrar_documentos_langchain
@@ -68,7 +68,9 @@ def capturar_auditoria():
 
 def verificar_indice():
     """Comprueba que existe un índice persistido sin reconstruirlo."""
-    if not VECTORSTORE_DIR.exists():
+    directorio = obtener_directorio_vectorial()
+
+    if not directorio.is_dir():
         raise RuntimeError("No existe el directorio del índice persistido.")
 
     ids = obtener_ids_existentes()
