@@ -1,14 +1,47 @@
+
 """Pruebas automatizadas de la evaluación del Bloque 16.
 
 Verifica la integración entre el cliente Gemini y el
 pipeline de métricas sin realizar solicitudes reales
 a servicios externos.
+
+El módulo comprueba seis comportamientos:
+
+    1. Evaluación de múltiples consultas con Gemini simulado.
+    2. Persistencia de resultados y métricas en archivos JSON.
+    3. Cálculo de promedios de precisión, cobertura y F1.
+    4. Tratamiento de evaluaciones sin resultados.
+    5. Selección de los casos con menor puntuación F1.
+    6. Ejecución integral del flujo de evaluación del Bloque 16.
+
+Las llamadas al modelo se sustituyen mediante monkeypatch
+por funciones simuladas que devuelven respuestas controladas.
+
+Los archivos generados durante las pruebas se almacenan
+en directorios temporales para evitar modificaciones
+sobre los resultados reales del proyecto.
+
+Las pruebas verifican el funcionamiento del proceso
+de evaluación, pero no miden el rendimiento real
+de Gemini ni la calidad semántica de sus respuestas.
 """
 
+# ============================================================
+# 1. DEPENDENCIAS
+# ============================================================
+
+# Módulo responsable de ejecutar evaluaciones,
+# almacenar resultados y calcular resúmenes.
 import evaluar_respuestas
 
+# Función del pipeline de texto utilizada para
+# calcular las métricas esperadas de manera independiente.
 from src.pipeline_texto import calcular_metricas
 
+
+# ============================================================
+# 2. EVALUACIÓN DE CONSULTAS CON GEMINI SIMULADO
+# ============================================================
 
 def test_evaluar_casos_bloque_16_sin_llamadas_reales(monkeypatch):
     """Comprueba la evaluación de varios casos con Gemini simulado.
@@ -18,6 +51,15 @@ def test_evaluar_casos_bloque_16_sin_llamadas_reales(monkeypatch):
     - Las respuestas simuladas se conserven correctamente.
     - Las métricas coincidan con el pipeline de evaluación.
     - El resultado contenga todas las claves esperadas.
+
+    Se utilizan dos consultas con respuestas controladas:
+    una coincide con su referencia y otra contiene
+    un año diferente al esperado.
+
+    Args:
+        monkeypatch:
+            Fixture de pytest que sustituye temporalmente
+            la función utilizada para consultar Gemini.
     """
 
     # Definimos dos casos de prueba independientes.
@@ -43,7 +85,19 @@ def test_evaluar_casos_bloque_16_sin_llamadas_reales(monkeypatch):
     consultas_recibidas: list[str] = []
 
     def consultar_modelo_simulado(pregunta: str) -> str:
-        """Devuelve una respuesta simulada sin utilizar Gemini."""
+        """Devuelve una respuesta simulada sin utilizar Gemini.
+
+        Args:
+            pregunta (str):
+                Consulta recibida desde el proceso de evaluación.
+
+        Returns:
+            str:
+                Respuesta simulada asociada a la consulta.
+
+        La función también registra cada invocación
+        para comprobar que no existan consultas repetidas.
+        """
 
         # Registramos cada invocación del cliente.
         consultas_recibidas.append(pregunta)
@@ -92,6 +146,11 @@ def test_evaluar_casos_bloque_16_sin_llamadas_reales(monkeypatch):
             "f1": metricas_esperadas["f1"],
         }
 
+
+# ============================================================
+# 3. PERSISTENCIA DE MÉTRICAS EN JSON
+# ============================================================
+
 def test_guardar_resultados_metricas_en_json(tmp_path):
     """Verifica el almacenamiento y recuperación de métricas en JSON.
 
@@ -100,6 +159,9 @@ def test_guardar_resultados_metricas_en_json(tmp_path):
     - Genere un archivo JSON válido.
     - Conserve las tildes y los caracteres especiales.
     - Mantenga los valores originales de las métricas.
+
+    La prueba utiliza dos resultados simulados
+    y comprueba que puedan recuperarse sin alteraciones.
 
     Args:
         tmp_path: Directorio temporal proporcionado por pytest
@@ -159,12 +221,19 @@ def test_guardar_resultados_metricas_en_json(tmp_path):
     # se hayan conservado correctamente.
     assert datos_recuperados == resultados
 
+
+# ============================================================
+# 4. CÁLCULO DE PROMEDIOS DE EVALUACIÓN
+# ============================================================
+
 def test_resumir_metricas_calcula_promedios():
     """Verifica el cálculo de promedios de evaluación.
 
     Comprueba que la función calcule correctamente
     la media aritmética de precisión, cobertura y F1
     utilizando varios resultados simulados.
+
+    Las tres métricas tienen un promedio esperado de 0.8.
 
     No realiza llamadas reales a Gemini.
     """
@@ -208,11 +277,21 @@ def test_resumir_metricas_calcula_promedios():
     assert round(resumen["f1"], 2) == 0.8
 
 
+# ============================================================
+# 5. EVALUACIÓN SIN RESULTADOS
+# ============================================================
+
 def test_resumir_metricas_sin_resultados():
     """Verifica que una evaluación vacía devuelva promedios cero.
 
     Comprueba que la función gestione correctamente
     una lista vacía sin provocar divisiones por cero.
+
+    Verificación:
+        - Precisión, cobertura y F1 son iguales a 0.0.
+
+    Este escenario contempla una evaluación
+    en la que todavía no existen resultados disponibles.
     """
 
     # Ejecutamos la función sin resultados disponibles.
@@ -225,6 +304,11 @@ def test_resumir_metricas_sin_resultados():
         "f1": 0.0,
     }
 
+
+# ============================================================
+# 6. IDENTIFICACIÓN DE CASOS CON MENOR F1
+# ============================================================
+
 def test_obtener_peores_casos_ordena_y_respeta_limite():
     """Verifica la selección de respuestas con menor F1.
 
@@ -233,6 +317,11 @@ def test_obtener_peores_casos_ordena_y_respeta_limite():
     - Respete la cantidad máxima solicitada.
     - No modifique el orden de la lista original.
     - Devuelva una lista vacía cuando el límite sea cero.
+
+    Los valores F1 utilizados son 0.9, 0.3, 0.7 y 0.5.
+
+    Al solicitar tres resultados, el orden esperado
+    corresponde a las puntuaciones 0.3, 0.5 y 0.7.
     """
 
     # Definimos cuatro evaluaciones simuladas.
@@ -304,6 +393,11 @@ def test_obtener_peores_casos_ordena_y_respeta_limite():
         limite=0,
     ) == []
 
+
+# ============================================================
+# 7. PRUEBA DE INTEGRACIÓN DEL BLOQUE 16
+# ============================================================
+
 def test_ejecutar_evaluacion_bloque_16_integracion(
     monkeypatch,
     tmp_path,
@@ -317,6 +411,10 @@ def test_ejecutar_evaluacion_bloque_16_integracion(
     - Los resultados se guarden en formato JSON.
     - Se presenten los promedios y los casos con menor F1.
     - No se realicen solicitudes reales a la API.
+
+    La prueba sustituye el cliente Gemini,
+    utiliza un directorio temporal y captura
+    la salida generada durante la evaluación.
 
     Args:
         monkeypatch: Permite sustituir temporalmente
@@ -348,7 +446,19 @@ def test_ejecutar_evaluacion_bloque_16_integracion(
     consultas_recibidas: list[str] = []
 
     def consultar_modelo_simulado(pregunta: str) -> str:
-        """Simula Gemini y registra cada consulta recibida."""
+        """Simula Gemini y registra cada consulta recibida.
+
+        Args:
+            pregunta (str):
+                Consulta recibida desde el flujo de evaluación.
+
+        Returns:
+            str:
+                Respuesta simulada asociada a la consulta.
+
+        El registro de consultas permite comprobar
+        que cada caso se procese exactamente una vez.
+        """
 
         consultas_recibidas.append(pregunta)
         return respuestas_simuladas[pregunta]

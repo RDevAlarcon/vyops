@@ -183,6 +183,17 @@ La indexación inicial e incremental se verificó previamente mediante pruebas l
 
 **Importante:** no utilizar `vectorstore/` como destino de indexación. Ese directorio corresponde al índice original del entorno de desarrollo y está protegido contra modificaciones por el módulo de indexación incremental.
 
+### 6.8 — Ejecución y validación del servicio RAG
+
+Requisitos previos: entorno virtual activo, dependencias instaladas, GEMINI_API_KEY configurada e índice vectorstore_profesor/ generado.
+```powershell
+python servicio_vyops_rag.py
+```
+Qué verifica: 387 fragmentos, recuperación documental, generación con citas, abstención segura, trazabilidad, protección contra inyección de prompts y supervisión humana simulada.
+
+Resultado esperado: RESULTADO FINAL: SERVICIO RAG GATE 2 - PASS.
+
+Advertencia: ejecuta dos consultas reales a Gemini y puede consumir cuota de API.
 
 #### Control de solicitudes durante la indexación
 
@@ -2219,461 +2230,48 @@ python -m pytest -q
 **Estado:** Bloque 32 implementado y validado
 como prototipo educativo.
 
-
 ## Cierre de Unidad 2 — Gate 2
 
-VyOps es un prototipo de asistente inteligente orientado a consultas documentales municipales. Utiliza recuperación aumentada por generación (RAG), modelos Gemini, LangChain y ChromaDB.
+**Proyecto:** VyOps — Asistente de IA para Gestión Operativa
+**Caso de uso:** Consultas documentales de la Municipalidad ficticia de Valle Claro
+**Estado:** PASS técnico local&#x20;
 
-El caso demostrativo corresponde a la **Municipalidad ficticia de Valle Claro**. Los documentos y procedimientos utilizados son simulados y tienen exclusivamente fines educativos.
+### Cumplimiento de los requisitos del Gate 2
 
-El proyecto está diseñado con una orientación modular y extensible. La arquitectura multiempresa, el aislamiento por organización y las integraciones futuras forman parte de su evolución prevista; no deben interpretarse como capacidades productivas ya desplegadas.
+| Requisito de SkillNest               | Implementación y evidencia                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Indexación y recuperación         | Pipeline incremental con Gemini y ChromaDB. Índice persistente de 387 fragmentos, sincronización idempotente y protección contra modificaciones accidentales. |
+| 2. Recuperación y métricas           | Recuperación documental con fuentes y citas. Evaluación de precisión, recall y F1 sobre cinco preguntas del corpus propio, con k=1, 3 y 5.                    |
+| 3. Costos y latencia                 | Instrumentación de tokens, costos y tiempos de ejecución. Validación real con Gemini: 2.412 tokens y costo estimado de USD 0,00083105.                        |
+| 4. Personalización                   | Evaluación de estrategias RAG, fine-tuning y PEFT mediante una matriz de decisión aplicada al caso municipal.                                                 |
+| 5. Logging y consumo                 | Registros JSON estructurados, sanitizados y correlacionados mediante `trace_id`, incluyendo consumo por consulta.                                             |
+| 6. Seguridad contra prompt injection | Filtrado aplicado a documentos recuperados. Prueba de bloqueo con documento sospechoso y sin invocación del LLM.                                              |
+| 7. Versionado y supervisión humana   | Registro de versiones de prompts y demostración con LangGraph utilizando `interrupt()` y `Command(resume=...)`.                                               |
+| 8. Matriz de riesgos                 | Cinco riesgos documentados: dos críticos, dos altos y uno medio, con medidas de mitigación y supervisión.                                                     |
+| 9. Reproducibilidad                  | Instalación, indexación, pruebas y ejecución del servicio RAG verificadas desde un clon limpio de GitHub.                                                     |
 
-### Estado actual y evidencia verificada
+### Validación final
 
-**Fecha de referencia:** 19 de noviembre de 2026.
+**Fecha:** 20 de noviembre de 2026
+**Commit validado:** `54f46b5`
 
-El prototipo cuenta con un flujo RAG funcional que recupera documentos, filtra contenido sospechoso, genera respuestas fundamentadas, comprueba la estructura de las citas y registra métricas de ejecución.
+- 30 documentos municipales ficticios y 387 fragmentos indexados.
+- 252 pruebas y 11 subpruebas aprobadas.
+- Dos consultas reales a Gemini: respuesta con tres citas válidas y abstención segura.
+- Trazabilidad, seguridad y supervisión humana simulada verificadas.
 
-### Arquitectura
+**Resultado de ejecución:**
 
 ```text
-Consulta del usuario
-        |
-        v
-Generación de embedding
-        |
-        v
-Recuperación en ChromaDB
-        |
-        v
-Filtrado de documentos sospechosos
-        |
-        v
-Construcción del prompt con fuentes
-        |
-        v
-Generación mediante Gemini
-        |
-        v
-Validación estructural de citas
-        |
-        v
-Respuesta y registro de métricas
+RESULTADO FINAL: SERVICIO RAG GATE 2 - PASS
 ```
 
-El flujo incorpora trazabilidad mediante `trace_id`, medición de latencia, conteo de tokens y estimación de costos.
+## Guía de ejecución — Gate 2
 
-### Corpus documental
+Para instalar VyOps desde cero, construir el índice vectorial
+y ejecutar la demostración de Gate 2, consultar:
 
-| Parámetro | Configuración |
-|---|---|
-| Documentos Markdown | 30 |
-| Fragmentos preparados | 387 |
-| Registros persistidos verificados | 387 |
-| Colección ChromaDB | `vyops_municipal_v1` |
-| Modelo de embeddings | `models/gemini-embedding-001` |
-| Modelo de generación | `gemini-3.5-flash-lite` |
-| Tamaño de fragmento | 800 |
-| Solapamiento | 120 |
-| Recuperación predeterminada | k=5 |
-
-Los documentos incluyen metadatos YAML, identificadores documentales y rutas de origen.
-
-La preparación genera identificadores deterministas a partir del documento, la posición del fragmento y una huella SHA-256 de su contenido.
-
-### Evaluación de recuperación
-
-Se evaluaron cinco preguntas con fuentes relevantes previamente definidas.
-
-| k | Precisión media | Recall medio | F1 medio |
-|---|---:|---:|---:|
-| 1 | 0,600 | 0,600 | 0,600 |
-| 3 | 0,600 | 0,800 | 0,660 |
-| 5 | 0,520 | 1,000 | 0,645 |
-
-La precisión contabiliza fragmentos recuperados y el recall contabiliza fuentes relevantes identificadas. Estas unidades diferentes limitan la interpretación conjunta de las métricas.
-
-La evaluación constituye una evidencia inicial, no una certificación de rendimiento general.
-
-### Ejecución real con Gemini
-
-En una ejecución documentada del 19 de noviembre de 2026 se obtuvieron:
-
-| Indicador | Resultado |
-|---|---:|
-| Fragmentos recuperados | 5 |
-| Latencia RAG | 4,707411 s |
-| Latencia completa | 5,785771 s |
-| Tokens de entrada | 1170 |
-| Tokens de salida | 51 |
-| Tokens totales de generación | 1221 |
-| Tokens de embedding contabilizados | 14 |
-| Costo total estimado | USD 0,0004806 |
-| Citas inválidas | 0 |
-
-Los valores corresponden a una ejecución individual. Las latencias pueden variar y los costos son estimaciones calculadas con las tarifas configuradas en el proyecto.
-
-### Demostración integral del Gate 2
-
-Se registraron dos consultas reales durante la demostración del servicio:
-
-- Una consulta sobre cancelación municipal obtuvo una respuesta con dos citas numéricas y cinco fragmentos recuperados y aceptados.
-- Una consulta sin respaldo suficiente produjo una abstención segura, sin citas, tras recuperar cinco fragmentos.
-
-En ambas consultas se registraron eventos de auditoría sanitizados con un `trace_id` compartido dentro de cada consulta y restablecido al finalizar. Las pruebas de filtrado de inyección y de supervisión humana incluyen demostraciones controladas; no equivalen a una autorización productiva.
-
-### Seguridad y observabilidad
-
-El sistema incluye:
-
-- Filtrado de documentos potencialmente afectados por prompt injection.
-- Tratamiento del contexto recuperado como información no confiable.
-- Respuesta de abstención cuando no existe evidencia suficiente.
-- Logs estructurados y sanitizados.
-- Identificadores de trazabilidad independientes por consulta.
-- Medición de tokens, latencia y costos.
-- Validación estructural de citas.
-
-La detección de inyecciones mediante patrones no garantiza cobertura completa. La validación de citas tampoco demuestra automáticamente que cada afirmación esté respaldada semánticamente.
-
-### Versionado y supervisión humana
-
-Se registraron dos versiones históricas del prompt RAG mediante Git y huellas SHA-256.
-
-El módulo de supervisión utiliza LangGraph con `interrupt()` y `Command(resume=...)` para demostrar decisiones de aprobación y rechazo.
-
-La supervisión es una simulación académica: no activa cambios reales ni incorpora autenticación de responsables.
-
-La matriz de riesgos documenta cinco escenarios, clasificados en dos críticos, dos altos y uno medio.
-
-### Instalación y ejecución local
-
-Requisitos:
-
-- Python y dependencias del proyecto.
-- Entorno virtual configurado.
-- Archivo `.env` con `GEMINI_API_KEY` para las operaciones que utilizan Gemini.
-- Índice ChromaDB previamente disponible para las consultas reales.
-
-Preparar el corpus sin generar embeddings:
-
-```powershell
-python indexar_corpus.py
-```
-
-Ejecutar la demostración integral:
-
-```powershell
-python servicio_vyops_rag.py
-```
-
-Evaluar la recuperación:
-
-```powershell
-python evaluar_recuperacion.py
-```
-
-Consultar el registro de prompts:
-
-```powershell
-python registro_prompts.py
-```
-
-Ejecutar la supervisión humana:
-
-```powershell
-python grafo_supervision.py
-```
-
-Mostrar la matriz de riesgos:
-
-```powershell
-python matriz_riesgos.py
-```
-
-Ejecutar las pruebas automatizadas:
-
-```powershell
-python -m pytest -q
-```
-
-**Resultado histórico de la suite pytest (19-11-2026):** 234 pruebas aprobadas y 11 subpruebas aprobadas, sin fallos ni advertencias. La validación posterior de 65 pruebas con unittest se documenta en la sección «Validación reproducible con Gemini real»; ambos conteos corresponden a ejecuciones y alcances diferentes.
-
-Las consultas y evaluaciones reales con Gemini pueden consumir cuota o generar costos.
-
-### Persistencia y reproducibilidad
-
-VyOps utiliza ChromaDB como almacenamiento vectorial local. El directorio original `vectorstore/` se mantiene protegido y excluido del repositorio mediante `.gitignore`.
-
-El corpus municipal ficticio contiene 30 documentos Markdown organizados en ocho categorías. La preparación determinista genera 387 fragmentos con identificadores únicos.
-
-El archivo `indexar_corpus.py` prepara y valida los documentos sin generar embeddings, modificar ChromaDB ni realizar llamadas a Gemini.
-
-El módulo `src/sincronizacion_vectorial.py` calcula las diferencias entre los identificadores almacenados y los deseados, determinando qué registros deben insertarse, conservarse o eliminarse.
-
-El módulo `src/indexacion_incremental.py` permite realizar la indexación inicial y sincronizaciones posteriores sobre un directorio vectorial alternativo, con bloqueo de operaciones concurrentes y controles para evitar eliminaciones accidentales.
-
-#### Reconstrucción del índice desde cero
-
-Después de instalar las dependencias y configurar `GEMINI_API_KEY` en `.env`, establecer:
-
-```dotenv
-VYOPS_VECTORSTORE_DIR=vectorstore_profesor
-```
-
-Ejecutar:
-
-```powershell
-python indexar_corpus.py
-python -m src.indexacion_incremental --directorio vectorstore_profesor
-```
-
-La primera instrucción valida la preparación documental. La segunda genera embeddings mediante Gemini y almacena los fragmentos en ChromaDB.
-
-La indexación con Gemini requiere conectividad, una clave válida y cuota disponible. Puede generar costos.
-
-#### Sincronización incremental
-
-Para sincronizar nuevamente el corpus:
-
-```powershell
-python -m src.indexacion_incremental --directorio vectorstore_profesor
-```
-
-El proceso identifica los fragmentos nuevos y conserva los existentes sin volver a insertarlos.
-
-La eliminación de registros obsoletos requiere una autorización explícita mediante:
-
-```powershell
-python -m src.indexacion_incremental --directorio vectorstore_profesor --aplicar-eliminaciones
-```
-
-La operación está sujeta a controles de integridad del corpus y límites de eliminación.
-
-#### Evidencia de validación
-
-Se realizaron pruebas locales aisladas utilizando `FakeEmbeddings`, sin consumir la API de Gemini ni modificar el índice original.
-
-Los resultados incluyeron:
-
-- Indexación inicial de 387 fragmentos.
-- Segunda ejecución idempotente, sin duplicados.
-- Incorporación de fragmentos nuevos.
-- Conservación de fragmentos existentes.
-- Eliminación controlada de registros obsoletos.
-- Bloqueo de eliminaciones que superan los límites de seguridad.
-- Verificación del directorio vectorial configurable.
-
-Estas pruebas acreditan el funcionamiento local de la indexación inicial e incremental. La validación complementaria desde un clon limpio con embeddings reales de Gemini se completó el 20 de noviembre de 2026.
-
-### Limitaciones
-
-- Corpus municipal completamente ficticio.
-- Evaluación de recuperación limitada a cinco preguntas.
-- Validación numérica de citas, sin comprobación semántica automática.
-- Costos estimados, sujetos a cambios de tarifas.
-- Supervisión humana simulada, sin autenticación productiva.
-- Persistencia vectorial local no incluida en Git.
-- Reconstrucción inicial e indexación incremental verificadas con embeddings simulados y, posteriormente, con Gemini real desde un clon limpio el 20 de noviembre de 2026.
-- Sin despliegue productivo ni integración con sistemas municipales reales.
-
-### Resultado del Gate 2
-
-VyOps dispone de evidencia funcional de integración RAG, recuperación documental, medición de rendimiento, seguridad, trazabilidad, versionado de prompts y supervisión humana.
-
-La aprobación formal del Gate 2 corresponde a la evaluación de SkillNest.
-
-### Validación reproducible con Gemini real — 20-11-2026
-
-Se completó una validación funcional de VyOps utilizando una copia limpia del repositorio, un entorno virtual independiente, Gemini y ChromaDB.
-
-La ejecución se realizó localmente en Windows PowerShell, sin modificar el directorio vectorial original `vectorstore/`.
-
-#### 1. Configuración del entorno
-
-Después de clonar el repositorio, crear y activar el entorno virtual e instalar las dependencias, configurar el archivo `.env`:
-
-```dotenv
-GEMINI_API_KEY=tu_clave_real
-VYOPS_VECTORSTORE_DIR=vectorstore_profesor
-VYOPS_EMBEDDING_PAUSA_SEGUNDOS=10
-```
-
-La clave API debe mantenerse privada y nunca incorporarse al repositorio.
-
-El directorio `vectorstore_profesor/` se utiliza para almacenar el índice ChromaDB generado durante la validación y las ejecuciones posteriores.
-
-#### 2. Preparación del corpus municipal
-
-Ejecutar:
-
-```powershell
-python indexar_corpus.py
-```
-
-Resultados verificados:
-
-- 30 documentos municipales ficticios.
-- 387 fragmentos preparados.
-- 387 identificadores únicos.
-- 0 identificadores duplicados.
-
-Esta operación no genera embeddings ni consume la API de Gemini.
-
-#### 3. Indexación real con Gemini
-
-Para generar y persistir los embeddings:
-
-```powershell
-python -m src.indexacion_incremental --directorio vectorstore_profesor
-```
-
-El indexador utiliza el modelo `models/gemini-embedding-001` y procesa hasta 10 fragmentos por lote, con pausas configurables entre lotes.
-
-La ejecución real confirmó:
-
-- 387 fragmentos insertados.
-- 387 registros persistidos en ChromaDB.
-- Conservación de identificadores únicos.
-- Finalización correcta de la sincronización.
-
-La indexación requiere conectividad, credenciales válidas y cuota disponible de Gemini. Puede generar costos.
-
-#### 4. Indicador de progreso de indexación
-
-El indexador incorpora mensajes de progreso en tiempo real mediante las siguientes etiquetas:
-
-| Etiqueta | Descripción |
-|---|---|
-| `[INICIO]` | Cantidad total de fragmentos preparados |
-| `[ESTADO]` | Fragmentos conservados y pendientes |
-| `[INDEXACION]` | Número del lote y cantidad de fragmentos |
-| `[PROGRESO]` | Fragmentos procesados, porcentaje y tiempo transcurrido |
-| `[ESPERA]` | Pausa preventiva antes del siguiente lote |
-| `[FINALIZADO]` | Resumen de fragmentos nuevos y conservados |
-| `[PASS]` | Indica que no existen fragmentos nuevos para indexar |
-
-El progreso de cada lote se informa después de que `db.add_documents()` termina correctamente. Si una operación falla, ese lote no se anuncia como completado.
-
-El porcentaje representa el avance de los fragmentos nuevos pendientes de inserción, no el porcentaje del corpus completo.
-
-#### 5. Sincronización incremental e idempotencia
-
-Para repetir la sincronización:
-
-```powershell
-python -m src.indexacion_incremental --directorio vectorstore_profesor
-```
-
-En la segunda ejecución real se verificó:
-
-- 0 fragmentos nuevos.
-- 387 fragmentos conservados.
-- 387 registros finales.
-- Sin duplicación de identificadores.
-- Sin necesidad de regenerar embeddings para los registros existentes.
-
-El proceso permite ejecutar sincronizaciones posteriores conservando los registros que no han cambiado.
-
-#### 6. Ejecución del servicio RAG
-
-Con el índice previamente construido, ejecutar:
-
-```powershell
-python servicio_vyops_rag.py
-```
-
-El servicio utiliza `VYOPS_VECTORSTORE_DIR` para localizar el índice persistido, evitando depender de una ruta fija.
-
-La demostración funcional real confirmó:
-
-- Reconocimiento de la colección `vyops_municipal_v1`.
-- Verificación de 387 registros persistidos con identificadores únicos.
-- Recuperación de documentos municipales.
-- Generación de una respuesta fundamentada con citas.
-- Abstención segura cuando la evidencia recuperada resulta insuficiente.
-- Filtrado de contenido con patrones de inyección de prompt.
-- Trazabilidad mediante identificadores independientes por consulta.
-- Registro estructurado de eventos y consumo de tokens.
-- Demostración de supervisión humana mediante un flujo simulado de interrupción y reanudación.
-
-El resultado de la ejecución fue:
-
-**`RESULTADO FINAL: SERVICIO RAG GATE 2 - PASS`**
-
-Este resultado corresponde a una validación funcional local y no constituye por sí mismo una certificación académica definitiva.
-
-#### 7. Consumo observado durante la demostración
-
-La ejecución real del servicio registró:
-
-| Métrica | Resultado |
-|---|---:|
-| Consultas RAG reales | 2 |
-| Tokens totales | 2.407 |
-| Costo total estimado | USD 0,00081855 |
-| Resultado funcional | PASS |
-
-Los valores corresponden a esa ejecución y pueden variar según el modelo, las tarifas y las respuestas del proveedor.
-
-#### 8. Pruebas automatizadas
-
-Para ejecutar las pruebas unitarias con `unittest`:
-
-```powershell
-python -m unittest discover -s tests -p "test_*.py" -v
-```
-
-**Resultado verificado el 20-11-2026:**
-
-```text
-Ran 65 tests in 0.159s
-
-OK
-```
-
-Entre las validaciones incluidas se encuentran:
-
-- Manejo de errores HTTP y reintentos de Gemini.
-- Cálculo y registro de costos.
-- Control de lotes y pausas de indexación.
-- Indicadores de progreso y sincronización sin cambios.
-- Manejo de errores de persistencia simulados.
-- Reconocimiento del directorio vectorial configurable.
-- Protección frente a inyecciones de prompt.
-- Registro de eventos y trazabilidad.
-- Protección de información sensible en los registros.
-- Validación de citas y abstención segura.
-
-Las pruebas automatizadas utilizan dependencias simuladas cuando corresponde, evitando consumir Gemini y modificar el índice original.
-
-#### 9. Seguridad y recuperación
-
-El proceso mantiene las siguientes medidas:
-
-- Protección del directorio original `vectorstore/` frente a escrituras del indexador incremental.
-- Configuración de un directorio alternativo mediante `VYOPS_VECTORSTORE_DIR`.
-- Bloqueo de indexaciones concurrentes.
-- Identificadores deterministas para evitar duplicaciones.
-- Conservación de registros existentes.
-- Eliminaciones sujetas a autorización explícita y controles de integridad.
-- Reintentos controlados para errores recuperables de Gemini.
-- Ausencia de confirmación de progreso cuando falla un lote.
-
-Si una ejecución se interrumpe, se puede volver a ejecutar la sincronización sobre el mismo directorio. El indexador calculará los registros pendientes a partir de los identificadores existentes.
-
-La recuperación de interrupciones y fallos parciales debe continuar validándose en escenarios de integración específicos.
-
-#### 10. Estado de validación
-
-Al 20-11-2026 se dispone de:
-
-- Indexación real con Gemini completada.
-- Índice persistido de 387 fragmentos.
-- Segunda sincronización real sin duplicaciones.
-- Servicio RAG funcional con recuperación y generación.
-- Demostración integral del Gate 2 con resultado PASS.
-- 65 pruebas automatizadas aprobadas.
+[Guía de instalación y ejecución de Gate 2](README_GATE2.md)
 
 ---
 

@@ -1,3 +1,47 @@
+
+"""Pruebas unitarias del pipeline de procesamiento de texto de VyOps.
+
+Este módulo verifica las funciones implementadas en
+src.pipeline_texto, desarrolladas durante los bloques
+15 y 16 del curso SkillNest.
+
+Las pruebas comprueban las siguientes capacidades:
+
+    1. Limpieza y normalización de texto.
+    2. Tokenización y conservación de palabras repetidas.
+    3. Integración de las etapas de procesamiento.
+    4. Vectorización mediante frecuencias de palabras.
+    5. Cálculo de coincidencias entre textos.
+    6. Cálculo de precisión, cobertura y F1.
+    7. Manejo de entradas vacías.
+    8. Identificación de limitaciones de las métricas léxicas.
+    9. Integración del pipeline completo de evaluación.
+
+El procesamiento utiliza comparaciones basadas en palabras
+y sus frecuencias, sin recurrir a modelos generativos
+ni a representaciones semánticas mediante embeddings.
+
+Además de verificar resultados correctos, algunas pruebas
+demuestran limitaciones importantes de las métricas:
+
+    - Los sinónimos pueden reducir artificialmente F1.
+    - Una respuesta con datos incorrectos puede obtener F1 alto.
+    - La omisión de una negación puede cambiar el significado
+      sin producir una penalización proporcional.
+
+Estas pruebas permiten distinguir la coincidencia léxica
+de la calidad semántica y factual de una respuesta.
+
+No realizan llamadas a Gemini ni modifican ChromaDB.
+"""
+
+
+# ============================================================
+# 1. DEPENDENCIAS DEL PIPELINE
+# ============================================================
+
+# Funciones responsables de la normalización, tokenización,
+# vectorización y evaluación de coincidencias entre textos.
 from src.pipeline_texto import (
     limpiar_texto,
     tokenizar,
@@ -9,12 +53,21 @@ from src.pipeline_texto import (
     calcular_metricas,
 )
 
+
+# ============================================================
+# 2. LIMPIEZA Y NORMALIZACIÓN DE TEXTO
+# ============================================================
+
 def test_limpiar_texto_normaliza_mayusculas_y_puntuacion():
     """Verifica que la limpieza normalice el formato del texto.
 
     Comprueba que se eliminen los signos de puntuación,
     se conviertan las letras a minúsculas y se reduzcan
     los espacios repetidos a uno solo.
+
+    La normalización permite comparar textos sin que
+    diferencias superficiales de escritura afecten
+    innecesariamente las coincidencias.
     """
 
     # Preparamos un texto con mayúsculas, puntuación
@@ -28,12 +81,21 @@ def test_limpiar_texto_normaliza_mayusculas_y_puntuacion():
     # pero sin diferencias artificiales de formato.
     assert resultado == "hola mundo cómo estás"
 
+
+# ============================================================
+# 3. TOKENIZACIÓN DE TEXTO
+# ============================================================
+
 def test_tokenizar_conserva_palabras_repetidas():
     """Verifica que la tokenización conserve todas las palabras.
 
     Comprueba que el texto limpio se convierta en una lista
     de tokens, manteniendo el orden original y las palabras
     repetidas para su posterior análisis de frecuencias.
+
+    Esta conservación es importante porque las métricas
+    posteriores consideran la cantidad de apariciones
+    de cada palabra.
     """
 
     # Preparamos un texto previamente normalizado que
@@ -46,12 +108,20 @@ def test_tokenizar_conserva_palabras_repetidas():
     # Comprobamos que se conserven el orden y las repeticiones.
     assert resultado == ["el", "gato", "y", "el", "perro"]
 
+
+# ============================================================
+# 4. INTEGRACIÓN DE LIMPIEZA Y TOKENIZACIÓN
+# ============================================================
+
 def test_procesar_texto_integra_limpieza_y_tokenizacion():
     """Verifica la integración de las etapas del pipeline.
 
     Comprueba que procesar_texto() convierta el contenido
     a minúsculas, elimine la puntuación y devuelva una lista
     de tokens conservando las palabras repetidas.
+
+    Esta prueba verifica el resultado conjunto de las
+    etapas de limpieza y tokenización.
     """
 
     # Preparamos una entrada con mayúsculas, puntuación
@@ -70,6 +140,9 @@ def test_procesar_texto_vacio_devuelve_lista_vacia():
 
     Comprueba que una cadena vacía o formada únicamente
     por espacios y puntuación no genere tokens.
+
+    Esta prueba cubre entradas que, después de normalizarse,
+    no contienen palabras útiles para el análisis.
     """
 
     # Definimos entradas que no contienen palabras.
@@ -84,12 +157,20 @@ def test_procesar_texto_vacio_devuelve_lista_vacia():
         resultado = procesar_texto(texto)
         assert resultado == []
 
+
+# ============================================================
+# 5. VECTORIZACIÓN POR FRECUENCIA DE PALABRAS
+# ============================================================
+
 def test_vectorizar_cuenta_frecuencia_de_palabras():
     """Verifica que la vectorización cuente las palabras repetidas.
 
     Comprueba que cada palabra aparezca como clave
     del diccionario y que su valor corresponda
     al número de veces que aparece en los tokens.
+
+    La representación resultante es un diccionario
+    de frecuencias, no un embedding semántico.
     """
 
     # Preparamos una lista de tokens con palabras repetidas.
@@ -112,6 +193,9 @@ def test_vectorizar_lista_vacia():
 
     Comprueba que la función devuelva un diccionario
     vacío cuando no existen palabras para contar.
+
+    Este comportamiento permite representar una entrada
+    sin tokens sin introducir frecuencias artificiales.
     """
 
     # Ejecutamos la vectorización sin tokens.
@@ -120,11 +204,19 @@ def test_vectorizar_lista_vacia():
     # Confirmamos que no se generen registros.
     assert resultado == {}
 
+
+# ============================================================
+# 6. CÁLCULO DE COINCIDENCIA ENTRE TEXTOS
+# ============================================================
+
 def test_calcular_coincidencia_sin_normalizacion():
     """Verifica la coincidencia antes de limpiar los textos.
 
     Comprueba que las diferencias de mayúsculas y
     puntuación afecten la comparación de palabras.
+
+    En este escenario, la coincidencia se calcula
+    utilizando los textos sin normalización previa.
     """
 
     # Preparamos dos textos con el mismo contenido,
@@ -149,6 +241,9 @@ def test_calcular_coincidencia_con_normalizacion():
 
     Comprueba que las diferencias de mayúsculas y
     puntuación desaparezcan después de procesar los textos.
+
+    Al normalizar ambos contenidos, las palabras
+    de la referencia coinciden con las de la respuesta.
     """
 
     # Utilizamos los mismos textos de la prueba anterior.
@@ -171,6 +266,9 @@ def test_calcular_coincidencia_referencia_vacia():
 
     Comprueba que la función devuelva cero cuando
     no existen palabras de referencia para comparar.
+
+    Esta validación también comprueba que el cálculo
+    no produzca un error por división entre cero.
     """
 
     # Evaluamos una referencia vacía.
@@ -182,6 +280,11 @@ def test_calcular_coincidencia_referencia_vacia():
     # Confirmamos que se evita una división por cero.
     assert resultado == 0.0
 
+
+# ============================================================
+# 7. CONTEO DE COINCIDENCIAS CON REPETICIONES
+# ============================================================
+
 def test_contar_coincidencias_considera_repeticiones():
     """Verifica que las coincidencias respeten las frecuencias.
 
@@ -191,6 +294,10 @@ def test_contar_coincidencias_considera_repeticiones():
 
     También verifica que las palabras adicionales
     no aumenten artificialmente las coincidencias.
+
+    Este comportamiento permite contar coincidencias
+    considerando repeticiones, en lugar de limitarse
+    a identificar palabras únicas compartidas.
     """
 
     # La referencia contiene dos apariciones de "el"
@@ -215,6 +322,11 @@ def test_contar_coincidencias_considera_repeticiones():
     # "duerme" falta y "sillón" no pertenece a la referencia.
     assert resultado == 3
 
+
+# ============================================================
+# 8. PRECISIÓN, COBERTURA Y F1
+# ============================================================
+
 def test_calcular_precision_cobertura_f1_con_repeticiones():
     """Verifica las métricas considerando palabras repetidas.
 
@@ -222,6 +334,14 @@ def test_calcular_precision_cobertura_f1_con_repeticiones():
     Comprueba que las coincidencias se calculen respetando
     la frecuencia de cada token y que F1 combine
     correctamente precisión y cobertura.
+
+    La precisión compara las coincidencias con la cantidad
+    de tokens de la respuesta.
+
+    La cobertura compara las coincidencias con la cantidad
+    de tokens de la referencia.
+
+    F1 combina ambas métricas mediante su media armónica.
     """
 
     # Preparamos los textos originales del ejemplo.
@@ -254,6 +374,9 @@ def test_calcular_precision_cobertura_f1_con_listas_vacias():
     Comprueba que la función devuelva cero en las tres
     métricas cuando falta la referencia, la respuesta
     o ambas listas de tokens.
+
+    Se evalúan los tres casos para verificar que
+    el cálculo gestione correctamente denominadores vacíos.
     """
 
     # Definimos los tres escenarios que podrían
@@ -278,6 +401,11 @@ def test_calcular_precision_cobertura_f1_con_listas_vacias():
             "f1": 0.0,
         }
 
+
+# ============================================================
+# 9. LIMITACIÓN: SINÓNIMOS Y SIGNIFICADO
+# ============================================================
+
 def test_f1_penaliza_sinonimos_con_mismo_significado():
     """Demuestra que F1 no reconoce equivalencias semánticas.
 
@@ -287,6 +415,9 @@ def test_f1_penaliza_sinonimos_con_mismo_significado():
     La métrica únicamente reconoce las palabras
     compartidas y no identifica que "auto" y "vehículo",
     o "veloz" y "rápido", son equivalentes en este contexto.
+
+    Esta prueba ilustra por qué una coincidencia léxica
+    baja no implica necesariamente una respuesta incorrecta.
     """
 
     # Definimos las dos oraciones del ejemplo de SkillNest.
@@ -310,6 +441,11 @@ def test_f1_penaliza_sinonimos_con_mismo_significado():
     assert resultado["cobertura"] == 0.5
     assert resultado["f1"] == 0.5
 
+
+# ============================================================
+# 10. LIMITACIÓN: ERRORES FACTUALES
+# ============================================================
+
 def test_f1_alto_con_dato_factual_incorrecto():
     """Demuestra que F1 puede ser alto pese a un dato incorrecto.
 
@@ -319,6 +455,9 @@ def test_f1_alto_con_dato_factual_incorrecto():
     Verifica que la métrica reconozca las coincidencias
     de palabras, pero no detecte por sí misma que
     el año indicado en la respuesta es incorrecto.
+
+    Esta prueba evidencia que un resultado F1 elevado
+    no garantiza exactitud factual.
     """
 
     # Definimos una referencia con el año correcto
@@ -343,9 +482,15 @@ def test_f1_alto_con_dato_factual_incorrecto():
     # Los años son diferentes y no coinciden.
     assert resultado["precision"] == 0.8
     assert resultado["cobertura"] == 0.8
+
     # Comparamos con una tolerancia decimal para evitar
     # diferencias propias de la representación de números float.
     assert round(resultado["f1"], 2) == 0.8
+
+
+# ============================================================
+# 11. LIMITACIÓN: OMISIÓN DE NEGACIONES
+# ============================================================
 
 def test_f1_alto_cuando_se_omite_una_negacion():
     """Demuestra que F1 no detecta inversiones de significado.
@@ -356,6 +501,9 @@ def test_f1_alto_cuando_se_omite_una_negacion():
     Aunque las oraciones expresan afirmaciones opuestas,
     la mayoría de sus tokens coinciden y producen
     una puntuación F1 elevada.
+
+    Este escenario demuestra que la métrica no interpreta
+    las relaciones lógicas entre las palabras.
     """
 
     # La referencia contiene la negación "no".
@@ -386,6 +534,11 @@ def test_f1_alto_cuando_se_omite_una_negacion():
     # F1 sigue siendo elevado pese al cambio de significado.
     assert round(resultado["f1"], 2) == 0.91
 
+
+# ============================================================
+# 12. INTEGRACIÓN DEL PIPELINE COMPLETO DE MÉTRICAS
+# ============================================================
+
 def test_calcular_metricas_integra_pipeline_completo():
     """Verifica la integración de limpieza, tokenización y métricas.
 
@@ -395,6 +548,10 @@ def test_calcular_metricas_integra_pipeline_completo():
 
     También verifica que los resultados sean equivalentes
     a los obtenidos al ejecutar manualmente el pipeline.
+
+    Esta prueba confirma que la función de integración
+    utiliza de forma coherente las etapas individuales
+    del procesamiento y evaluación.
     """
 
     # Definimos dos textos originales que incluyen

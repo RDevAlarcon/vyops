@@ -1,35 +1,83 @@
-"""Evaluación de respuestas generadas por Gemini.
 
-Bloque 15 — SkillNest.
+"""Evalúa respuestas generadas por Gemini en el proyecto VyOps.
 
-Este módulo permitirá comparar respuestas generadas por
-un modelo de inteligencia artificial con textos de referencia.
+Bloques 15 y 16 — SkillNest.
 
-Se evaluará la coincidencia de vocabulario antes y después
-de aplicar el pipeline de limpieza y tokenización de VyOps.
+Este módulo implementa dos mecanismos de evaluación
+de respuestas generadas por modelos de lenguaje.
+
+Bloque 15:
+    Compara las respuestas de Gemini con textos de referencia
+    mediante coincidencia léxica, antes y después de aplicar
+    el pipeline de limpieza y tokenización de VyOps.
+
+Bloque 16:
+    Amplía la evaluación incorporando métricas de precisión,
+    cobertura y F1, junto con funciones para:
+        - Evaluar conjuntos de preguntas y referencias.
+        - Guardar resultados en archivos JSON.
+        - Calcular promedios de las métricas.
+        - Identificar los casos con menor puntuación F1.
+        - Presentar resúmenes en la terminal.
+
+Las métricas permiten comparar el vocabulario utilizado
+en las respuestas, pero no garantizan su corrección
+semántica, factual o documental.
+
+El módulo utiliza el cliente de Gemini y el pipeline
+de procesamiento de texto existentes en VyOps.
+
+Las funciones de evaluación realizan solicitudes reales
+a Gemini cuando son ejecutadas.
+
+La importación del módulo no inicia automáticamente
+las evaluaciones.
 """
-# Permite guardar los resultados de evaluación en formato JSON.
+
+# ============================================================
+# 1. DEPENDENCIAS
+# ============================================================
+
+# Permite serializar los resultados de evaluación
+# para conservarlos en archivos JSON.
 import json
-# Permite leer los argumentos proporcionados desde PowerShell.
+
+# Permite interpretar los argumentos proporcionados
+# desde PowerShell u otra terminal.
 import sys
-# Facilita la construcción de rutas independientes
-# del sistema operativo utilizado.
+
+# Facilita la construcción de rutas de archivos
+# independientes del sistema operativo.
 from pathlib import Path
+
+# Cliente modular encargado de consultar Gemini.
 from src.cliente_api import consultar_modelo
-# Importamos la función que integra el procesamiento
-# de texto con las métricas de precisión, cobertura y F1.
+
+# Funciones del pipeline de texto de VyOps.
+#
+# calcular_coincidencia compara vocabulario con
+# normalización opcional.
+#
+# calcular_metricas calcula precisión, cobertura y F1.
 from src.pipeline_texto import calcular_coincidencia, calcular_metricas
 
-# Casos de evaluación correspondientes al Bloque 16.
+
+# ============================================================
+# 2. CASOS DE EVALUACIÓN — BLOQUE 16
+# ============================================================
+
+# Conjunto de evaluación utilizado para medir
+# precisión, cobertura y F1.
 #
 # Cada caso contiene:
-# - consulta: pregunta que enviaremos al modelo Gemini.
-# - referencia: respuesta esperada con la que compararemos
-#   el texto generado por el modelo.
+#     consulta: Pregunta enviada al modelo.
+#     referencia: Texto esperado para la comparación.
 #
-# Estas referencias permiten calcular coincidencias léxicas,
-# pero no constituyen una evaluación semántica ni factual completa.
-
+# Las referencias son breves y permiten una evaluación
+# léxica reproducible sobre las respuestas obtenidas.
+#
+# No representan todas las respuestas válidas posibles
+# ni constituyen una verificación factual completa.
 CASOS_EVALUACION_BLOQUE_16: list[dict[str, str]] = [
     {
         "consulta": "¿Qué es Python?",
@@ -49,55 +97,71 @@ CASOS_EVALUACION_BLOQUE_16: list[dict[str, str]] = [
     },
 ]
 
+
+# ============================================================
+# 3. EVALUACIÓN DE RESPUESTAS — BLOQUE 16
+# ============================================================
+
 def evaluar_casos_bloque_16(
     casos: list[dict[str, str]],
 ) -> list[dict[str, str | float]]:
     """Evalúa respuestas de Gemini mediante precisión, cobertura y F1.
 
-    Recorre los casos de evaluación definidos para el Bloque 16.
-    Para cada caso, consulta una sola vez al modelo Gemini,
-    compara la respuesta con el texto de referencia y
-    almacena las métricas obtenidas.
+    Recorre los casos proporcionados y consulta Gemini
+    una vez por cada pregunta.
+
+    Compara cada respuesta con su referencia utilizando
+    el pipeline de procesamiento de texto de VyOps.
 
     Args:
-        casos: Lista de diccionarios que contienen las claves
-            "consulta" y "referencia".
+        casos: Lista de diccionarios que contienen:
+            - consulta: Pregunta enviada a Gemini.
+            - referencia: Respuesta utilizada como referencia.
 
     Returns:
-        Lista de diccionarios con la consulta, la respuesta
-        generada y las métricas de precisión, cobertura y F1.
+        Lista de diccionarios con los campos:
+            - consulta: Pregunta evaluada.
+            - respuesta: Texto generado por Gemini.
+            - precision: Precisión léxica calculada.
+            - cobertura: Cobertura léxica calculada.
+            - f1: Media armónica de ambas métricas.
 
-        Si la lista de casos está vacía, devuelve una lista vacía.
+        Si la lista de entrada está vacía,
+        devuelve una lista vacía.
 
-    Nota:
-        Esta función realiza llamadas reales a Gemini cuando
-        se ejecuta. Definirla no genera solicitudes a la API.
+    Notes:
+        La función realiza una llamada a consultar_modelo()
+        por cada caso de evaluación.
+
+        No guarda automáticamente los resultados en disco.
+
+        Las excepciones producidas por el cliente o el
+        pipeline pueden propagarse al código que la invoca.
     """
 
-    # Preparamos una lista para almacenar los resultados
-    # de todas las consultas evaluadas.
+    # Almacena los resultados de cada consulta evaluada.
     resultados: list[dict[str, str | float]] = []
 
-    # Recorremos los casos definidos para el Bloque 16.
+    # Procesa los casos en el orden recibido.
     for caso in casos:
 
-        # Recuperamos la pregunta y su respuesta de referencia.
+        # Recupera la pregunta y el texto de referencia.
         consulta = caso["consulta"]
         referencia = caso["referencia"]
 
-        # Consultamos Gemini una sola vez por pregunta,
-        # reutilizando el cliente existente de VyOps.
+        # Realiza una solicitud al cliente de Gemini
+        # por cada caso de evaluación.
         respuesta = consultar_modelo(consulta)
 
-        # Evaluamos la respuesta utilizando el pipeline
-        # de limpieza, tokenización y métricas.
+        # Calcula las métricas mediante el pipeline
+        # de limpieza y tokenización de VyOps.
         metricas = calcular_metricas(
             referencia,
             respuesta,
         )
 
-        # Guardamos la pregunta, la respuesta generada
-        # y las tres métricas calculadas.
+        # Construye el registro de evaluación
+        # con la respuesta y las métricas calculadas.
         resultado: dict[str, str | float] = {
             "consulta": consulta,
             "respuesta": respuesta,
@@ -106,12 +170,14 @@ def evaluar_casos_bloque_16(
             "f1": metricas["f1"],
         }
 
-        # Incorporamos el resultado a la lista general.
         resultados.append(resultado)
 
-    # Devolvemos todos los resultados para que puedan
-    # guardarse posteriormente en un archivo JSON.
     return resultados
+
+
+# ============================================================
+# 4. PERSISTENCIA DE RESULTADOS
+# ============================================================
 
 def guardar_resultados_metricas(
     resultados: list[dict[str, str | float]],
@@ -119,45 +185,49 @@ def guardar_resultados_metricas(
 ) -> None:
     """Guarda los resultados de evaluación en formato JSON.
 
-    Almacena las consultas, respuestas generadas y métricas
-    de precisión, cobertura y F1 en un archivo reutilizable.
+    Serializa la lista de evaluaciones y la escribe
+    en la ruta indicada.
 
     Args:
-        resultados: Lista de resultados obtenidos durante
-            la evaluación de las respuestas de Gemini.
-        ruta_archivo: Ruta donde se guardará el archivo JSON.
+        resultados: Colección de resultados que contiene
+            consultas, respuestas y métricas.
+        ruta_archivo: Ruta de destino, expresada como
+            cadena o como objeto Path.
 
     Returns:
-        None. Los resultados se escriben en el archivo indicado.
+        None: Los resultados se escriben en disco.
 
-    Nota:
-        La función crea los directorios necesarios si no existen.
-        Utiliza UTF-8 para conservar correctamente los caracteres
-        del español y no realiza llamadas a la API de Gemini.
+    Notes:
+        Crea los directorios de destino cuando no existen.
+
+        Utiliza codificación UTF-8 y conserva caracteres
+        del español mediante ensure_ascii=False.
+
+        El modo de apertura "w" reemplaza el contenido
+        de un archivo existente en la misma ruta.
+
+        Esta función no consulta Gemini.
     """
 
-    # Convertimos la ruta recibida en un objeto Path
-    # para trabajar de forma independiente del sistema operativo.
+    # Normaliza la representación de la ruta de destino.
     ruta = Path(ruta_archivo)
 
-    # Creamos el directorio de destino si todavía no existe.
-    # parents=True permite crear directorios intermedios.
-    # exist_ok=True evita errores cuando ya está creado.
+    # Crea el directorio de destino y sus directorios
+    # intermedios cuando sea necesario.
     ruta.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    # Abrimos el archivo en modo escritura con codificación UTF-8.
+    # Abre el archivo en modo escritura.
     # El administrador de contexto garantiza su cierre.
     with ruta.open(
         mode="w",
         encoding="utf-8",
     ) as archivo:
 
-        # Guardamos los resultados como JSON.
-        # ensure_ascii=False conserva tildes y caracteres especiales.
-        # indent=2 facilita la lectura del archivo.
+        # Serializa los resultados con una indentación
+        # legible y preservando los caracteres Unicode.
         json.dump(
             resultados,
             archivo,
@@ -165,36 +235,44 @@ def guardar_resultados_metricas(
             indent=2,
         )
 
+
+# ============================================================
+# 5. RESUMEN DE MÉTRICAS
+# ============================================================
+
 def resumir_metricas(
     resultados: list[dict[str, str | float]],
 ) -> dict[str, float]:
-    """Calcula los promedios de las métricas de evaluación.
+    """Calcula promedios de precisión, cobertura y F1.
 
-    Recorre los resultados obtenidos durante la evaluación
-    de respuestas generadas por Gemini y calcula el promedio
-    aritmético de precisión, cobertura y F1.
+    Obtiene la media aritmética de cada métrica
+    considerando todos los resultados recibidos.
 
     Args:
-        resultados: Lista de diccionarios que contienen
-            las métricas de cada respuesta evaluada.
+        resultados: Lista de evaluaciones con los campos
+            precision, cobertura y f1.
 
     Returns:
-        Diccionario con los promedios de:
-            precision: Precisión promedio.
-            cobertura: Cobertura promedio.
-            f1: Puntuación F1 promedio.
+        Diccionario con:
+            - precision: Precisión promedio.
+            - cobertura: Cobertura promedio.
+            - f1: Puntuación F1 promedio.
 
-        Si no existen resultados, devuelve cero
+        Si la lista está vacía, devuelve 0.0
         para las tres métricas.
 
-    Nota:
-        Los promedios se calculan sobre los casos evaluados,
-        asignando el mismo peso a cada respuesta.
-        No representan una evaluación semántica o factual.
+    Notes:
+        Cada caso tiene el mismo peso en el promedio.
+
+        Los valores se convierten a float antes
+        de realizar las operaciones.
+
+        Los promedios no representan una evaluación
+        semántica ni una comprobación factual.
     """
 
-    # Si no existen resultados, devolvemos valores
-    # neutros y evitamos una división por cero.
+    # Evita divisiones por cero cuando no existen
+    # evaluaciones disponibles.
     if not resultados:
         return {
             "precision": 0.0,
@@ -202,137 +280,151 @@ def resumir_metricas(
             "f1": 0.0,
         }
 
-    # Obtenemos la cantidad total de respuestas evaluadas.
     cantidad_resultados = len(resultados)
 
-    # Sumamos los valores de precisión de todos los casos
-    # y dividimos por la cantidad de respuestas.
+    # Calcula la media aritmética de precisión.
     precision_promedio = (
         sum(float(resultado["precision"]) for resultado in resultados)
         / cantidad_resultados
     )
 
-    # Calculamos el promedio de cobertura.
+    # Calcula la media aritmética de cobertura.
     cobertura_promedio = (
         sum(float(resultado["cobertura"]) for resultado in resultados)
         / cantidad_resultados
     )
 
-    # Calculamos el promedio de las puntuaciones F1.
+    # Calcula la media aritmética de F1.
     f1_promedio = (
         sum(float(resultado["f1"]) for resultado in resultados)
         / cantidad_resultados
     )
 
-    # Devolvemos los tres promedios en un diccionario
-    # para facilitar su presentación y reutilización.
     return {
         "precision": precision_promedio,
         "cobertura": cobertura_promedio,
         "f1": f1_promedio,
     }
 
+
+# ============================================================
+# 6. IDENTIFICACIÓN DE CASOS CON MENOR F1
+# ============================================================
+
 def obtener_peores_casos(
     resultados: list[dict[str, str | float]],
     limite: int = 3,
 ) -> list[dict[str, str | float]]:
-    """Identifica las respuestas con menor puntuación F1.
+    """Selecciona las evaluaciones con menor puntuación F1.
 
-    Ordena los resultados de evaluación desde la puntuación
-    F1 más baja hasta la más alta y devuelve una cantidad
-    limitada de casos para su revisión.
+    Ordena los resultados de forma ascendente por F1
+    y devuelve como máximo la cantidad solicitada.
 
     Args:
-        resultados: Lista de evaluaciones que contienen
-            las respuestas y sus métricas.
-        limite: Cantidad máxima de casos que se devolverán.
-            Por defecto, se seleccionan los tres peores.
+        resultados: Lista de evaluaciones con sus métricas.
+        limite: Número máximo de casos que se devolverán.
+            Su valor predeterminado es 3.
 
     Returns:
-        Lista de resultados ordenados por F1 ascendente.
+        Lista de evaluaciones ordenadas por F1 ascendente.
 
-        Si no existen resultados o el límite es cero,
-        devuelve una lista vacía.
+        Devuelve una lista vacía si no existen resultados
+        o si el límite solicitado es cero.
 
     Raises:
-        ValueError: Si el límite es negativo.
+        ValueError:
+            Si el límite es negativo.
 
-    Nota:
-        Un F1 bajo señala poca coincidencia léxica,
-        pero no demuestra necesariamente que la respuesta
-        sea incorrecta. Los casos deben revisarse
-        considerando su significado y exactitud factual.
+    Notes:
+        sorted() genera una nueva lista y conserva
+        el orden original de los resultados recibidos.
+
+        Los casos con menor F1 presentan menor coincidencia
+        léxica, pero no necesariamente son incorrectos
+        desde el punto de vista semántico o factual.
     """
 
-    # Evitamos aceptar cantidades negativas de resultados.
+    # Rechaza límites negativos.
     if limite < 0:
         raise ValueError(
             "El límite de casos no puede ser negativo."
         )
 
-    # Si no existen resultados o no se solicita ninguno,
-    # devolvemos una lista vacía.
+    # Evita ordenar cuando no hay resultados
+    # o cuando no se solicita ningún caso.
     if not resultados or limite == 0:
         return []
 
-    # Ordenamos los resultados desde el menor F1.
-    # sorted() genera una nueva lista, por lo que
-    # no modifica el orden de los resultados originales.
+    # Ordena las evaluaciones por puntuación F1.
     resultados_ordenados = sorted(
         resultados,
         key=lambda resultado: float(resultado["f1"]),
     )
 
-    # Seleccionamos únicamente la cantidad solicitada.
+    # Selecciona hasta la cantidad máxima solicitada.
     peores_casos = resultados_ordenados[:limite]
 
-    # Devolvemos los casos que requieren revisión.
     return peores_casos
 
+
+# ============================================================
+# 7. EJECUCIÓN COMPLETA — BLOQUE 16
+# ============================================================
+
 def ejecutar_evaluacion_bloque_16() -> None:
-    """Ejecuta la evaluación completa de respuestas del Bloque 16.
+    """Ejecuta el proceso de evaluación del Bloque 16.
 
-    Consulta Gemini una sola vez por cada caso configurado,
-    calcula precisión, cobertura y F1, guarda los resultados
-    en JSON y presenta un resumen en la terminal.
+    Consulta Gemini para los casos configurados,
+    calcula precisión, cobertura y F1, guarda los
+    resultados y presenta un resumen en consola.
 
-    También identifica los tres casos con menor F1 para
-    facilitar su revisión posterior.
+    También identifica los tres casos con menor F1
+    para facilitar su revisión posterior.
 
-    Nota:
+    Returns:
+        None: Los resultados se guardan en JSON
+        y el resumen se presenta en la terminal.
+
+    Notes:
         Esta función realiza llamadas reales a Gemini.
-        No debe ejecutarse durante las pruebas unitarias.
+
+        Los resultados se guardan en:
+            resultados/resultados_metricas.json
+
+        La ruta es relativa al directorio de trabajo
+        desde el cual se ejecuta el programa.
+
+        La ejecución puede sobrescribir un archivo
+        de resultados existente en esa ubicación.
     """
 
-    # Evaluamos las consultas configuradas para el Bloque 16.
-    # Cada pregunta genera una sola solicitud a Gemini.
+    # Evalúa los casos configurados para el Bloque 16.
     resultados = evaluar_casos_bloque_16(
         CASOS_EVALUACION_BLOQUE_16
     )
 
-    # Definimos la ruta del archivo donde almacenaremos
-    # las respuestas y sus métricas.
+    # Define la ubicación del archivo JSON de resultados.
     ruta_resultados = (
         Path("resultados") / "resultados_metricas.json"
     )
 
-    # Guardamos las evaluaciones para poder analizarlas
-    # posteriormente sin volver a consultar Gemini.
+    # Conserva las evaluaciones para analizarlas
+    # posteriormente sin repetir las consultas.
     guardar_resultados_metricas(
         resultados,
         ruta_resultados,
     )
 
-    # Calculamos los promedios de todas las evaluaciones.
+    # Calcula los promedios de las métricas.
     resumen = resumir_metricas(resultados)
 
-    # Identificamos los tres casos con menor puntuación F1.
+    # Selecciona los casos con menor F1.
     peores_casos = obtener_peores_casos(
         resultados,
         limite=3,
     )
 
-    # Presentamos el resumen general en la terminal.
+    # Presenta el resumen general de evaluación.
     print("\n" + "=" * 60)
     print("BLOQUE 16 — EVALUACIÓN DE RESPUESTAS GEMINI")
     print("=" * 60)
@@ -342,9 +434,8 @@ def ejecutar_evaluacion_bloque_16() -> None:
     print(f"Cobertura promedio: {resumen['cobertura']:.2%}")
     print(f"F1 promedio: {resumen['f1']:.2%}")
 
-    # Mostramos las preguntas con menor F1.
-    # Estas requieren revisión, pero no necesariamente
-    # contienen errores semánticos o factuales.
+    # Muestra los casos que requieren revisión
+    # por presentar menor coincidencia léxica.
     print("\nCASOS CON MENOR F1")
 
     for posicion, caso in enumerate(peores_casos, start=1):
@@ -353,15 +444,22 @@ def ejecutar_evaluacion_bloque_16() -> None:
             f"| F1: {caso['f1']:.2%}"
         )
 
-    # Informamos dónde quedaron almacenados los resultados.
     print(f"\nResultados guardados en: {ruta_resultados}")
 
-# Definimos tres casos de evaluación.
-# Cada caso contiene una pregunta para Gemini y una respuesta
-# de referencia que utilizaremos para calcular coincidencias.
-# Las referencias son breves y contienen información verificable.
-# No representan todas las respuestas válidas posibles.
 
+# ============================================================
+# 8. CASOS DE EVALUACIÓN — BLOQUE 15
+# ============================================================
+
+# Casos utilizados para comparar coincidencia léxica
+# antes y después de la normalización del texto.
+#
+# Cada caso contiene:
+#     pregunta: Consulta enviada al modelo.
+#     referencia: Texto esperado para la comparación.
+#
+# Las referencias no representan necesariamente
+# todas las formulaciones correctas posibles.
 CASOS_EVALUACION = [
     {
         "pregunta": "¿Cuál es la capital de Chile? Responde brevemente.",
@@ -377,57 +475,68 @@ CASOS_EVALUACION = [
     },
 ]
 
+
+# ============================================================
+# 9. EVALUACIÓN DE COINCIDENCIA — BLOQUE 15
+# ============================================================
+
 def evaluar_respuestas() -> None:
-    """Evalúa tres respuestas reales generadas por Gemini.
+    """Compara respuestas de Gemini con textos de referencia.
 
-    Recorre los casos de evaluación definidos previamente,
-    consulta el modelo y compara cada respuesta con su
-    correspondiente texto de referencia.
+    Ejecuta los casos del Bloque 15 y calcula dos
+    medidas de coincidencia para cada respuesta:
 
-    Para cada caso calcula dos métricas:
-        - Coincidencia sin normalización.
+        - Coincidencia original, sin normalización.
         - Coincidencia después de aplicar el pipeline.
 
-    Los resultados se presentan en la terminal como
-    porcentajes para facilitar su comparación.
+    Args:
+        No recibe argumentos.
+
+    Returns:
+        None: Presenta los resultados en la terminal.
 
     Raises:
-        ValueError: Si existe un problema con los parámetros.
-        RuntimeError: Si falla la comunicación con Gemini.
+        ValueError:
+            Si ocurre un problema de parámetros
+            propagado por las funciones utilizadas.
+        RuntimeError:
+            Si el cliente informa un fallo de comunicación
+            con Gemini.
 
-    Nota:
-        Esta función realiza consultas reales a la API.
-        No debe ejecutarse durante las pruebas unitarias.
+    Notes:
+        Realiza una consulta real a Gemini por cada caso.
+
+        Las respuestas se comparan con las referencias
+        mediante calcular_coincidencia().
+
+        Esta evaluación no guarda archivos JSON.
     """
 
-    # Recorremos los tres casos de evaluación.
+    # Procesa cada caso en el orden definido.
     for numero, caso in enumerate(CASOS_EVALUACION, start=1):
 
-        # Obtenemos la pregunta y su respuesta de referencia.
         pregunta = caso["pregunta"]
         referencia = caso["referencia"]
 
-        # Consultamos Gemini utilizando el cliente modular
-        # que desarrollamos en los bloques anteriores.
+        # Solicita una respuesta al modelo.
         respuesta = consultar_modelo(pregunta)
 
-        # Calculamos la coincidencia conservando las
-        # diferencias originales de formato.
+        # Calcula coincidencia sin normalizar el texto.
         coincidencia_original = calcular_coincidencia(
             referencia,
             respuesta,
             normalizar=False,
         )
 
-        # Calculamos la coincidencia después de aplicar
-        # la limpieza y tokenización de nuestro pipeline.
+        # Calcula coincidencia aplicando la normalización
+        # implementada en el pipeline de VyOps.
         coincidencia_normalizada = calcular_coincidencia(
             referencia,
             respuesta,
             normalizar=True,
         )
 
-        # Presentamos los textos utilizados en la evaluación.
+        # Presenta los textos utilizados en la comparación.
         print(f"\n{'=' * 60}")
         print(f"CASO DE EVALUACIÓN {numero}")
         print(f"{'=' * 60}")
@@ -435,7 +544,7 @@ def evaluar_respuestas() -> None:
         print(f"Referencia: {referencia}")
         print(f"Respuesta Gemini: {respuesta}")
 
-        # Mostramos las métricas expresadas en porcentajes.
+        # Muestra las coincidencias como porcentajes.
         print(
             f"Coincidencia original: "
             f"{coincidencia_original:.2%}"
@@ -445,26 +554,30 @@ def evaluar_respuestas() -> None:
             f"{coincidencia_normalizada:.2%}"
         )
 
+
+# ============================================================
+# 10. PUNTO DE ENTRADA
+# ============================================================
+
 if __name__ == "__main__":
-    # Este bloque se ejecuta únicamente cuando iniciamos
-    # evaluar_respuestas.py directamente desde la terminal.
-    # No se ejecuta al importar el módulo desde otro archivo.
+    # Selecciona la evaluación según los argumentos
+    # recibidos desde la terminal.
+    #
+    # Sin argumentos:
+    #     Ejecuta la evaluación del Bloque 15.
+    #
+    # Con --bloque-16:
+    #     Ejecuta la evaluación del Bloque 16.
+    #
+    # Los argumentos desconocidos producen ValueError.
 
     try:
-        # Iniciamos la evaluación de los tres casos.
-        # Cada caso realizará una consulta real a Gemini.
-        # Seleccionamos la evaluación solicitada desde la terminal.
-        # Sin argumentos, mantenemos el comportamiento del Bloque 15.
         if len(sys.argv) == 1:
             evaluar_respuestas()
 
-        # El argumento --bloque-16 ejecuta exclusivamente
-        # la evaluación con precisión, cobertura y F1.
         elif sys.argv[1:] == ["--bloque-16"]:
             ejecutar_evaluacion_bloque_16()
 
-        # Rechazamos argumentos desconocidos para evitar
-        # ejecutar una evaluación diferente a la solicitada.
         else:
             raise ValueError(
                 "Argumento no reconocido. "
@@ -472,11 +585,10 @@ if __name__ == "__main__":
             )
 
     except ValueError as error:
-        # Informamos los errores relacionados con parámetros
-        # o configuración sin mostrar información sensible.
+        # Informa errores de configuración o parámetros.
         print(f"Error de configuración: {error}")
 
     except RuntimeError as error:
-        # Informamos los problemas de comunicación con Gemini,
-        # incluyendo fallos que persistan después de los reintentos.
+        # Informa errores de comunicación propagados
+        # por el cliente de Gemini.
         print(f"Error al consultar Gemini: {error}")

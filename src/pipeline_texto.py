@@ -1,6 +1,85 @@
+
+"""Pipeline de procesamiento de texto y evaluación léxica de VyOps.
+
+Este módulo implementa las operaciones fundamentales
+de preparación y comparación de textos utilizadas
+en los bloques 15 y 16 del curso SkillNest.
+
+Su objetivo es transformar respuestas textuales
+en representaciones comparables y calcular métricas
+que permitan evaluar coincidencias de vocabulario.
+
+Responsabilidades principales:
+
+    1. Normalizar textos mediante expresiones regulares.
+    2. Separar los textos normalizados en tokens.
+    3. Integrar limpieza y tokenización en un pipeline.
+    4. Construir vectores de frecuencias de palabras.
+    5. Calcular coincidencias de vocabulario.
+    6. Contabilizar coincidencias considerando repeticiones.
+    7. Calcular precisión, cobertura y F1.
+    8. Proporcionar una interfaz de evaluación textual.
+
+Funciones disponibles:
+
+    limpiar_texto():
+        Convierte a minúsculas, elimina puntuación
+        y normaliza espacios.
+
+    tokenizar():
+        Divide un texto normalizado en palabras.
+
+    procesar_texto():
+        Integra las etapas de limpieza y tokenización.
+
+    vectorizar():
+        Construye un diccionario de frecuencias
+        mediante Counter.
+
+    calcular_coincidencia():
+        Compara conjuntos de palabras únicas.
+
+    contar_coincidencias():
+        Calcula coincidencias considerando
+        las frecuencias de cada palabra.
+
+    calcular_precision_cobertura_f1():
+        Obtiene las métricas léxicas a partir de tokens.
+
+    calcular_metricas():
+        Integra el procesamiento y la evaluación
+        directamente a partir de dos textos.
+
+Consideraciones:
+
+    Las métricas utilizan coincidencias léxicas.
+
+    No evalúan equivalencia semántica, contexto,
+    veracidad ni corrección factual.
+
+    Una respuesta puede obtener una puntuación alta
+    aunque contenga información incorrecta.
+
+    Las métricas deben interpretarse como indicadores
+    cuantitativos complementarios a la revisión humana.
+"""
+
+# ============================================================
+# 1. DEPENDENCIAS
+# ============================================================
+
+# Biblioteca estándar para trabajar con expresiones regulares.
+# Se utiliza durante la normalización del texto.
 import re
+
+# Counter permite contabilizar las apariciones
+# de cada token y comparar frecuencias entre textos.
 from collections import Counter
 
+
+# ============================================================
+# 2. NORMALIZACIÓN DEL TEXTO
+# ============================================================
 
 def limpiar_texto(texto: str) -> str:
     """Normaliza un texto para facilitar su comparación.
@@ -43,6 +122,11 @@ def limpiar_texto(texto: str) -> str:
 
     return texto
 
+
+# ============================================================
+# 3. TOKENIZACIÓN DEL TEXTO
+# ============================================================
+
 def tokenizar(texto_limpio: str) -> list[str]:
     """Convierte un texto normalizado en una lista de tokens.
 
@@ -74,6 +158,11 @@ def tokenizar(texto_limpio: str) -> list[str]:
     # Devolvemos la lista de palabras para su posterior
     # procesamiento y comparación.
     return tokens
+
+
+# ============================================================
+# 4. PIPELINE DE PROCESAMIENTO
+# ============================================================
 
 def procesar_texto(texto: str) -> list[str]:
     """Ejecuta el pipeline de limpieza y tokenización de texto.
@@ -113,6 +202,11 @@ def procesar_texto(texto: str) -> list[str]:
     # o comparación con otros textos.
     return tokens
 
+
+# ============================================================
+# 5. VECTORIZACIÓN POR FRECUENCIAS
+# ============================================================
+
 def vectorizar(tokens: list[str]) -> dict[str, int]:
     """Construye un vector de frecuencias a partir de tokens.
 
@@ -141,6 +235,11 @@ def vectorizar(tokens: list[str]) -> dict[str, int]:
     # Convertimos el contador en un diccionario convencional
     # para facilitar su uso en otras funciones del proyecto.
     return dict(frecuencias)
+
+
+# ============================================================
+# 6. COINCIDENCIA DE VOCABULARIO
+# ============================================================
 
 def calcular_coincidencia(
     referencia: str,
@@ -204,6 +303,11 @@ def calcular_coincidencia(
 
     return coincidencia
 
+
+# ============================================================
+# 7. CONTEO DE COINCIDENCIAS CON FRECUENCIAS
+# ============================================================
+
 def contar_coincidencias(
     tokens_referencia: list[str],
     tokens_respuesta: list[str],
@@ -252,6 +356,11 @@ def contar_coincidencias(
     coincidencias = sum(interseccion.values())
 
     return coincidencias
+
+
+# ============================================================
+# 8. CÁLCULO DE PRECISIÓN, COBERTURA Y F1
+# ============================================================
 
 def calcular_precision_cobertura_f1(
     tokens_referencia: list[str],
@@ -322,6 +431,11 @@ def calcular_precision_cobertura_f1(
     }
 
     return resultado
+
+
+# ============================================================
+# 9. INTERFAZ GENERAL DE EVALUACIÓN TEXTUAL
+# ============================================================
 
 def calcular_metricas(
     texto_referencia: str,

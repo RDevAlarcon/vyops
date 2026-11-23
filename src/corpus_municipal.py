@@ -1,4 +1,12 @@
-﻿"""Carga y validacion del corpus municipal ficticio de VyOps."""
+﻿"""Carga y valida el corpus documental municipal ficticio de VyOps.
+
+Cada archivo Markdown debe comenzar con un encabezado YAML que
+identifique el documento y describa sus características.
+
+El módulo convierte los archivos válidos en objetos Document de
+LangChain, conservando sus metadatos para las etapas posteriores
+de fragmentación, indexación y recuperación documental.
+"""
 
 from pathlib import Path
 import re

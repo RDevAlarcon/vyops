@@ -1,8 +1,22 @@
+"""Punto de entrada y coordinador del servicio RAG municipal de VyOps.
 
-"""Punto de entrada del servicio RAG municipal de VyOps para SkillNest Gate 2.
+Integra las capacidades desarrolladas para el Gate 2 de SkillNest:
 
-Modo real: consulta el índice persistido y utiliza Gemini.
-Modo ensayo: ejecuta las verificaciones simuladas existentes.
+- Verificación del índice vectorial persistente.
+- Recuperación documental y generación de respuestas mediante Gemini.
+- Validación de citas y presentación de fuentes.
+- Captura de eventos de auditoría JSON sanitizados.
+- Identificación y comprobación de trazas independientes.
+- Verificación controlada de documentos con instrucciones maliciosas.
+- Demostración de supervisión humana con LangGraph.
+- Presentación de métricas de tokens, costos y latencias.
+
+Modos de ejecución:
+    real: Ejecuta consultas contra el índice y puede consumir Gemini.
+    ensayo: Ejecuta las verificaciones del módulo ensayo_gate2.
+
+La supervisión humana incluida es demostrativa y no despliega
+operaciones reales sobre sistemas municipales.
 """
 
 import argparse
@@ -27,7 +41,15 @@ from inyeccion_prompt import filtrar_documentos_langchain
 from langchain_core.documents import Document
 
 class CapturadorAuditoria(logging.Handler):
-    """Recoge eventos JSON sanitizados del pipeline RAG."""
+    """Captura eventos de auditoría asociados a una traza RAG.
+
+    Utiliza el formateador configurado en el logger del proyecto
+    para obtener eventos JSON y conserva únicamente aquellos
+    que contienen un identificador de trazabilidad.
+
+    Attributes:
+        eventos: Lista de eventos JSON capturados en memoria.
+    """
 
     def __init__(self):
         super().__init__()
@@ -47,7 +69,24 @@ class CapturadorAuditoria(logging.Handler):
 
 @contextmanager
 def capturar_auditoria():
-    """Captura eventos sanitizados sin duplicarlos en la consola."""
+    """Captura temporalmente los eventos de auditoría del servicio.
+
+    Sustituye los manejadores del logger RAG por un capturador
+    en memoria durante la ejecución del bloque protegido.
+
+    Al finalizar, restaura los manejadores originales, incluso
+    si ocurre una excepción.
+
+    Yields:
+        list[dict]: Eventos JSON capturados durante la operación.
+
+    Notes:
+        El mecanismo reutiliza el primer formateador configurado
+        en el logger. No modifica el contenido de los eventos.
+
+        La sustitución temporal de manejadores no proporciona
+        aislamiento entre ejecuciones concurrentes del mismo logger.
+    """
 
     capturador = CapturadorAuditoria()
 
@@ -67,7 +106,25 @@ def capturar_auditoria():
 
 
 def verificar_indice():
-    """Comprueba que existe un índice persistido sin reconstruirlo."""
+    """Verifica la disponibilidad del índice vectorial persistido.
+
+    Obtiene el directorio configurado y comprueba que exista.
+    Después consulta los identificadores almacenados para
+    confirmar que la colección no esté vacía.
+
+    Returns:
+        dict: Información de la colección, cantidad de fragmentos
+        persistidos y resultado de la comprobación de IDs únicos.
+
+    Raises:
+        RuntimeError: Si no existe el directorio del índice
+            o si la colección está vacía.
+
+    Notes:
+        Esta función no reconstruye ni actualiza el corpus.
+        La comprobación de identificadores utiliza el módulo
+        de sincronización vectorial existente.
+    """
     directorio = obtener_directorio_vectorial()
 
     if not directorio.is_dir():
@@ -85,7 +142,41 @@ def verificar_indice():
 
 
 def ejecutar_consulta(pregunta, k=5):
-    """Ejecuta una consulta real y devuelve una respuesta pública sanitizada."""
+    """Ejecuta una consulta RAG y prepara su resultado público.
+
+    Primero verifica la disponibilidad del índice y la
+    unicidad de los identificadores almacenados.
+
+    Después ejecuta el pipeline RAG con captura temporal
+    de eventos de auditoría. Conserva solamente los eventos
+    que corresponden al trace_id de la consulta.
+
+    Cuando se genera una respuesta documental, exige que
+    la numeración de sus citas sea válida y devuelve las
+    fuentes sin duplicados, ordenadas alfabéticamente.
+
+    Args:
+        pregunta: Consulta textual que se enviará al pipeline RAG.
+        k: Número de fragmentos solicitados en la recuperación.
+
+    Returns:
+        dict: Resultado que incluye respuesta, estado, fuentes,
+        trazabilidad, auditoría, validación de citas, consumo
+        de tokens, costo estimado y latencias.
+
+    Raises:
+        RuntimeError: Si el índice no está disponible,
+            contiene identificadores duplicados o la respuesta
+            generada presenta citas numéricamente inválidas.
+
+    Notes:
+        Esta función puede realizar llamadas reales a Gemini.
+        No modifica intencionalmente el índice vectorial.
+
+        La validación de citas comprueba su numeración,
+        no la correspondencia semántica entre cada afirmación
+        y su fuente.
+    """
     indice = verificar_indice()
 
     if not indice["ids_unicos"]:
@@ -127,7 +218,32 @@ def ejecutar_consulta(pregunta, k=5):
 
 
 def demostrar_supervision(aprobacion):
-    """Demuestra pausa y reanudación del grafo con decisión humana."""
+    """Demuestra una decisión humana mediante un grafo LangGraph.
+
+    Construye una instancia del grafo y genera un identificador
+    de ejecución independiente mediante thread_id.
+
+    El grafo se inicia con una operación simulada que debe
+    interrumpirse para solicitar una decisión humana.
+
+    Después se reanuda mediante Command(resume=aprobacion)
+    y se comprueba que la decisión haya sido respetada.
+
+    Args:
+        aprobacion (bool): Decisión humana simulada.
+            True representa aprobación y False rechazo.
+
+    Returns:
+        dict: Evidencia de interrupción, decisión y finalización.
+
+    Raises:
+        RuntimeError: Si no ocurre la interrupción esperada,
+            la decisión no se respeta o el grafo no finaliza.
+
+    Notes:
+        Esta demostración no modifica solicitudes municipales,
+        no despliega cambios y no requiere Gemini.
+    """
     app = construir_grafo()
     config = {
         "configurable": {
@@ -166,7 +282,21 @@ def demostrar_supervision(aprobacion):
 
 
 def obtener_evento(auditoria, nombre):
-    """Obtiene un evento sanitizado por su nombre."""
+    """Busca un evento de auditoría por su nombre.
+
+    Recorre los eventos registrados y devuelve el primero
+    cuyo campo msg coincide exactamente con el nombre solicitado.
+
+    Args:
+        auditoria: Secuencia de eventos de auditoría.
+        nombre (str): Nombre del evento que se desea localizar.
+
+    Returns:
+        dict: Primer evento que coincide con el nombre.
+
+    Raises:
+        RuntimeError: Si no se encuentra el evento solicitado.
+    """
     for evento in auditoria:
         if evento.get("msg") == nombre:
             return evento
@@ -174,7 +304,31 @@ def obtener_evento(auditoria, nombre):
 
 
 def verificar_trazabilidad(resultado):
-    """Comprueba los eventos y el restablecimiento del contexto."""
+    """Verifica la consistencia de la auditoría de una consulta RAG.
+
+    Comprueba que existan eventos de auditoría, que todos
+    pertenezcan al trace_id de la consulta y que estén presentes
+    los eventos obligatorios del flujo.
+
+    Finalmente verifica que el contexto de trazabilidad
+    haya sido restablecido después de la ejecución.
+
+    Args:
+        resultado (dict): Resultado generado por ejecutar_consulta(),
+            incluyendo auditoría e identificador de trazabilidad.
+
+    Returns:
+        bool: True cuando todas las verificaciones son satisfactorias.
+
+    Raises:
+        RuntimeError: Si faltan eventos, existen identificadores
+            de traza incorrectos o el contexto no fue restaurado.
+
+    Notes:
+        La función verifica presencia y pertenencia de eventos.
+        No comprueba su orden cronológico ni la veracidad
+        del contenido documental recuperado.
+    """
     auditoria = resultado["auditoria"]
     trace_id = resultado["trace_id"]
 
@@ -202,7 +356,34 @@ def verificar_trazabilidad(resultado):
 
 
 def verificar_inyeccion_controlada():
-    """Verifica el bloqueo de una inyección con trazabilidad independiente."""
+    """Verifica el bloqueo de un documento con inyección de prompts.
+
+    Genera un identificador de trazabilidad independiente y crea
+    un documento de prueba que contiene instrucciones destinadas
+    a modificar el comportamiento del asistente.
+
+    Envía el documento al filtro de seguridad existente y comprueba
+    que no sea aceptado para su posterior procesamiento.
+
+    El contexto de trazabilidad se restablece mediante finally,
+    incluso si ocurre una excepción durante la verificación.
+
+    Returns:
+        dict: Evidencia que incluye el identificador de traza,
+        cantidad de documentos recibidos y descartados, e
+        indicación de que no se invocó el modelo de lenguaje.
+
+    Raises:
+        RuntimeError: Si el filtro acepta el documento sospechoso.
+
+    Notes:
+        Esta prueba utiliza un documento construido en memoria.
+        No requiere llamadas a Gemini ni modifica ChromaDB.
+
+        Verifica el rechazo de este patrón específico de ataque;
+        no garantiza la detección de todas las posibles
+        inyecciones de prompts.
+    """
     trace_id = generar_trace_id()
     token_contexto = trace_id_var.set(trace_id)
 
@@ -236,7 +417,36 @@ def verificar_inyeccion_controlada():
 
 
 def mostrar_consulta_real(numero, resultado):
-    """Presenta las evidencias de una consulta real."""
+    """Valida y presenta las evidencias de una consulta RAG real.
+
+    Recupera de la auditoría los eventos de recuperación,
+    filtrado documental y consumo de tokens.
+
+    Comprueba que la consulta haya terminado con una respuesta
+    generada o una abstención segura. Si existe una respuesta
+    documental, verifica también la numeración de sus citas.
+
+    Después comprueba la trazabilidad y presenta en consola
+    la respuesta, las fuentes, los eventos sanitizados,
+    el consumo de tokens, el costo estimado y la latencia.
+
+    Args:
+        numero (int): Número de la consulta dentro de la demostración.
+        resultado (dict): Resultado obtenido de ejecutar_consulta().
+
+    Raises:
+        RuntimeError: Si falta un evento obligatorio, el estado
+            es inesperado, las citas son inválidas o falla
+            alguna comprobación de trazabilidad.
+
+    Notes:
+        Esta función presenta resultados previamente obtenidos.
+        No realiza directamente llamadas a Gemini.
+
+        La validación comprueba el estado y las referencias,
+        pero no garantiza que todas las afirmaciones generadas
+        estén respaldadas semánticamente por las fuentes.
+    """
     auditoria = resultado["auditoria"]
     recuperacion = obtener_evento(auditoria, "documentos_recuperados")
     filtrado = obtener_evento(auditoria, "documentos_filtrados")
@@ -305,7 +515,38 @@ def mostrar_consulta_real(numero, resultado):
 
 
 def main():
-    """Ejecuta el servicio individual o la demostracion integral Gate 2."""
+    """Coordina los modos de ejecución del servicio RAG de VyOps.
+
+    Procesa los argumentos de línea de comandos y selecciona
+    el flujo correspondiente.
+
+    Argumentos disponibles:
+        --pregunta: Ejecuta una consulta individual.
+        --k: Cantidad de fragmentos solicitados al recuperador.
+        --modo: Selecciona ejecución real o ensayo.
+        --supervision: Aprueba, rechaza u omite la demostración
+            de supervisión humana.
+
+    Flujo de ejecución:
+        1. Valida los argumentos recibidos.
+        2. Ejecuta el ensayo si se seleccionó ese modo.
+        3. Procesa una consulta individual cuando corresponde.
+        4. En la demostración integral, verifica el índice.
+        5. Ejecuta dos consultas reales y presenta sus evidencias.
+        6. Comprueba la independencia de las trazas.
+        7. Verifica el bloqueo de un documento malicioso.
+        8. Demuestra la supervisión humana cuando está habilitada.
+        9. Presenta el consumo acumulado y el resultado final.
+
+    Notes:
+        El modo predeterminado es real y puede consumir Gemini.
+
+        La ejecución integral utiliza dos preguntas predefinidas
+        para demostrar la recuperación, generación y abstención.
+
+        La supervisión humana es una simulación controlada;
+        no ejecuta modificaciones en sistemas municipales.
+    """
     parser = argparse.ArgumentParser(
         description="Servicio RAG municipal de VyOps - Gate 2"
     )
@@ -427,7 +668,35 @@ def main():
 
 
 def mostrar_resultado_consola(resultado):
-    """Presenta el resultado RAG sin volcar la auditoría JSON completa."""
+    """Presenta en consola el resultado de una consulta RAG individual.
+
+    Organiza la información en secciones para facilitar
+    su lectura y revisión durante las demostraciones.
+
+    Secciones presentadas:
+        - Estado del índice vectorial.
+        - Estado de recuperación y generación.
+        - Validación numérica de citas.
+        - Respuesta generada o abstención.
+        - Fuentes documentales utilizadas.
+        - Tokens, latencia y costo estimado.
+        - Cantidad de eventos de auditoría y trace_id.
+
+    Args:
+        resultado (dict): Resultado estructurado producido
+            por ejecutar_consulta().
+
+    Notes:
+        Esta función solamente presenta información.
+        No realiza directamente llamadas a Gemini.
+
+        A diferencia de mostrar_consulta_real(), no imprime
+        el contenido completo de los eventos JSON de auditoría.
+
+        El mensaje final PASS indica que la presentación
+        terminó; esta función no ejecuta nuevamente
+        las validaciones del pipeline.
+    """
 
     indice = resultado["indice"]
     citas = resultado["validacion_citas"]
