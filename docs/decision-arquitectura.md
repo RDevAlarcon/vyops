@@ -18,7 +18,7 @@ La selección es provisional y se fundamenta en las mediciones obtenidas durante
 
 El diagrama desarrollado durante el Bloque 8 se encuentra en:
 
-[Ver diagrama de arquitectura](Diagrama_arquitectura.png)
+[Ver diagrama de consumo de Gemini](diagrama_consumo_gemini.png)
 
 El diagrama representa el flujo de la aplicación, las solicitudes a la API de Gemini, el manejo de credenciales, las respuestas, las excepciones y el registro de tokens y costos.
 

@@ -363,7 +363,7 @@ Posteriormente se implementó el cliente Python y se evaluaron otros modelos par
 
 El diseño técnico y su evolución se documentan en `docs/`, incluyendo el diagrama de arquitectura y las decisiones de selección del modelo.
 El diagrama de arquitectura de la Unidad 1 está disponible en:
-[Diagrama de arquitectura de VyOps](docs/Diagrama_arquitectura.png).
+[Diagrama de consumo de Gemini](docs/diagrama_consumo_gemini.png).
 
 ### Prueba funcional del cliente Python
 
@@ -2272,6 +2272,392 @@ Para instalar VyOps desde cero, construir el índice vectorial
 y ejecutar la demostración de Gate 2, consultar:
 
 [Guía de instalación y ejecución de Gate 2](README_GATE2.md)
+
+## Módulo 3 — Construcción, despliegue y validación del MVP
+
+El Módulo 3 tiene como objetivo transformar los componentes
+desarrollados durante los módulos anteriores en un servicio
+funcional, reproducible, documentado y evaluable.
+
+VyOps mantiene como caso de uso académico las consultas
+documentales de la Municipalidad ficticia de Valle Claro.
+
+La construcción del MVP considera la reutilización del sistema
+RAG validado durante el Gate 2, incorporando progresivamente
+FastAPI, Docker, pruebas de calidad, seguridad y documentación
+técnica para la entrega del Gate 3.
+
+## Unidad 3.1 — Bloque 33: Diseño funcional y arquitectura de la solución
+
+### 1. Objetivo
+
+Definir el problema de negocio, los requerimientos funcionales
+y no funcionales, el alcance del MVP, el presupuesto de
+construcción y la arquitectura objetivo de VyOps.
+
+El diseño busca garantizar que el proyecto sea viable dentro
+del tiempo disponible, evitando incorporar funcionalidades
+que excedan el alcance académico.
+
+### 2. Problema de negocio
+
+Los funcionarios administrativos municipales requieren consultar
+documentos, normativas y procedimientos internos para resolver
+dudas relacionadas con sus actividades diarias.
+
+La búsqueda manual de información en documentos dispersos
+genera demoras, aumenta la carga administrativa y dificulta
+la entrega de respuestas consistentes.
+
+Escenario simulado:
+
+- 50 consultas documentales semanales.
+- 10 minutos estimados por consulta.
+- 8 horas y 20 minutos de trabajo semanal.
+- Objetivo: reducir el tiempo promedio de consulta a un
+  minuto o menos.
+
+Estos valores corresponden a supuestos del ejercicio académico
+y no representan mediciones realizadas en una municipalidad real.
+
+### 3. Requerimientos funcionales
+
+| ID | Requerimiento | Prioridad |
+|---|---|---|
+| RF-01 | Consultas mediante API HTTP y respuestas JSON | Imprescindible |
+| RF-02 | Recuperación documental con fuentes y citas | Imprescindible |
+| RF-03 | Abstención ante evidencia insuficiente | Imprescindible |
+| RF-04 | Detección y bloqueo de intentos de inyección de prompts | Imprescindible |
+| RF-05 | Trazabilidad mediante `trace_id` | Imprescindible |
+| RF-06 | Supervisión humana simulada mediante API | Deseable |
+| RF-07 | Panel gráfico de métricas operacionales | Deseable |
+| RF-08 | Interfaz web con autenticación | Fuera de alcance |
+| RF-09 | Integración con sistemas municipales reales | Fuera de alcance |
+| RF-10 | Gestión multiempresa | Fuera de alcance |
+
+Las funcionalidades deseables se incorporarán únicamente
+cuando exista disponibilidad de tiempo y se hayan satisfecho
+los requisitos imprescindibles.
+
+### 4. Requerimientos no funcionales
+
+| ID | Criterio objetivo |
+|---|---|
+| RNF-01 | Al menos 9 de 10 consultas respondidas en menos de 30 segundos |
+| RNF-02 | Cero exposiciones de información sensible en 10 pruebas de seguridad y privacidad |
+| RNF-03 | Inicio del servicio mediante Docker en un máximo de 15 minutos, con imagen e índice previamente preparados |
+| RNF-04 | Al menos 9 de 10 consultas con evidencia disponible respaldadas por fuentes pertinentes y verificables |
+| RNF-05 | El 100 % de 10 consultas independientes con identificadores de trazabilidad únicos |
+
+Los criterios anteriores representan objetivos de aceptación
+del MVP y todavía no constituyen resultados certificados.
+
+### 5. Presupuesto de construcción
+
+Se desarrolló un ejercicio de planificación utilizando
+exclusivamente la biblioteca estándar de Python.
+
+La disponibilidad estimada corresponde a 20 días de trabajo,
+con una dedicación de tres horas diarias.
+
+| Concepto | Horas |
+|---|---:|
+| Disponibilidad total | 60 |
+| Reserva para pruebas, documentación y defensa técnica (30 %) | 18 |
+| Margen para imprevistos (20 %) | 12 |
+| Presupuesto neto de construcción | 30 |
+| Requisitos imprescindibles | 15 |
+| Requisitos deseables seleccionados | 10 |
+| Total seleccionado | 25 |
+| Holgura de construcción | 5 |
+
+Se aplica un factor de novedad tecnológica de 1,5 a las
+funcionalidades identificadas como nuevas.
+
+Las capas obligatorias del MVP son:
+
+- API.
+- RAG.
+- Contenedor.
+
+La selección conserva los requisitos imprescindibles para
+detectar explícitamente los escenarios en los que el MVP
+no resulta viable dentro del presupuesto disponible.
+
+### 6. Funcionalidades excluidas
+
+| ID | Horas ajustadas | Motivo |
+|---|---:|---|
+| RF-08 | 8 | Fuera del alcance académico |
+| RF-09 | 15 | Integración con sistemas reales |
+| RF-10 | 12 | Fuera del alcance académico |
+| **Total** | **35** | |
+
+El informe diferencia las exclusiones por restricciones
+académicas, integración con sistemas reales y falta de
+presupuesto.
+
+Se verificó la conciliación entre las horas solicitadas,
+seleccionadas y excluidas.
+
+### 7. Escenarios alternativos
+
+| Escenario | Presupuesto neto | Horas seleccionadas | Resultado |
+|---|---:|---:|---|
+| Disponibilidad de 60 horas | 30 | 25 | PASS |
+| Sin contenedor | 30 | 21 | FAIL esperado |
+| Disponibilidad de 40 horas | 20 | 19 | PASS |
+| Disponibilidad de 30 horas | 15 | 15 | PASS |
+| Disponibilidad de 20 horas | 10 | 15 | FAIL esperado |
+
+La variante sin contenedor detecta la ausencia de una capa
+obligatoria y del requerimiento RNF-03.
+
+El escenario de 20 horas detecta un exceso de cinco horas
+sobre el presupuesto neto de construcción.
+
+Los resultados FAIL corresponden a pruebas negativas
+intencionales y demuestran el funcionamiento de las
+validaciones.
+
+Las horas corresponden a estimaciones de planificación,
+no a tiempos reales de implementación.
+
+### 8. Arquitectura de la solución
+
+Se definieron cinco decisiones principales de arquitectura:
+
+| Componente | Tecnología | Responsabilidad |
+|---|---|---|
+| Modelo generativo | Google Gemini | Generación de respuestas y embeddings mediante su API |
+| Almacenamiento vectorial | ChromaDB | Persistencia y recuperación documental |
+| Orquestación | LangChain + LangGraph | Coordinación de los flujos de procesamiento |
+| Exposición del servicio | FastAPI | Comunicación mediante API HTTP y JSON |
+| Empaquetado | Docker | Ejecución reproducible del servicio |
+
+La arquitectura contempla un volumen persistente para
+conservar el índice documental independientemente del
+ciclo de vida del contenedor.
+
+Las credenciales se proporcionarán mediante variables
+de entorno, utilizando un archivo `.env` externo.
+
+Google Gemini permanecerá como servicio externo al
+contenedor Docker.
+
+### Diagrama de arquitectura
+
+![Arquitectura objetivo de VyOps para el Gate 3](docs/diagrama_arquitectura.png)
+
+[Archivo editable del diagrama de arquitectura](docs/diagrama_arquitectura.drawio)
+
+El diagrama representa la arquitectura objetivo del Gate 3
+y no un despliegue actualmente operativo.
+
+La arquitectura mantiene una separación modular de
+responsabilidades que facilitará su evolución futura
+hacia una plataforma multiempresa.
+
+La gestión multiempresa no forma parte del MVP académico.
+
+### 9. Generador de ficha funcional
+
+Archivo: `crear_ficha.py`
+
+Se implementó un generador que permite:
+
+- Crear automáticamente la estructura de la ficha funcional.
+- Crear el directorio de documentación cuando no existe.
+- Utilizar codificación UTF-8.
+- Evitar la sobrescritura de documentos existentes.
+- Conservar las cinco secciones definidas para el diseño.
+
+Se verificó que una segunda ejecución no modifica una
+ficha previamente creada mediante la comparación de
+sus hashes.
+
+### 10. Verificador de ficha funcional
+
+Archivo: `verificar_ficha.py`
+
+Se implementaron validaciones para comprobar:
+
+- Existencia de las cinco secciones obligatorias.
+- Títulos y numeración de las secciones.
+- Contenido completo de las secciones 1 a 3.
+- Ausencia de marcadores pendientes en las secciones evaluadas.
+- Cantidad mínima de requerimientos funcionales y no funcionales.
+- Identificadores duplicados.
+- Presencia de valores numéricos en los requisitos no funcionales.
+- Clasificación de todos los requerimientos funcionales.
+- Máximo de cinco requisitos funcionales imprescindibles.
+- Existencia de los archivos de imagen referenciados.
+- Presencia de términos tecnológicos en el problema de negocio.
+
+El verificador admite clasificaciones de alcance distribuidas
+en varias líneas.
+
+Devuelve un código de salida 0 cuando no existen errores
+y un código de salida 1 cuando se detectan incumplimientos.
+
+La revisión automática se complementa con una revisión
+manual del contenido y del diagrama de arquitectura.
+
+### 11. Archivos principales
+
+| Archivo | Responsabilidad |
+|---|---|
+| `practicas/bloque_33/presupuesto_alcance.py` | Planificación y validación del presupuesto |
+| `practicas/bloque_33/variante_sin_contenedor.py` | Validación de ausencia de una capa obligatoria |
+| `practicas/bloque_33/variante_horas.py` | Evaluación de escenarios de disponibilidad |
+| `crear_ficha.py` | Generación de la ficha funcional |
+| `verificar_ficha.py` | Validación automática de la ficha |
+| `docs/ficha_diseno_funcional.md` | Documento de diseño funcional |
+| `docs/diagrama_arquitectura.png` | Diagrama de arquitectura objetivo |
+| `docs/diagrama_arquitectura.drawio` | Archivo editable del diagrama |
+
+El diagrama histórico del consumo de Gemini se conserva
+en `docs/diagrama_consumo_gemini.png`.
+
+### 12. Ejecución
+
+Desde la raíz del proyecto, con el entorno virtual activo.
+
+Ejecutar el ejercicio de presupuesto:
+
+```powershell
+python practicas/bloque_33/presupuesto_alcance.py
+```
+
+Evaluar la ausencia del contenedor:
+
+```powershell
+python practicas/bloque_33/variante_sin_contenedor.py
+```
+
+Evaluar escenarios alternativos de disponibilidad:
+
+```powershell
+python practicas/bloque_33/variante_horas.py
+```
+
+Generar la estructura de la ficha funcional:
+
+```powershell
+python crear_ficha.py
+```
+
+El generador no sobrescribe la ficha existente.
+
+Validar la ficha funcional:
+
+```powershell
+python verificar_ficha.py
+```
+
+Los scripts del Bloque 33 no requieren llamadas a Gemini
+ni dependencias externas adicionales.
+
+### 13. Resultados de validación
+
+Fecha: 24 de noviembre de 2026.
+
+| Validación | Resultado |
+|---|---|
+| Presupuesto de construcción | PASS |
+| Escenarios alternativos | PASS |
+| Informe de funcionalidades excluidas | PASS |
+| Conciliación de horas | PASS |
+| Generador de ficha funcional | PASS |
+| Protección contra sobrescritura | PASS |
+| Verificador de ficha funcional | PASS |
+| Integridad y formatos de diagramas | PASS |
+| Secciones 1 a 3 de la ficha | PASS |
+| Conservación de secciones 4 y 5 pendientes | PASS |
+
+Resultado del verificador:
+
+```text
+=== VERIFICACION DE FICHA FUNCIONAL ===
+
+Errores: 0
+Avisos: 0
+Ficha verificada: secciones 1 a 3 completas
+RESULTADO: PASS
+```
+
+### 14. Pruebas de regresión
+
+Se ejecutaron las pruebas descubiertas mediante `unittest`
+para comprobar el comportamiento de los componentes
+desarrollados durante los módulos anteriores.
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+Resultados:
+
+- 65 pruebas aprobadas.
+- 0 errores.
+- 0 fallos.
+- Tiempo de ejecución: 0,203 segundos.
+- Código de salida: 0.
+
+Esta ejecución corresponde a la suite descubierta mediante
+`unittest` y no sustituye los resultados históricos de la
+suite completa ejecutada mediante `pytest`.
+
+#### Validación de la suite completa mediante pytest
+
+```powershell
+python -m pytest -q
+```
+
+Resultados:
+
+- 252 pruebas aprobadas.
+- 11 subpruebas aprobadas.
+- 0 pruebas fallidas.
+- Tiempo de ejecución: 4,32 segundos.
+- Código de salida: 0.
+
+La suite completa conserva los resultados obtenidos durante
+el cierre del Gate 2, sin regresiones detectadas tras la
+incorporación de los entregables del Bloque 33.
+
+### 15. Documentación técnica
+
+Consultar la
+[Ficha de Diseño Funcional](docs/ficha_diseno_funcional.md).
+
+El documento contiene:
+
+1. Problema de negocio.
+2. Requerimientos y alcance del MVP.
+3. Arquitectura de la solución.
+4. Criterios de aceptación (pendiente del Bloque 34).
+5. Plan de construcción por hitos (pendiente del Bloque 34).
+
+### 16. Limitaciones y trabajo pendiente
+
+- FastAPI y Docker corresponden a componentes planificados
+  para las siguientes etapas de construcción.
+- Los objetivos de rendimiento y calidad documental
+  requieren validación mediante pruebas específicas.
+- La supervisión humana mediante API y el panel gráfico
+  de métricas son funcionalidades deseables.
+- La autenticación real y la gestión multiempresa quedan
+  fuera del alcance académico.
+- No se utilizan datos municipales reales.
+- Los controles de seguridad existentes no garantizan
+  protección contra todas las variantes de ataques.
+
+**Estado:** Bloque 33 completado y validado técnicamente
+en entorno local.
+
+**Siguiente etapa:** Bloque 34 — Criterios de aceptación
+y plan de construcción por hitos.
 
 ---
 

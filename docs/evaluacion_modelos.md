@@ -200,6 +200,6 @@ Por estas razones, la selección permanece provisional.
 
 **Arquitectura:**
 
-- `docs/Diagrama_arquitectura.png`
+- `docs/diagrama_consumo_gemini.png`
 
 Los archivos JSON contienen las respuestas y los intentos registrados. Los CSV permiten analizar las métricas y comparar los modelos.
