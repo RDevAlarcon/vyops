@@ -3186,6 +3186,377 @@ no la disponibilidad de Gemini ni de ChromaDB.
 
 **Estado:** Bloque 35 validado técnicamente en entorno local.
 
+## Bloque 36 — Validación, pruebas y consumo externo de la API
+
+**Fecha de implementación:** 26 de noviembre de 2026.
+
+**Estado técnico:** Validado localmente.
+
+### Objetivo
+
+Fortalecer el servicio HTTP de VyOps mediante restricciones
+de entrada, respuestas de error estandarizadas, pruebas
+automatizadas, consumo mediante un cliente externo y
+generación de evidencias reproducibles.
+
+La implementación conserva la arquitectura existente y
+reutiliza los endpoints desarrollados en el Bloque 35.
+
+### Parte 1 — Validación de entradas y manejo de errores
+
+Se incorporaron restricciones explícitas mediante Pydantic
+y un mecanismo centralizado de manejo de errores HTTP.
+
+#### Restricciones de entrada
+
+El endpoint `POST /consultas` establece las siguientes
+condiciones para el campo `pregunta`:
+
+- Campo obligatorio.
+- Tipo de dato: cadena de texto.
+- Longitud mínima: 3 caracteres.
+- Longitud máxima: 500 caracteres.
+- Eliminación de espacios exteriores.
+- Rechazo de cadenas vacías o compuestas únicamente
+  por espacios.
+- Rechazo de valores nulos y tipos de datos incompatibles.
+
+Las entradas inválidas se rechazan antes de ejecutar
+la lógica documental.
+
+#### Contrato común de errores
+
+Las respuestas de error utilizan una estructura JSON
+consistente, independiente del origen del fallo.
+
+Ejemplo de respuesta HTTP 422:
+
+```json
+{
+  "codigo": "VALIDACION_ERROR",
+  "mensaje": "La solicitud contiene datos inválidos.",
+  "detalles": [
+    {
+      "campo": "pregunta",
+      "mensaje": "Debe contener al menos 3 caracteres."
+    }
+  ]
+}
+```
+
+Códigos HTTP contemplados:
+
+| HTTP | Código de aplicación | Descripción |
+| --- | --- | --- |
+| 422 | VALIDACION_ERROR | Entrada inválida |
+| 404 | NO_ENCONTRADO | Recurso inexistente |
+| 405 | METODO_NO_PERMITIDO | Método HTTP incorrecto |
+| 500 | ERROR_INTERNO | Fallo interno inesperado |
+
+Se conserva la cabecera HTTP `Allow` cuando corresponde
+a una respuesta 405.
+
+#### Seguridad en el manejo de errores
+
+Se incorporaron las siguientes medidas:
+
+- Mensajes de error controlados.
+- Exclusión de los valores originales de entrada
+  en las respuestas de validación.
+- Prevención de exposición del mensaje original
+  de excepciones internas.
+- Registro controlado de errores inesperados.
+- Middleware de protección frente a excepciones HTTP
+  inesperadas.
+- Conservación de la documentación automática de FastAPI.
+
+Las pruebas controladas de errores 422 y 500 comprobaron
+que los marcadores sensibles ficticios no aparecen
+en las respuestas ni en los registros evaluados.
+
+La protección de errores internos también fue comprobada
+mediante un servidor Uvicorn real.
+
+### Parte 2 — Matriz de casos y cliente HTTP externo
+
+Se implementó una matriz reutilizable de casos de prueba
+en `casos.py`.
+
+Cada caso define:
+
+- Identificador único.
+- Descripción.
+- Método HTTP.
+- Ruta.
+- Cuerpo de la petición, cuando corresponde.
+- Código HTTP esperado.
+- Fragmento de contenido esperado.
+
+La función compartida `ejecutar_caso()` permite utilizar
+la misma matriz con diferentes clientes HTTP.
+
+#### Cobertura de la matriz
+
+| Categoría | Cantidad |
+| --- | ---: |
+| Casos válidos | 4 |
+| Casos inválidos | 10 |
+| Total | 14 |
+
+Distribución de códigos HTTP esperados:
+
+| Código HTTP | Cantidad |
+| --- | ---: |
+| 200 | 4 |
+| 422 | 8 |
+| 404 | 1 |
+| 405 | 1 |
+| Total | 14 |
+
+#### Cliente externo
+
+El archivo `cliente_externo.py` permite ejecutar la matriz
+contra un servicio HTTP activo mediante `httpx2`.
+
+El cliente verifica la disponibilidad del servicio,
+compara los resultados esperados con los obtenidos
+y presenta un resumen de cumplimiento.
+
+Códigos de salida:
+
+- `0`: todos los casos se cumplen.
+- `1`: existe algún incumplimiento o fallo de comunicación.
+
+#### Servidor controlado de pruebas
+
+El archivo `servidor_pruebas.py` inicia la aplicación
+FastAPI real mediante Uvicorn, sustituyendo exclusivamente
+la lógica documental por respuestas deterministas.
+
+Este mecanismo permite comprobar el transporte HTTP,
+las restricciones y los contratos de respuesta sin
+consumir la API de Gemini ni requerir acceso al
+índice vectorial.
+
+El servidor está destinado exclusivamente a pruebas locales.
+
+### Parte 3 — Automatización y registro de pruebas
+
+Se implementó `tests/test_api.py` utilizando pytest
+y FastAPI TestClient.
+
+La suite contiene 27 pruebas:
+
+- 14 casos parametrizados de la matriz compartida.
+- 13 pruebas adicionales de contrato y seguridad.
+
+Las comprobaciones adicionales incluyen:
+
+- Estructura y tipos del contrato JSON.
+- Horario documental y fuente esperada.
+- Abstención segura.
+- Identificadores de trazabilidad independientes.
+- Límites válidos de longitud.
+- Normalización de espacios.
+- Contrato común de errores.
+- Prevención de ejecución documental ante entradas inválidas.
+- Prevención de exposición de datos en errores 422 y 500.
+
+#### Detección deliberada de regresiones
+
+Para comprobar la efectividad de las pruebas se deshabilitó
+temporalmente la restricción de longitud mínima.
+
+Los casos afectados fueron:
+
+| Caso | Descripción | Esperado | Obtenido |
+| --- | --- | ---: | ---: |
+| I-02 | Pregunta vacía | 422 | 200 |
+| I-03 | Pregunta con espacios | 422 | 200 |
+| I-04 | Pregunta demasiado corta | 422 | 200 |
+
+Resultados durante el fallo controlado:
+
+- Cliente HTTP externo: 11 de 14 casos cumplidos.
+- Pytest parametrizado: 11 aprobados y 3 fallidos.
+- Ejecución aislada de I-03: 1 fallo esperado.
+- Código de salida de la ejecución aislada: 1.
+
+Después de restaurar la restricción, todas las pruebas
+volvieron a aprobarse.
+
+No se conservaron modificaciones deliberadamente defectuosas
+en el código productivo.
+
+#### Generación automática del registro
+
+El archivo `registrar_pruebas.py` ejecuta la matriz compartida
+mediante HTTP y genera el documento:
+
+[Registro de pruebas de la API](docs/registro_pruebas.md)
+
+Antes de ejecutar las solicitudes, verifica:
+
+- Al menos 3 casos válidos.
+- Al menos 5 casos inválidos.
+- Cobertura de los códigos HTTP 404, 405 y 422.
+
+Si la cobertura es insuficiente, el script detiene
+la ejecución y conserva el registro existente.
+
+El registro incluye:
+
+- Fecha de ejecución.
+- Servicio evaluado.
+- Cliente HTTP utilizado.
+- Modo de ejecución declarado.
+- Identificadores y descripciones de los casos.
+- Peticiones sintéticas abreviadas.
+- Códigos HTTP esperados y obtenidos.
+- Resultado individual y global.
+
+No se almacenan los cuerpos de respuesta del servicio.
+
+La conservación del registro ante una matriz incompleta
+fue comprobada mediante la comparación de su hash SHA-256
+antes y después de la ejecución rechazada.
+
+### Archivos incorporados o actualizados
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `servicio/esquemas.py` | Restricciones y modelos de datos |
+| `servicio/errores.py` | Manejo centralizado de errores |
+| `servicio/main.py` | Integración de manejadores y middleware |
+| `casos.py` | Matriz compartida de casos |
+| `cliente_externo.py` | Ejecución de pruebas HTTP externas |
+| `servidor_pruebas.py` | Servidor local con lógica simulada |
+| `tests/test_api.py` | Pruebas automatizadas de la API |
+| `registrar_pruebas.py` | Generación de evidencia documental |
+| `docs/registro_pruebas.md` | Registro de resultados |
+
+### Reproducción de las pruebas
+
+Ejecutar los comandos desde la raíz del proyecto
+con el entorno virtual activado.
+
+#### Pruebas automatizadas de la API
+
+```powershell
+python -m pytest tests/test_api.py -v
+```
+
+#### Ejecución de un caso individual
+
+```powershell
+python -m pytest tests/test_api.py -k "I-03" --tb=short
+```
+
+#### Suite completa
+
+```powershell
+python -m pytest -q
+```
+
+#### Pruebas mediante HTTP real
+
+En una primera terminal:
+
+```powershell
+python servidor_pruebas.py
+```
+
+En una segunda terminal:
+
+```powershell
+python cliente_externo.py
+python registrar_pruebas.py
+```
+
+El servicio controlado utiliza la dirección:
+
+`http://127.0.0.1:8000`
+
+Una vez finalizadas las pruebas, detener el servidor
+mediante `Ctrl + C`.
+
+### Resultados finales de validación
+
+Fecha de validación: 26 de noviembre de 2026.
+
+| Comprobación | Resultado |
+| --- | --- |
+| Casos válidos e inválidos | 14/14 PASS |
+| Cliente HTTP externo | 14/14 PASS |
+| Pruebas automatizadas de la API | 27/27 PASS |
+| Verificador del servicio | 8/8 PASS |
+| Registro de pruebas | 14/14 PASS |
+| Detección deliberada de regresiones | PASS |
+| Restauración de restricciones | PASS |
+| Protección del registro existente | PASS |
+| Integridad SHA-256 del registro | PASS |
+| Suite completa | 279 PASS |
+| Subpruebas | 11 PASS |
+| Integridad de dependencias | PASS |
+| Integridad del repositorio | PASS |
+
+Tiempo de ejecución de la última suite completa:
+9,54 segundos.
+
+### Entorno técnico validado
+
+| Componente | Versión |
+| --- | --- |
+| Python | 3.13.10 |
+| FastAPI | 0.143.0 |
+| Uvicorn | 0.54.0 |
+| Pydantic | 2.14.3 |
+| httpx2 | 2.16.0 |
+| pytest | 9.1.1 |
+
+### Relación con el diseño funcional
+
+Las pruebas del Bloque 36 aportan evidencia técnica
+relacionada con:
+
+- RF-01: exposición de la funcionalidad mediante HTTP.
+- RF-02: contrato de respuestas documentales con fuentes.
+- RF-03: contrato de abstención segura.
+- RF-05: estructura e independencia de identificadores
+  de trazabilidad.
+- RNF-02: protección frente a exposición de datos
+  en los escenarios HTTP evaluados.
+- CA-01: estructura de respuesta JSON.
+- CA-02: respuesta documental y fuente esperada.
+- CA-03: comportamiento de abstención segura.
+
+### Alcance y limitaciones
+
+- Las pruebas HTTP utilizan lógica documental simulada.
+- El modo simulado del registro es declarado,
+  no detectado automáticamente.
+- No se realizan llamadas reales a Gemini durante
+  estas pruebas HTTP controladas.
+- No se certifica la precisión documental del RAG real.
+- No se certifica el rendimiento integral del servicio.
+- Las comprobaciones de seguridad se limitan
+  a los escenarios evaluados.
+- La independencia de los identificadores simulados
+  no sustituye la validación de trazabilidad real.
+- La arquitectura multiempresa permanece fuera
+  del alcance de esta implementación académica.
+
+### Conclusión
+
+El Bloque 36 fortalece la confiabilidad del servicio
+HTTP de VyOps mediante validaciones explícitas,
+manejo seguro de errores, pruebas reutilizables,
+detección de regresiones y generación automatizada
+de evidencias.
+
+La implementación proporciona una base técnica
+validada para avanzar hacia la contenerización
+del servicio mediante Docker en el Bloque 37.
 ---
 
 ## Derechos de autor y propiedad intelectual
