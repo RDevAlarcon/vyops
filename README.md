@@ -2659,6 +2659,426 @@ en entorno local.
 **Siguiente etapa:** Bloque 34 — Criterios de aceptación
 y plan de construcción por hitos.
 
+## Unidad 3.1 — Bloque 34: Criterios de aceptación y plan de construcción por hitos
+
+### 1. Objetivo
+
+Completar la ficha de diseño funcional de VyOps mediante
+criterios de aceptación verificables, un plan de construcción
+por hitos y una revisión crítica del alcance del MVP.
+
+El bloque establece las condiciones que deberán cumplirse
+durante la construcción, integración y validación del Gate 3,
+manteniendo la coherencia con las decisiones de arquitectura
+y alcance adoptadas durante el Bloque 33.
+
+### 2. Criterios de aceptación ejecutables
+
+Se desarrolló un ejercicio práctico para demostrar cómo
+los requerimientos pueden transformarse en comprobaciones
+observables y ejecutables.
+
+El ejercicio incluye:
+
+- Validación de la estructura de una respuesta JSON.
+- Comprobación de respuestas respaldadas por fuentes.
+- Abstención ante ausencia de información.
+- Evaluación de tiempos de respuesta.
+- Ejecución independiente de cada criterio.
+- Registro de resultados satisfactorios y fallidos.
+
+El ejercicio utiliza respuestas simuladas y no requiere
+llamadas a Google Gemini.
+
+#### Escenario correcto
+
+```powershell
+python practicas/bloque_34/criterios_demo.py
+```
+
+Resultado:
+
+| Criterio | Resultado |
+|---|---|
+| CA-01 | PASS |
+| CA-02 | PASS |
+| CA-03 | PASS |
+| CA-05 | PASS |
+| Total | 4/4 |
+
+#### Variante defectuosa
+
+```powershell
+python practicas/bloque_34/variante_rota.py
+```
+
+La variante elimina intencionalmente el campo `fuentes`
+de la respuesta simulada.
+
+| Criterio | Resultado |
+|---|---|
+| CA-01 | FAIL esperado |
+| CA-02 | FAIL esperado |
+| CA-03 | FAIL esperado |
+| CA-05 | PASS |
+| Total | 1/4 |
+
+Los incumplimientos son intencionales y demuestran que
+los criterios permiten detectar respuestas defectuosas.
+
+El ejercicio restaura el comportamiento original después
+de ejecutar la variante.
+
+### 3. Extracción estructurada de la ficha funcional
+
+Se implementó el módulo `ficha_datos.py` para extraer
+información estructurada desde la ficha de diseño funcional.
+
+El módulo permite identificar:
+
+- Requerimientos funcionales.
+- Requerimientos no funcionales.
+- Clasificación del alcance.
+- Criterios de aceptación.
+- Hitos de construcción.
+- Horas disponibles.
+- Margen de imprevistos.
+
+La implementación reutiliza las funciones de extracción
+desarrolladas durante el Bloque 33, evitando duplicar
+la lógica existente.
+
+La extracción de información se mantiene separada
+de los procesos de validación.
+
+### 4. Resumen automático de la ficha
+
+Se implementó `resumen_ficha.py` para facilitar
+la revisión objetiva del alcance y la planificación.
+
+El resumen informa:
+
+- Cantidad de requerimientos funcionales y no funcionales.
+- Distribución de funcionalidades según su alcance.
+- Cantidad de criterios de aceptación.
+- Requerimientos obligatorios sin cobertura.
+- Cantidad de hitos y horas planificadas.
+- Disponibilidad y margen de imprevistos.
+- Criterios huérfanos.
+- Hitos sin criterios asociados.
+
+Ejecución:
+
+```powershell
+python resumen_ficha.py
+```
+
+El resumen tiene carácter informativo y no sustituye
+al verificador completo.
+
+### 5. Verificador completo de la ficha funcional
+
+Se implementó `verificar_ficha_completa.py` para ampliar
+las comprobaciones desarrolladas durante el Bloque 33.
+
+El verificador realiza las siguientes validaciones:
+
+#### Estructura y alcance
+
+- Existencia de las cinco secciones obligatorias.
+- Coherencia de los títulos.
+- Requerimientos funcionales y no funcionales.
+- Clasificación de funcionalidades.
+- Existencia del diagrama de arquitectura.
+- Ausencia de secciones pendientes de completar.
+
+#### Criterios de aceptación
+
+- Formato de los identificadores.
+- Ausencia de identificadores duplicados.
+- Referencias a requerimientos existentes.
+- Cobertura de los requerimientos obligatorios.
+- Identificación de criterios que requieren mayor precisión.
+
+#### Planificación por hitos
+
+- Existencia de entre tres y seis hitos.
+- Identificadores únicos.
+- Horas de construcción positivas.
+- Referencias a requerimientos y criterios existentes.
+- Coherencia entre requerimientos y criterios de cada hito.
+- Cobertura de los requerimientos imprescindibles.
+- Ausencia de criterios huérfanos.
+- Cumplimiento del presupuesto disponible.
+
+#### Revisión del alcance
+
+- Existencia del documento de revisión.
+- Presencia de al menos dos hallazgos.
+- Identificadores de hallazgos no duplicados.
+- Correspondencia entre hallazgos y decisiones.
+- Utilización de decisiones reconocidas.
+
+El verificador devuelve un código de salida 0 cuando
+no existen errores y un código de salida 1 cuando
+se detectan incumplimientos.
+
+Las comprobaciones estructurales no sustituyen
+la evaluación manual de la calidad del diseño.
+
+### 6. Validación mediante escenarios controlados
+
+Se utilizó una ficha funcional independiente para comprobar
+la capacidad de los scripts de detectar inconsistencias.
+
+Los escenarios evaluados incluyeron:
+
+| Escenario | Resultado esperado |
+|---|---|
+| Secciones pendientes | FAIL |
+| Diagrama inexistente | FAIL |
+| Requerimiento obligatorio sin criterio | FAIL |
+| Presupuesto excedido | FAIL |
+| Hito sin criterio asociado | FAIL |
+| Criterio huérfano | FAIL |
+| Documento de revisión inexistente | FAIL |
+| Ficha corregida y revisión válida | PASS |
+
+La ficha temporal de práctica no forma parte de los
+entregables definitivos de VyOps.
+
+### 7. Criterios de aceptación de VyOps
+
+Se completó la sección 4 de la ficha de diseño funcional
+con diez criterios de aceptación.
+
+| Criterio | Requerimiento | Comprobación |
+|---|---|---|
+| CA-01 | RF-01 | Contrato HTTP y respuesta JSON |
+| CA-02 | RF-02 | Respuesta fundamentada y fuente verificable |
+| CA-03 | RF-03 | Abstención segura |
+| CA-04 | RF-04 | Bloqueo de inyección de instrucciones |
+| CA-05 | RF-05 | Trazabilidad operacional |
+| CA-06 | RNF-01 | Rendimiento de extremo a extremo |
+| CA-07 | RNF-02 | Seguridad y privacidad de registros |
+| CA-08 | RNF-03 | Puesta en funcionamiento mediante Docker |
+| CA-09 | RNF-04 | Calidad documental y pertinencia de fuentes |
+| CA-10 | RNF-05 | Unicidad y correspondencia de trazas |
+
+Los criterios cubren el 100 % de los requerimientos
+funcionales imprescindibles y no funcionales definidos.
+
+### 8. Conjunto de aceptación
+
+Se incorporó `conjunto_aceptacion_gate3.py` como definición
+estructurada de los escenarios de evaluación.
+
+| Grupo | Identificadores | Cantidad |
+|---|---|---:|
+| Casos documentales | E01 a E10 | 10 |
+| Escenarios negativos | N01 a N02 | 2 |
+| Seguridad y privacidad | S01 a S10 | 10 |
+| Total | | 22 |
+
+Los casos documentales utilizan información del corpus
+municipal ficticio de Valle Claro.
+
+Las fuentes de referencia incluyen:
+
+- Canales y horarios de atención ciudadana.
+- Plazos y prioridades de solicitudes.
+- Requisitos generales de permisos municipales.
+
+Los escenarios negativos contemplan la ausencia de
+evidencia documental y la inyección de instrucciones.
+
+Los escenarios de seguridad contemplan consultas legítimas,
+credenciales ficticias, documentos simulados, errores
+controlados del proveedor y trazabilidad.
+
+La definición de los escenarios no constituye evidencia
+de su ejecución ni de cumplimiento funcional del Gate 3.
+
+### 9. Plan de construcción por hitos
+
+Se completó la sección 5 de la ficha funcional.
+
+| Hito | Entregable | Horas |
+|---|---|---:|
+| H1 | API FastAPI y contrato HTTP | 4 |
+| H2 | Integración del servicio RAG | 3 |
+| H3 | Seguridad, privacidad y trazabilidad | 4 |
+| H4 | Contenerización mediante Docker | 4 |
+| H5 | Funcionalidades deseables | 10 |
+| H6 | Validación, documentación y defensa | 18 |
+| Total planificado | | 43 |
+
+H5 es condicional y podrá reducirse u omitirse si
+compromete el alcance imprescindible.
+
+H6 constituye un hito obligatorio de cierre.
+
+### 10. Distribución del presupuesto
+
+| Concepto | Horas | Porcentaje |
+|---|---:|---:|
+| Construcción imprescindible | 15 | 25,00 % |
+| Construcción deseable | 10 | 16,67 % |
+| Pruebas, documentación y defensa | 18 | 30,00 % |
+| Construcción sin asignar | 5 | 8,33 % |
+| Margen de imprevistos | 12 | 20,00 % |
+| Total | 60 | 100 % |
+
+El presupuesto máximo de planificación corresponde
+a 48 horas, excluyendo las 12 horas de imprevistos.
+
+Se asignaron 43 horas a hitos, conservando cinco horas
+de construcción sin asignar.
+
+### 11. Revisión del alcance
+
+Se preparó una autorrevisión crítica asistida de las
+cinco secciones de la ficha funcional.
+
+Los hallazgos identificados fueron:
+
+| Hallazgo | Criterio | Decisión registrada |
+|---|---|---|
+| Restricción de concurrencia | Arquitectura | Aceptado |
+| Definición de respuesta válida | Criterios de aceptación | Aceptado |
+| Comprobaciones de funcionalidades deseables | Planificación | Aplazado |
+
+Las correcciones documentales incorporadas establecen:
+
+- Procesamiento serializado de consultas durante el MVP.
+- Condiciones explícitas de validez para CA-06.
+- Evaluación semántica independiente mediante CA-09.
+
+Las comprobaciones específicas de RF-06 y RF-07 deberán
+definirse antes de implementar dichas funcionalidades.
+
+La principal fortaleza identificada corresponde a la
+trazabilidad entre requerimientos, criterios, escenarios
+de evaluación y planificación temporal.
+
+Consultar el documento
+[Revisión del alcance](docs/revision_alcance.md).
+
+### 12. Archivos principales
+
+| Archivo | Responsabilidad |
+|---|---|
+| `practicas/bloque_34/criterios_demo.py` | Ejercicio de criterios ejecutables |
+| `practicas/bloque_34/variante_rota.py` | Escenario defectuoso controlado |
+| `ficha_datos.py` | Extracción estructurada de información |
+| `resumen_ficha.py` | Resumen automático de alcance y planificación |
+| `verificar_ficha.py` | Verificación de las secciones iniciales |
+| `verificar_ficha_completa.py` | Verificación integral de la ficha |
+| `conjunto_aceptacion_gate3.py` | Definición de escenarios de aceptación |
+| `docs/ficha_diseno_funcional.md` | Ficha funcional completa |
+| `docs/revision_alcance.md` | Registro de revisión del alcance |
+| `docs/diagrama_arquitectura.png` | Diagrama de arquitectura objetivo |
+| `docs/diagrama_arquitectura.drawio` | Diagrama editable |
+
+### 13. Ejecución
+
+Desde la raíz del proyecto, con el entorno virtual activo:
+
+```powershell
+python verificar_ficha.py
+python resumen_ficha.py
+python verificar_ficha_completa.py
+```
+
+Los scripts de extracción, resumen y verificación documental
+no requieren llamadas a Gemini ni dependencias externas
+adicionales.
+
+### 14. Resultados de validación
+
+Fecha: 26 de noviembre de 2026.
+
+| Validación | Resultado |
+|---|---|
+| Compilación de módulos | PASS |
+| Ejercicio de criterios | 4/4 |
+| Variante defectuosa | 1/4, resultado esperado |
+| Verificador de secciones iniciales | PASS |
+| Verificador completo | PASS |
+| Requerimientos obligatorios sin criterio | 0 |
+| Criterios huérfanos | 0 |
+| Hitos sin criterios | 0 |
+| Presupuesto | 43/48 horas |
+| Errores documentales | 0 |
+| Avisos documentales | 0 |
+
+Resultado del verificador completo:
+
+```text
+=== VERIFICACION COMPLETA DE FICHA FUNCIONAL ===
+
+Errores: 0
+Avisos: 0
+
+Ficha verificada: las cinco secciones son coherentes.
+RESULTADO: PASS
+```
+
+Código de salida: 0.
+
+### 15. Pruebas de regresión
+
+Se ejecutaron las pruebas automatizadas del proyecto
+para comprobar que los cambios del Bloque 34 no
+introdujeran regresiones en los componentes existentes.
+
+#### Suite unittest
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+Resultados:
+
+- 65 pruebas aprobadas.
+- 0 errores.
+- 0 fallos.
+- Tiempo de ejecución: 0,311 segundos.
+- Código de salida: 0.
+
+#### Suite completa pytest
+
+```powershell
+python -m pytest -q
+```
+
+Resultados:
+
+- 252 pruebas aprobadas.
+- 11 subpruebas aprobadas.
+- 0 pruebas fallidas.
+- Tiempo de ejecución: 9,44 segundos.
+- Código de salida: 0.
+
+No se detectaron regresiones respecto de la validación
+realizada durante el cierre del Bloque 33.
+
+Los resultados de unittest y pytest no se contabilizan
+como conjuntos independientes de pruebas.
+
+### 16. Documentación técnica
+
+Consultar:
+
+- [Ficha de Diseño Funcional](docs/ficha_diseno_funcional.md).
+- [Revisión del alcance](docs/revision_alcance.md).
+- [Diagrama de arquitectura](docs/diagrama_arquitectura.png).
+
+La ficha funcional contiene las cinco secciones
+requeridas para orientar la construcción del MVP.
+
+**Estado:** Bloque 34 validado técnicamente en entorno local.
+
 ---
 
 ## Derechos de autor y propiedad intelectual

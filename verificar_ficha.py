@@ -333,7 +333,10 @@ def validar_alcance(contenido: str) -> list[str]:
 
     return errores
 
-def validar_diagrama(contenido: str) -> list[str]:
+def validar_diagrama(
+    contenido: str,
+    raiz: Path = RAIZ_PROYECTO,
+) -> list[str]:
     """Comprueba las referencias a diagramas de arquitectura.
 
     Identifica imágenes PNG, JPG y JPEG dentro de docs/
@@ -358,7 +361,10 @@ def validar_diagrama(contenido: str) -> list[str]:
 
     # Eliminar referencias repetidas antes de comprobarlas.
     for referencia in sorted(set(referencias)):
-        ruta = RAIZ_PROYECTO / referencia
+        """raiz: Directorio raíz utilizado para resolver las
+        rutas relativas de los diagramas.
+        """
+        ruta = raiz / referencia
 
         if not ruta.is_file():
             errores.append(
