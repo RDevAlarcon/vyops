@@ -3079,6 +3079,113 @@ requeridas para orientar la construcción del MVP.
 
 **Estado:** Bloque 34 validado técnicamente en entorno local.
 
+## Unidad 3.2 — Bloque 35: Primeros endpoints funcionales con FastAPI
+
+### Objetivo
+
+Exponer la funcionalidad documental de VyOps mediante
+una API HTTP con contratos tipados, documentación
+automática y criterios de aceptación ejecutables.
+
+### Arquitectura del servicio
+
+El servicio se organiza en tres capas:
+
+- `servicio/esquemas.py`: contratos Pydantic de entrada y salida.
+- `servicio/logica.py`: integración con el motor RAG existente.
+- `servicio/main.py`: aplicación FastAPI y endpoints HTTP.
+
+La lógica de negocio permanece separada de la capa HTTP.
+La inicialización del motor RAG se realiza bajo demanda
+y las consultas se procesan de forma serializada.
+
+### Dependencias
+
+- FastAPI: 0.143.0.
+- Uvicorn: 0.54.0.
+- Pydantic: 2.14.3.
+- HTTPX2: 2.16.0.
+- Starlette: 1.10.0.
+
+Se conservaron las versiones compatibles del entorno
+existente para evitar regresiones en el motor RAG.
+
+### Endpoints implementados
+
+| Método | Ruta | Funcionalidad |
+|---|---|---|
+| GET | `/salud` | Disponibilidad de la API |
+| POST | `/consultas` | Consulta documental municipal |
+
+La respuesta documental contiene:
+
+- `trace_id`.
+- `respuesta`.
+- `fuentes`.
+- `estado`.
+
+### Documentación automática
+
+- `/docs`: documentación interactiva Swagger.
+- `/redoc`: documentación de referencia.
+- `/openapi.json`: contrato OpenAPI.
+
+Los modelos incluyen descripciones de sus campos
+y ejemplos de entrada.
+
+### Ejecución local
+
+Desde la raíz del repositorio:
+
+    python -m uvicorn servicio.main:app --reload
+
+### Verificación del servicio
+
+El archivo `verificar_servicio.py` permite ejecutar
+comprobaciones mediante TestClient de FastAPI.
+
+Modo simulado:
+
+    python verificar_servicio.py
+
+Modo real:
+
+    python verificar_servicio.py --real
+
+### Resultados de validación
+
+Fecha: 26-11-2026.
+
+| Prueba | Resultado |
+|---|---|
+| Verificación de dependencias | PASS |
+| Modo simulado | 8/8 PASS |
+| Modo real | 8/8 PASS |
+| Fallo controlado | 6/8, FAIL esperado |
+| Código de salida ante fallo | 1 |
+| Recuperación posterior | 8/8 PASS |
+| Regresión previa al ajuste final del verificador | 252 pruebas y 11 subpruebas aprobadas |
+
+El fallo controlado consistió en eliminar temporalmente
+el campo `fuentes` de una respuesta simulada.
+
+El verificador detectó correctamente los fallos de
+CA-01 y CA-02, manteniendo las demás comprobaciones.
+
+### Alcance y limitaciones
+
+Se verificaron CA-01, CA-02 y las condiciones
+estructurales de CA-03 mediante la API.
+
+La evaluación semántica completa de la abstención
+y los criterios CA-04 a CA-10 permanecen pendientes
+de validación en las etapas correspondientes.
+
+El endpoint de salud comprueba la disponibilidad HTTP,
+no la disponibilidad de Gemini ni de ChromaDB.
+
+**Estado:** Bloque 35 validado técnicamente en entorno local.
+
 ---
 
 ## Derechos de autor y propiedad intelectual
