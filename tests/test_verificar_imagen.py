@@ -1533,7 +1533,6 @@ class TestOrquestador(unittest.TestCase):
     def setUp(self):
         self.imagen = "vyops:0.2"
         self.imagen_id = "sha256:" + "a" * 64
-
         self.nombre_original = vi.generar_nombre_contenedor()
         self.nombre_integracion = vi.generar_nombre_contenedor()
 
