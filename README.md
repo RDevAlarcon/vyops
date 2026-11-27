@@ -3557,6 +3557,58 @@ de evidencias.
 La implementación proporciona una base técnica
 validada para avanzar hacia la contenerización
 del servicio mediante Docker en el Bloque 37.
+
+## Bloque 37 — Contenerización del servicio
+
+VyOps dispone de una imagen Docker versionada que permite
+ejecutar el servicio sin depender del entorno Python
+instalado en el equipo anfitrión.
+
+### Configuración
+
+- Imagen: `vyops:0.2`.
+- Imagen base: `python:3.13.10-slim`.
+- Puerto interno: `8000`.
+- Puerto de verificación: `8099`.
+- Usuario sin privilegios: `vyops` (UID 10001).
+- Endpoint de salud: `/salud`.
+- Dependencias de ejecución y pruebas separadas.
+- Exclusión de archivos sensibles mediante `.dockerignore`.
+
+### Construcción y ejecución
+
+```bash
+docker build -t vyops:0.2 .
+docker run --rm -p 127.0.0.1:8000:8000 vyops:0.2
+```
+
+### Verificación automatizada
+
+```bash
+python verificar_dockerfile.py
+python verificar_imagen.py vyops:0.2
+```
+
+### Resultados
+
+| Validación | Resultado |
+|---|---|
+| Verificador estático | 7/7 |
+| Verificador dinámico | 6/6 |
+| Casos HTTP con RAG simulado | 14/14 |
+| Pruebas unitarias del verificador estático | 44/44 |
+| Pruebas unitarias del verificador dinámico | 99/99 |
+| Healthcheck | Healthy |
+| Contenedores residuales | 0 |
+
+La eliminación deliberada de la instrucción `USER`
+fue detectada correctamente por ambos verificadores.
+La configuración original permanece intacta.
+
+La integración HTTP utiliza un RAG simulado y no
+requiere credenciales de Gemini. La ejecución de
+consultas reales requiere configuración externa.
+
 ---
 
 ## Derechos de autor y propiedad intelectual
