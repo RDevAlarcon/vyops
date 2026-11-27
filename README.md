@@ -3609,6 +3609,36 @@ La integración HTTP utiliza un RAG simulado y no
 requiere credenciales de Gemini. La ejecución de
 consultas reales requiere configuración externa.
 
+### Validación de reproducibilidad en segundo equipo
+
+Fecha: 27 de noviembre de 2026.
+
+La reproducibilidad de VyOps fue validada en un segundo equipo físico con Ubuntu Server 24.04, mediante una clonación independiente del repositorio y una construcción Docker sin caché.
+
+| Comprobación | Resultado |
+|---|---|
+| Sistema operativo | Ubuntu 24.04 |
+| Arquitectura | Linux AMD64 |
+| Docker | 29.1.3 |
+| Git | 2.43.0 |
+| Commit validado | `3e83524` |
+| Construcción sin caché | PASS |
+| Tamaño de imagen | 962 MB |
+| Endpoint `/salud` | HTTP 200 |
+| Respuesta | `{"estado":"ok"}` |
+| Usuario de ejecución | UID 10001 (vyops) |
+| Healthcheck | Healthy |
+| Eliminación de recursos temporales | PASS |
+
+La construcción y ejecución fueron realizadas sin instalar dependencias Python en el anfitrión ni proporcionar credenciales de Gemini.
+
+La validación se realizó en un segundo equipo físico por el mismo alumno.
+
+No se ejecutaron consultas reales al modelo generativo.
+
+Los recursos temporales fueron eliminados y los 11 contenedores productivos del servidor permanecieron en ejecución.
+
+**Estado técnico del Bloque 37: COMPLETADO.**
 ---
 
 ## Derechos de autor y propiedad intelectual
