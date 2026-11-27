@@ -1,0 +1,93 @@
+
+# Excluir todos los archivos por defecto.
+**
+
+# Archivos necesarios para construir la imagen.
+!requirements.txt
+!LICENSE
+
+# API HTTP de VyOps.
+!servicio/
+servicio/**
+!servicio/__init__.py
+!servicio/main.py
+!servicio/esquemas.py
+!servicio/logica.py
+!servicio/errores.py
+
+# Motor RAG y componentes de soporte.
+!servicio_vyops_rag.py
+!configuracion_modelos.py
+!costos_rag.py
+!grafo_supervision.py
+!indexar_corpus.py
+!inyeccion_prompt.py
+!latencia_rag.py
+!logs_json.py
+!persistencia_rag.py
+!recuperacion.py
+!registro_rag.py
+!tokens_embedding.py
+!traza_contexto.py
+
+# Modulos internos necesarios.
+!src/
+src/**
+!src/bloqueo_indexacion.py
+!src/corpus_municipal.py
+!src/embeddings_con_reintentos.py
+!src/indexacion_incremental.py
+!src/sincronizacion_vectorial.py
+
+# Corpus documental ficticio.
+!corpus/
+!corpus/**/
+!corpus/**/*.md
+
+# Exclusiones explicitas de seguridad.
+.env
+.env.*
+**/.env
+**/.env.*
+.git
+**/.git
+.venv
+.venv-viejo
+venv
+**/.venv
+**/venv
+
+# Cache y archivos compilados.
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+
+# Desarrollo y documentacion.
+.vscode
+.idea
+tests
+docs
+evidencias
+practicas
+practica_revision
+resultados
+requirements-dev.txt
+
+# Indices vectoriales y registros locales.
+vectorstore*
+**/vectorstore*
+**/*.jsonl
+**/*.log
+**/*.bak
+
+# Archivos potencialmente sensibles.
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.sqlite
+**/*.sqlite3
+**/*.db

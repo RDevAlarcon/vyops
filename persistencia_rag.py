@@ -22,16 +22,14 @@ el contenido anterior.
 Este módulo no ejecuta consultas a Gemini ni modifica
 el índice vectorial de ChromaDB.
 """
-
+import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 from recuperacion import BASE_DIR
-
 from traza_contexto import trace_id_var
-import hashlib
-import math
 
 
 def sanitizar_uso_original(uso):
@@ -140,8 +138,47 @@ def sanitizar_fuentes(fuentes):
 
     return resultado
 
+def obtener_ruta_registro(ruta=None) -> Path:
+    """Resuelve la ubicación del archivo de registros RAG.
 
-def guardar_registro_jsonl(resultado, ruta=None):
+    Prioriza una ruta explícita, seguida del directorio
+    configurado mediante VYOPS_REGISTROS_DIR.
+
+    Si no existe una configuración personalizada,
+    conserva la ubicación original del proyecto.
+
+    Las rutas relativas configuradas mediante la variable
+    de entorno se interpretan desde BASE_DIR.
+
+    Esta función no crea directorios ni archivos.
+    """
+
+    # Respeta la ruta proporcionada por el llamador.
+    if ruta is not None:
+        return Path(ruta)
+
+    # Permite configurar el almacenamiento externamente.
+    directorio_configurado = os.environ.get(
+        "VYOPS_REGISTROS_DIR", ""
+    ).strip()
+
+    if directorio_configurado:
+        directorio = Path(
+            directorio_configurado
+        ).expanduser()
+
+        if not directorio.is_absolute():
+            directorio = BASE_DIR / directorio
+
+        return directorio / "resultados_rag.jsonl"
+
+    # Conserva la compatibilidad con el entorno local.
+    return BASE_DIR / "resultados_rag.jsonl"
+
+def guardar_registro_jsonl(
+    resultado: dict,
+    ruta: str | Path | None = None,
+) -> Path:
     """Guarda las métricas de una ejecución RAG en formato JSONL.
 
     Construye un registro estructurado con información
@@ -155,9 +192,14 @@ def guardar_registro_jsonl(resultado, ruta=None):
         resultado (dict): Resultado estructurado de una
             ejecución RAG que contiene las métricas
             necesarias para construir el registro.
-        ruta (str | Path | None): Ruta del archivo JSONL.
-            Si es None, se utiliza resultados_rag.jsonl
-            dentro del directorio base del proyecto.
+
+        ruta (str | Path | None): Ruta explícita del archivo JSONL.
+            Si es None, se utiliza el directorio configurado
+            mediante VYOPS_REGISTROS_DIR.
+
+            Si la variable no está definida o está vacía,
+            se utiliza resultados_rag.jsonl dentro del
+            directorio base del proyecto.
 
     Returns:
         Path: Ruta del archivo donde se escribió
@@ -166,12 +208,15 @@ def guardar_registro_jsonl(resultado, ruta=None):
     Raises:
         KeyError: Si faltan campos obligatorios
             dentro del diccionario resultado.
-        OSError: Si ocurre un problema de acceso
-            o escritura en el archivo.
+        OSError: Si ocurre un problema de acceso,
+            creación de directorios o escritura.
         TypeError: Si algún valor no puede
             serializarse mediante json.dumps().
 
     Notes:
+        El directorio de destino se crea automáticamente
+        cuando no existe.
+
         El archivo se abre en modo anexado ("a"),
         por lo que los registros existentes se conservan.
 
@@ -191,12 +236,10 @@ def guardar_registro_jsonl(resultado, ruta=None):
         de citas se incorporan sin sanitización adicional.
     """
 
-    # Define el archivo predeterminado de observabilidad
-    # cuando el llamador no proporciona una ruta explícita.
-    if ruta is None:
-        ruta = BASE_DIR / "resultados_rag.jsonl"
+    # Resuelve la ubicación del registro respetando
+    # la configuración externa y la compatibilidad local.
+    ruta = obtener_ruta_registro(ruta)
 
-    ruta = Path(ruta)
     tiempos = resultado["tiempos"]
 
     # Construye el registro con métricas y metadatos.
@@ -227,6 +270,9 @@ def guardar_registro_jsonl(resultado, ruta=None):
         "validacion_citas": resultado["validacion_citas"],
     }
 
+    # Prepara el directorio de destino cuando todavía
+    # no existe, sin modificar los permisos existentes.
+    ruta.parent.mkdir(parents=True, exist_ok=True)
     # Agrega una línea JSON sin sobrescribir los registros
     # existentes. ensure_ascii=False conserva caracteres
     # Unicode legibles dentro del archivo UTF-8.

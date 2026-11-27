@@ -41,6 +41,9 @@ No realizan llamadas a Gemini ni utilizan ChromaDB.
 # para verificar los valores almacenados.
 import json
 
+import os
+from unittest.mock import patch
+
 # Proporciona directorios temporales que se eliminan
 # automáticamente al finalizar cada escenario.
 import tempfile
@@ -54,8 +57,143 @@ from pathlib import Path
 
 # Función encargada de guardar registros RAG
 # en archivos con formato JSON Lines.
-from persistencia_rag import guardar_registro_jsonl
+from persistencia_rag import (
+    guardar_registro_jsonl,
+    obtener_ruta_registro,
+)
 
+class TestConfiguracionPersistenciaRAG(unittest.TestCase):
+    """Verifica la configuración externa de los registros RAG."""
+
+    def setUp(self):
+        """Prepara un entorno aislado para cada prueba."""
+
+        carpeta = tempfile.TemporaryDirectory()
+        self.addCleanup(carpeta.cleanup)
+
+        self.base = Path(carpeta.name)
+
+        # Aísla la configuración del entorno.
+        entorno = patch.dict(os.environ, {})
+        entorno.start()
+        self.addCleanup(entorno.stop)
+
+        os.environ.pop("VYOPS_REGISTROS_DIR", None)
+
+        # Evita escribir en el directorio real del proyecto.
+        base = patch("persistencia_rag.BASE_DIR", self.base)
+        base.start()
+        self.addCleanup(base.stop)
+
+    def test_conserva_ruta_predeterminada(self):
+        """Mantiene la ubicación original sin configuración."""
+
+        esperado = self.base / "resultados_rag.jsonl"
+
+        self.assertEqual(
+            obtener_ruta_registro(),
+            esperado,
+        )
+
+    def test_respeta_directorio_absoluto(self):
+        """Utiliza el directorio absoluto configurado."""
+
+        directorio = self.base / "registros"
+
+        os.environ["VYOPS_REGISTROS_DIR"] = str(directorio)
+
+        self.assertEqual(
+            obtener_ruta_registro(),
+            directorio / "resultados_rag.jsonl",
+        )
+
+    def test_resuelve_directorio_relativo(self):
+        """Interpreta rutas relativas desde BASE_DIR."""
+
+        os.environ["VYOPS_REGISTROS_DIR"] = "registros"
+
+        self.assertEqual(
+            obtener_ruta_registro(),
+            self.base / "registros" / "resultados_rag.jsonl",
+        )
+
+    def test_prioriza_ruta_explicita(self):
+        """La ruta explícita prevalece sobre el entorno."""
+
+        os.environ["VYOPS_REGISTROS_DIR"] = str(
+            self.base / "configurado"
+        )
+
+        ruta = self.base / "personalizado.jsonl"
+
+        self.assertEqual(
+            obtener_ruta_registro(ruta),
+            ruta,
+        )
+
+    def test_ignora_configuracion_vacia(self):
+        """Una variable vacía conserva la ruta original."""
+
+        os.environ["VYOPS_REGISTROS_DIR"] = "   "
+
+        self.assertEqual(
+            obtener_ruta_registro(),
+            self.base / "resultados_rag.jsonl",
+        )
+
+    def test_crea_directorio_y_persiste_registro(self):
+        """Crea el directorio configurado y guarda métricas."""
+
+        directorio = self.base / "datos" / "registros"
+
+        os.environ["VYOPS_REGISTROS_DIR"] = str(directorio)
+
+        resultado = {
+            "trace_id": "traza-docker-prueba",
+            "modelo_generacion": "modelo-prueba",
+            "modelo_embedding": "embedding-prueba",
+            "pregunta": "Consulta ficticia de prueba",
+            "fuentes": [],
+            "tiempos": {
+                "total_rag": 0.5,
+                "total_completo": 0.6,
+            },
+            "tokens_entrada": 10,
+            "tokens_salida": 5,
+            "tokens_totales": 15,
+            "tokens_razonamiento": None,
+            "tokens_cache": 0,
+            "tokens_embedding": 3,
+            "uso_original": {},
+            "costo_generacion_usd": 0.0,
+            "costo_embedding_usd": 0.0,
+            "costo_total_usd": 0.0,
+            "validacion_citas": {},
+        }
+
+        self.assertFalse(directorio.exists())
+
+        ruta = guardar_registro_jsonl(resultado)
+
+        self.assertTrue(directorio.is_dir())
+        self.assertTrue(ruta.is_file())
+
+        self.assertEqual(
+            ruta,
+            directorio / "resultados_rag.jsonl",
+        )
+
+        registro = json.loads(
+            ruta.read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            registro["trace_id"],
+            "traza-docker-prueba",
+        )
+
+        self.assertEqual(registro["tokens_totales"], 15)
+        self.assertNotIn("pregunta", registro)
 
 # ============================================================
 # 2. PRUEBAS DE PERSISTENCIA RAG

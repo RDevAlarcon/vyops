@@ -1,118 +1,139 @@
 
-"""Coordina operaciones de indexación mediante un bloqueo en Windows.
+"""Coordina operaciones de indexación mediante un bloqueo multiplataforma.
 
-Este módulo implementa un bloqueo exclusivo cooperativo utilizando
-msvcrt.locking(), disponible en sistemas Windows.
+Implementa un bloqueo exclusivo cooperativo compatible con Windows
+y sistemas POSIX, incluido Linux.
 
-Su objetivo es evitar que dos procesos de VyOps que respeten este
-mecanismo ejecuten simultáneamente operaciones sobre el mismo
-directorio de almacenamiento vectorial.
+Su objetivo es evitar que dos procesos de VyOps ejecuten
+simultáneamente operaciones sobre el mismo directorio vectorial.
 
-El bloqueo se mantiene durante la ejecución del bloque protegido
-y se libera al finalizar, incluso cuando ocurre una excepción.
+El bloqueo se libera al finalizar la operación protegida,
+incluso cuando ocurre una excepción.
 
 Limitaciones:
-- El mecanismo depende de Windows.
-- Solo coordina procesos que utilizan el mismo archivo de bloqueo.
-- No impide que aplicaciones externas modifiquen ChromaDB.
+- Solo coordina procesos que respetan el mecanismo de bloqueo.
+- No impide modificaciones realizadas por aplicaciones externas.
+- Requiere un sistema de archivos compatible con estos bloqueos.
 """
 
+import errno
+import os
 from contextlib import contextmanager
 from pathlib import Path
-import msvcrt
+from typing import BinaryIO, Iterator
 
 from recuperacion import obtener_directorio_vectorial
 
 
-class IndexacionEnCursoError(RuntimeError):
-    """Indica que no fue posible adquirir el bloqueo exclusivo.
+# Selecciona el mecanismo nativo de bloqueo según la plataforma.
+if os.name == "nt":
+    import msvcrt
+elif os.name == "posix":
+    import fcntl
+else:
+    raise RuntimeError(
+        "Sistema operativo no compatible con el bloqueo de VyOps."
+    )
 
-    Se utiliza cuando otro proceso mantiene bloqueado el archivo
-    de coordinación o Windows rechaza la adquisición del bloqueo.
-    """
+
+class IndexacionEnCursoError(RuntimeError):
+    """Indica que otra operación mantiene el bloqueo exclusivo."""
+
+
+def _adquirir_bloqueo(archivo: BinaryIO) -> None:
+    """Solicita un bloqueo exclusivo sin esperar su disponibilidad."""
+
+    try:
+        if os.name == "nt":
+            # Windows permite bloquear una región más allá
+            # del final del archivo, incluso si está vacío.
+            archivo.seek(0)
+
+            msvcrt.locking(
+                archivo.fileno(),
+                msvcrt.LK_NBLCK,
+                1,
+            )
+        else:
+            # Linux utiliza un bloqueo exclusivo sobre el archivo.
+            fcntl.flock(
+                archivo.fileno(),
+                fcntl.LOCK_EX | fcntl.LOCK_NB,
+            )
+
+    except OSError as exc:
+        # Distingue la contención de otros errores del sistema,
+        # evitando informar una indexación en curso incorrectamente.
+        if exc.errno in {
+            errno.EACCES,
+            errno.EAGAIN,
+            errno.EWOULDBLOCK,
+        }:
+            raise IndexacionEnCursoError(
+                "Otra indexación de VyOps mantiene el bloqueo."
+            ) from exc
+
+        raise
+
+
+def _liberar_bloqueo(archivo: BinaryIO) -> None:
+    """Libera el bloqueo utilizando el mecanismo de la plataforma."""
+
+    if os.name == "nt":
+        archivo.seek(0)
+
+        msvcrt.locking(
+            archivo.fileno(),
+            msvcrt.LK_UNLCK,
+            1,
+        )
+    else:
+        fcntl.flock(
+            archivo.fileno(),
+            fcntl.LOCK_UN,
+        )
 
 
 @contextmanager
-def bloqueo_indexacion(directorio: Path | None = None):
+def bloqueo_indexacion(
+    directorio: Path | None = None,
+) -> Iterator[None]:
     """Protege una operación mediante un bloqueo exclusivo de archivo.
-
-    Determina el directorio vectorial, crea un archivo de coordinación
-    y solicita a Windows un bloqueo exclusivo no bloqueante sobre
-    su primer byte.
-
-    El bloqueo permanece activo mientras se ejecuta el código
-    incluido dentro de la instrucción ``with``.
 
     Args:
         directorio: Directorio vectorial que se desea proteger.
             Si es None, utiliza la ruta configurada en VyOps.
 
     Yields:
-        None: Cede el control al bloque protegido una vez
-        adquirido el bloqueo.
+        None: Cede el control una vez adquirido el bloqueo.
 
     Raises:
-        IndexacionEnCursoError: Si no puede adquirirse el bloqueo
-            exclusivo porque Windows rechaza la operación.
+        IndexacionEnCursoError: Si otra operación mantiene el bloqueo.
+        OSError: Si ocurre otro error del sistema de archivos.
 
     Notes:
-        El directorio y el archivo de bloqueo pueden crearse si
-        todavía no existen. Por lo tanto, este mecanismo no es
-        estrictamente de solo lectura.
+        El directorio y el archivo de coordinación pueden crearse
+        si todavía no existen.
 
-        El bloqueo es cooperativo y está asociado al directorio
-        seleccionado. Dos procesos que utilicen directorios
-        diferentes no comparten el mismo bloqueo.
+        El archivo de bloqueo permanece en el directorio después
+        de liberar el bloqueo para conservar su identidad.
     """
-    # Normaliza el directorio indicado o utiliza la configuración
-    # centralizada cuando no se proporciona una ruta explícita.
+
     ruta_vectorial = (
         Path(directorio).expanduser().resolve()
         if directorio is not None
         else obtener_directorio_vectorial()
     )
 
-    # Garantiza que exista el directorio donde se almacenará
-    # el archivo utilizado para coordinar las ejecuciones.
     ruta_vectorial.mkdir(parents=True, exist_ok=True)
 
     ruta_bloqueo = ruta_vectorial / ".vyops_indexacion.lock"
 
-    # Mantiene abierto el archivo durante toda la operación.
-    # El modo a+b permite crearlo sin truncarlo.
+    # Abre o crea el archivo sin truncarlo ni agregar contenido.
     with ruta_bloqueo.open("a+b") as archivo:
-        # Prepara el primer byte sobre el que Windows aplicará
-        # el bloqueo exclusivo.
-        archivo.seek(0)
-        archivo.write(b"0")
-        archivo.flush()
-        archivo.seek(0)
+        _adquirir_bloqueo(archivo)
 
         try:
-            # LK_NBLCK solicita un bloqueo exclusivo sin esperar.
-            # Si no puede adquirirse, Windows informa un error.
-            msvcrt.locking(
-                archivo.fileno(),
-                msvcrt.LK_NBLCK,
-                1,
-            )
-        except OSError as exc:
-            # Convierte el error del sistema en una excepción
-            # específica y comprensible para el proyecto.
-            raise IndexacionEnCursoError(
-                "Otra indexación de VyOps mantiene el bloqueo."
-            ) from exc
-
-        try:
-            # Ejecuta la operación protegida mientras el proceso
-            # conserva el bloqueo exclusivo.
             yield
         finally:
-            # Libera el mismo byte bloqueado, incluso cuando
-            # el código protegido termina mediante una excepción.
-            archivo.seek(0)
-            msvcrt.locking(
-                archivo.fileno(),
-                msvcrt.LK_UNLCK,
-                1,
-            )
+            _liberar_bloqueo(archivo)
