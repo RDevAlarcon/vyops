@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
-from servicio import logica
+from servicio import config, logica
 from servicio.errores import (
     manejar_validacion,
     manejar_error_http,
@@ -63,8 +63,16 @@ app.middleware("http")(proteger_errores_internos)
     },
 )
 def salud() -> Salud:
-    """Comprueba que la API HTTP está operativa."""
-    return Salud(**logica.obtener_salud())
+    """Comprueba el estado operativo y la configuración del servicio."""
+    return Salud(
+        **logica.obtener_salud(),
+        entorno=config.entorno(),
+        modelo=(
+            "configurado"
+            if config.modelo_configurado()
+            else "sin clave"
+        ),
+    )
 
 
 @app.post(

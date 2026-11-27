@@ -4,11 +4,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Salud(BaseModel):
-    """Estado de disponibilidad de la API."""
+    """Estado operativo y configuración de la API."""
 
     estado: str = Field(
         description="Estado operativo del servicio.",
         examples=["ok"],
+    )
+
+    entorno: str = Field(
+        description="Entorno de ejecución del servicio.",
+        examples=["desarrollo", "produccion"],
+    )
+
+    modelo: str = Field(
+        description="Disponibilidad de la clave del modelo.",
+        examples=["configurado", "sin clave"],
     )
 
 

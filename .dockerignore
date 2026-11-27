@@ -14,6 +14,7 @@ servicio/**
 !servicio/esquemas.py
 !servicio/logica.py
 !servicio/errores.py
+!servicio/config.py
 
 # Motor RAG y componentes de soporte.
 !servicio_vyops_rag.py

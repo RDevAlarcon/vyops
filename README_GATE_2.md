@@ -42,7 +42,7 @@ Copy-Item .env.example .env
 Editar `.env` con los siguientes valores:
 
 ```dotenv
-GEMINI_API_KEY=tu_clave_real
+GEMINI_API_KEY=
 VYOPS_VECTORSTORE_DIR=vectorstore_profesor
 VYOPS_EMBEDDING_PAUSA_SEGUNDOS=10
 ```

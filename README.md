@@ -139,7 +139,7 @@ Copy-Item .env.example .env
 Abrir `.env` y reemplazar el valor de ejemplo por la clave API real:
 
 ```dotenv
-GEMINI_API_KEY=tu_clave_real
+GEMINI_API_KEY=
 VYOPS_VECTORSTORE_DIR=vectorstore_profesor
 ```
 VYOPS_VECTORSTORE_DIR define dónde se almacenará el índice ChromaDB generado localmente. El directorio vectorstore_profesor/ se encuentra excluido de Git. La configuración evita depender del índice original utilizado durante el desarrollo.
@@ -3639,6 +3639,69 @@ No se ejecutaron consultas reales al modelo generativo.
 Los recursos temporales fueron eliminados y los 11 contenedores productivos del servidor permanecieron en ejecución.
 
 **Estado técnico del Bloque 37: COMPLETADO.**
+
+## Bloque 38 — Gestión de secretos y configuración
+
+### Configuración mediante variables de entorno
+
+El servicio VyOps obtiene su configuración desde variables de entorno,
+sin incorporar credenciales en la imagen Docker.
+
+- `GEMINI_API_KEY`: credencial externa del modelo generativo.
+- `ENTORNO`: entorno de ejecución, con desarrollo como valor predeterminado.
+- El endpoint `/salud` informa si el modelo está configurado,
+  sin revelar el valor de la credencial.
+- El archivo `.env` está excluido del repositorio y de la imagen Docker.
+- El archivo `.env.example` proporciona una plantilla sin credenciales.
+
+### Validación de la imagen Docker
+
+Fecha: 27 de noviembre de 2026.
+
+Imagen validada: `vyops:0.3`.
+
+| Comprobación | Resultado |
+|---|---|
+| Ejecución sin credenciales | PASS |
+| Configuración mediante `-e` | PASS |
+| Configuración mediante `--env-file` | PASS |
+| Variables heredadas desde la terminal | PASS |
+| Ausencia de la clave ficticia en los logs consultados | PASS |
+| Verificador del servicio | 8/8 PASS |
+| Pruebas del verificador de imágenes | 99/99 PASS |
+
+### Verificación de secretos
+
+Se implementó `buscar_secretos.py` para ejecutar cinco comprobaciones:
+
+| Código | Comprobación | Resultado |
+|---|---|---|
+| SEC-1 | Detección de secretos en el repositorio | PASS |
+| SEC-2 | Protección de `.env` mediante Git | PASS |
+| SEC-3 | Archivo `.env` no versionado | PASS |
+| SEC-4 | Plantilla `.env.example` sin credenciales | PASS |
+| SEC-5 | Inspección de variables e historial de Docker | PASS |
+
+La prueba negativa introdujo temporalmente una credencial ficticia
+en un archivo Python. El verificador detectó correctamente el secreto,
+obteniendo 4/5 comprobaciones aprobadas.
+
+Después de eliminar el archivo temporal, se recuperó el resultado
+de 5/5 comprobaciones aprobadas.
+
+### Consideraciones de seguridad
+
+- Las pruebas de configuración utilizaron exclusivamente claves ficticias.
+- No se realizaron consultas reales al modelo generativo.
+- Las variables de entorno de un contenedor pueden ser inspeccionadas
+  por usuarios con acceso autorizado a Docker.
+- El verificador utiliza patrones heurísticos y no sustituye una
+  auditoría completa de seguridad.
+- Se corrigió un falso positivo asociado a la huella GPG pública
+  utilizada por la imagen base de Python.
+
+**Estado de las comprobaciones SEC-1 a SEC-5: COMPLETADO.**
+
 ---
 
 ## Derechos de autor y propiedad intelectual

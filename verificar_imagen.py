@@ -175,7 +175,7 @@ def esperar_servicio(
                 )
 
                 if respuesta.status_code == 200:
-                    if respuesta.json() == {"estado": "ok"}:
+                    if respuesta.json().get("estado") == "ok":
                         return True, "Servicio HTTP disponible."
 
             except (httpx2.HTTPError, ValueError):

@@ -102,7 +102,7 @@ def verificar_salud() -> tuple[bool, str]:
 
     ok = (
         respuesta.status_code == 200
-        and respuesta.json() == {"estado": "ok"}
+        and respuesta.json().get("estado") == "ok"
     )
 
     return ok, f"HTTP {respuesta.status_code}"
