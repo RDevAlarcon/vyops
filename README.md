@@ -3733,6 +3733,28 @@ docker --version
 docker compose version
 python --version
 ```
+### Preparación del entorno para los verificadores
+
+Los contenedores no requieren instalar dependencias de Python
+en el equipo anfitrión. Sin embargo, los verificadores ejecutados
+localmente requieren un entorno virtual con las dependencias
+del proyecto.
+
+En Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+En Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
 
 ## Configuración
 

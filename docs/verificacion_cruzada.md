@@ -118,3 +118,106 @@ Validación técnica alternativa: PASA.
 
 La implementación presenta evidencia de reproducibilidad
 en dos equipos con sistemas operativos diferentes.
+
+## Autorrevisión desde un clon limpio
+
+Revisor: Ricardo Alexis Alarcón Castro (autor del proyecto).
+Repositorio revisado: VyOps, rama main.
+Commit revisado: ae9b7bf.
+Fecha: 2026-11-28.
+Modalidad: autorrevisión desde una terminal nueva.
+Se utilizó README.md como guía de ejecución durante
+la revisión inicial, con seguimiento de los resultados
+mediante asistencia técnica.
+
+### Entorno de validación
+
+- Sistema operativo: Windows.
+- Git: 2.52.0.
+- Docker: 29.9.2.
+- Docker Compose: 5.6.1.
+- Python: 3.13.10.
+
+### Resultado por criterio
+
+- VC-1 (clon limpio): PASA.
+  Repositorio clonado desde GitHub, sin cambios locales.
+
+- VC-2 (configuración documentada): PASA.
+  Archivo .env creado desde .env.example y configuración
+  de Docker Compose validada.
+
+- VC-3 (arranque con un comando): PASA.
+  Ambas imágenes construidas y servicios iniciados.
+
+- VC-4 (servicios sanos y alcanzables): PASA.
+  Ambos contenedores saludables y endpoints de salud
+  accesibles en los puertos 8000 y 8080.
+
+- VC-5 (comportamiento verificable): PASA.
+  Consulta documental simulada con respuesta correcta,
+  fuente documental y trace_id.
+  Consulta inválida rechazada correctamente.
+
+- VC-6 (sin secretos y apagado limpio): PASA.
+  Detector de secretos aprobado con 5/5 comprobaciones.
+  Contenedores y red eliminados correctamente.
+
+### Hallazgos
+
+Hallazgo 1: El verificador del stack no pudo ejecutarse
+inicialmente debido a la ausencia de httpx2 en el entorno
+Python del clon.
+
+Decisión: Aceptado y resuelto.
+
+Corrección: Incorporar instrucciones explícitas para preparar
+el entorno virtual e instalar las dependencias en la sección
+de despliegue con Docker del README.
+
+Validación posterior: Tras instalar las dependencias,
+el verificador del stack obtuvo 7/7 comprobaciones y
+14/14 casos del contrato HTTP, con código de salida 0.
+
+### Resultados consolidados
+
+| Comprobación | Resultado |
+|---|---|
+| Criterios funcionales de revisión | 6/6 |
+| Dockerfile API | 7/7 |
+| Dockerfile interfaz | 7/7 |
+| Verificador del stack | 7/7 |
+| Contrato HTTP | 14/14 |
+| Detector de secretos | 5/5 |
+| Verificador de entrega | 7/7 |
+| Apagado limpio | PASA |
+
+### Limitaciones
+
+- La revisión fue realizada por el autor del proyecto.
+- se respetó el intervalo mínimo de un día establecido
+  para la modalidad de autorrevisión.
+- Docker reutilizó la caché de construcción.
+- Las consultas documentales fueron simuladas.
+- La resolución del hallazgo se realizó posteriormente
+  con asistencia técnica.
+
+### Conclusión
+
+Validación técnica: PASA.
+
+El despliegue es reproducible desde un clon limpio,
+con las dependencias locales correctamente instaladas.
+
+El cumplimiento formal de la modalidad de autorrevisión
+queda sujeto al criterio del evaluador.
+
+## Revisión final — 28 de noviembre de 2026
+
+Se realizó una nueva revisión desde un clon limpio
+del repositorio, utilizando la documentación actualizada.
+
+No se detectaron nuevos problemas durante la ejecución.
+Los hallazgos técnicos anteriores se encuentran resueltos.
+
+Resultado técnico informado: PASA.
