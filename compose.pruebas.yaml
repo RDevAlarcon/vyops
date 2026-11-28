@@ -1,0 +1,25 @@
+
+services:
+  api:
+    environment:
+      GEMINI_API_KEY: ""
+      ENTORNO: desarrollo
+
+    volumes:
+      - ./servidor_pruebas.py:/app/servidor_pruebas.py:ro
+      - ./casos.py:/app/casos.py:ro
+
+    command:
+      - python
+      - -c
+      - |
+        from unittest.mock import patch
+        from servidor_pruebas import responder_simulado
+        from servicio.main import app
+        import uvicorn
+
+        with patch(
+            "servicio.logica.responder",
+            side_effect=responder_simulado,
+        ):
+            uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -3702,6 +3702,135 @@ de 5/5 comprobaciones aprobadas.
 
 **Estado de las comprobaciones SEC-1 a SEC-5: COMPLETADO.**
 
+
+## Despliegue con Docker Compose
+
+VyOps dispone de dos servicios independientes:
+
+- API: servicio FastAPI disponible en http://localhost:8000.
+- Interfaz: aplicación web disponible en http://localhost:8080.
+
+Ambos servicios se comunican mediante la red interna de Docker
+Compose, utilizando la dirección `http://api:8000`.
+
+### Requisitos
+
+- Docker con Docker Compose.
+- Python 3.13 para ejecutar el verificador automático.
+- Dependencias de `requirements.txt` instaladas para el verificador.
+
+### Configuración
+
+Copiar `.env.example` a `.env` si este último no existe.
+
+Las variables utilizadas son:
+
+| Variable | Descripción | Valor predeterminado |
+|---|---|---|
+| GEMINI_API_KEY | Credencial del proveedor Gemini | Vacío |
+| ENTORNO | Entorno de ejecución | desarrollo |
+| VYOPS_SUBNET | Subred privada de Docker | 10.200.38.0/28 |
+
+No incorporar credenciales reales al repositorio ni a las imágenes.
+
+Si existe un conflicto de subredes, configurar `VYOPS_SUBNET`
+con una subred privada disponible en el equipo.
+
+### Arranque normal
+
+```bash
+docker compose up -d --build
+```
+
+Consultar el estado de los servicios:
+
+```bash
+docker compose ps
+```
+
+Abrir la interfaz en http://localhost:8080.
+
+Las consultas RAG reales requieren una credencial válida y
+un índice vectorial preparado. El arranque de los servicios
+no certifica por sí solo la disponibilidad del modelo.
+
+### Arranque en modo simulado
+
+Para verificar el contrato HTTP sin consumir Gemini:
+
+```bash
+docker compose --env-file .env.example -f compose.yaml -f compose.pruebas.yaml up -d --build
+```
+
+Realizar la siguiente consulta desde la interfaz:
+
+> ¿Cuál es el horario de atención presencial los viernes?
+
+Resultado esperado:
+
+- Horario: 08:30 a 13:00 horas.
+- Fuente: `atencion_ciudadana/canales_horarios.md`.
+- Estado: `respuesta_generada`.
+- Identificador de trazabilidad único.
+
+Una consulta inferior a tres caracteres devuelve HTTP 422.
+
+### Apagado
+
+```bash
+docker compose down
+```
+
+El comando elimina los contenedores y la red del proyecto,
+conservando las imágenes construidas.
+
+### Verificación automática
+
+Con la composición previamente detenida, ejecutar:
+
+```bash
+python verificar_stack.py
+```
+
+El verificador construye, inicia, comprueba y detiene
+automáticamente los servicios en modo simulado.
+
+### Evidencias de validación
+
+Fecha: 27 de noviembre de 2026.
+
+| Comprobación | Resultado |
+|---|---|
+| Configuración de Docker Compose | PASA |
+| Construcción y arranque | PASA |
+| Contenedores saludables | PASA |
+| Disponibilidad de la API | PASA |
+| Consulta desde la interfaz | PASA |
+| Casos del contrato HTTP | 14/14 |
+| Apagado limpio | PASA |
+| Resultado del verificador | 7/7 |
+| Código de salida | 0 |
+
+Pruebas de fallo controlado:
+
+- Dirección interna incorrecta: HTTP 404.
+- API detenida: HTTP 502.
+- Recuperación de la API: HTTP 200.
+- Configuración incorrecta en el verificador: 6/7, salida 1.
+- Configuración restaurada: 7/7, salida 0.
+
+Se resolvió un agotamiento de subredes de Docker mediante
+una subred privada configurable, sin eliminar redes ni
+intervenir otros proyectos.
+
+### Alcance y limitaciones
+
+Las pruebas documentales se ejecutaron en modo simulado,
+reutilizando `servidor_pruebas.py` y `casos.py`.
+
+Se verificó la infraestructura y el contrato HTTP real,
+sin realizar llamadas a Gemini.
+
 ---
 
 ## Derechos de autor y propiedad intelectual

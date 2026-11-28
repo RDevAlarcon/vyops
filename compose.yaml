@@ -1,0 +1,30 @@
+
+name: vyops
+
+services:
+  api:
+    build: .
+    image: vyops:0.3
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ENTORNO: ${ENTORNO:-desarrollo}
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  interfaz:
+    build: ./interfaz
+    image: vyops/interfaz:0.1
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:8080:8000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${VYOPS_SUBNET:-10.200.38.0/28}
