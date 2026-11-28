@@ -3703,66 +3703,161 @@ de 5/5 comprobaciones aprobadas.
 **Estado de las comprobaciones SEC-1 a SEC-5: COMPLETADO.**
 
 
-## Despliegue con Docker Compose
+
+# Despliegue con Docker Compose
 
 VyOps dispone de dos servicios independientes:
 
-- API: servicio FastAPI disponible en http://localhost:8000.
-- Interfaz: aplicación web disponible en http://localhost:8080.
+| Servicio | Dirección | Puerto publicado |
+|---|---|---|
+| API FastAPI | http://localhost:8000 | 8000 |
+| Interfaz web | http://localhost:8080 | 8080 |
 
-Ambos servicios se comunican mediante la red interna de Docker
-Compose, utilizando la dirección `http://api:8000`.
+Ambos servicios se comunican mediante la red interna de
+Docker Compose, utilizando la dirección `http://api:8000`.
 
-### Requisitos
+## Requisitos
 
+- Git.
 - Docker con Docker Compose.
-- Python 3.13 para ejecutar el verificador automático.
-- Dependencias de `requirements.txt` instaladas para el verificador.
+- Puertos 8000 y 8080 disponibles.
+- Python 3.13 para ejecutar los verificadores.
+- Dependencias de `requirements.txt` instaladas para
+  ejecutar los verificadores.
 
-### Configuración
+Comprobar las herramientas disponibles:
+
+```bash
+git --version
+docker --version
+docker compose version
+python --version
+```
+
+## Configuración
+
+Clonar el repositorio:
+
+```bash
+git clone https://github.com/RDevAlarcon/vyops.git
+cd vyops
+```
 
 Copiar `.env.example` a `.env` si este último no existe.
 
-Las variables utilizadas son:
+En Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+En Linux:
+
+```bash
+cp .env.example .env
+```
+
+### Variables de entorno
 
 | Variable | Descripción | Valor predeterminado |
 |---|---|---|
 | GEMINI_API_KEY | Credencial del proveedor Gemini | Vacío |
 | ENTORNO | Entorno de ejecución | desarrollo |
-| VYOPS_SUBNET | Subred privada de Docker | 10.200.38.0/28 |
+| VYOPS_SUBNET | Subred privada de Docker Compose | 10.200.38.0/28 |
+| VYOPS_VECTORSTORE_DIR | Directorio local del índice ChromaDB | vectorstore_profesor |
+| VYOPS_EMBEDDING_PAUSA_SEGUNDOS | Pausa entre lotes de embeddings | 10 |
+| API_URL | Dirección interna de la API utilizada por la interfaz | http://api:8000 |
 
-No incorporar credenciales reales al repositorio ni a las imágenes.
+Las variables VYOPS_VECTORSTORE_DIR y
+VYOPS_EMBEDDING_PAUSA_SEGUNDOS corresponden al proceso
+local de indexación.
 
-Si existe un conflicto de subredes, configurar `VYOPS_SUBNET`
-con una subred privada disponible en el equipo.
+API_URL se configura directamente en `compose.yaml`.
+
+Las variables del entorno de la terminal pueden tener
+precedencia sobre las definidas en `.env`.
+
+No incorporar credenciales reales al repositorio
+ni a las imágenes.
+
+### Archivos de despliegue
+
+- `compose.yaml`: composición principal.
+- `compose.pruebas.yaml`: configuración simulada.
+- `Dockerfile`: construcción de la API.
+- `.dockerignore`: exclusiones de construcción de la API.
+- `interfaz/Dockerfile`: construcción de la interfaz.
+- `interfaz/.dockerignore`: exclusiones de la interfaz.
+- `interfaz/requirements.txt`: dependencias de la interfaz.
+- `.env.example`: plantilla de configuración.
+- `.gitignore`: exclusiones del repositorio.
+- `verificar_dockerfile.py`: verificador estático.
+- `verificar_stack.py`: verificador de la composición.
+- `buscar_secretos.py`: detector de secretos.
+- `verificar_entrega.py`: verificador de entrega.
+- `docs/verificacion_cruzada.md`: registro de revisión.
+
+## Cómo arrancar
 
 ### Arranque normal
+
+Validar la configuración:
+
+```bash
+docker compose config --quiet
+```
+
+Construir e iniciar los servicios:
 
 ```bash
 docker compose up -d --build
 ```
 
-Consultar el estado de los servicios:
+Las consultas RAG reales requieren una credencial válida
+y un índice vectorial preparado.
+
+El arranque de los servicios no certifica por sí solo
+la disponibilidad del modelo ni del índice vectorial.
+
+### Arranque en modo simulado
+
+Para verificar el contrato HTTP sin consumir Gemini,
+detener previamente la composición normal, si está activa.
+
+```bash
+docker compose --env-file .env.example -f compose.yaml -f compose.pruebas.yaml up -d --build --wait --wait-timeout 120
+```
+
+El modo simulado reutiliza `servidor_pruebas.py`
+y `casos.py`.
+
+No requiere credenciales reales.
+
+## Cómo comprobar que funciona
+
+### Estado de los servicios
 
 ```bash
 docker compose ps
 ```
 
-Abrir la interfaz en http://localhost:8080.
+Ambos servicios deben alcanzar el estado healthy.
 
-Las consultas RAG reales requieren una credencial válida y
-un índice vectorial preparado. El arranque de los servicios
-no certifica por sí solo la disponibilidad del modelo.
+### Endpoints de salud
 
-### Arranque en modo simulado
+Abrir las siguientes direcciones en el navegador:
 
-Para verificar el contrato HTTP sin consumir Gemini:
+- http://localhost:8000/salud
+- http://localhost:8080/salud
 
-```bash
-docker compose --env-file .env.example -f compose.yaml -f compose.pruebas.yaml up -d --build
-```
+Ambos endpoints deben responder HTTP 200
+y presentar el estado `ok`.
 
-Realizar la siguiente consulta desde la interfaz:
+### Consulta documental
+
+Abrir http://localhost:8080 en modo simulado.
+
+Realizar la siguiente consulta:
 
 > ¿Cuál es el horario de atención presencial los viernes?
 
@@ -3773,27 +3868,79 @@ Resultado esperado:
 - Estado: `respuesta_generada`.
 - Identificador de trazabilidad único.
 
-Una consulta inferior a tres caracteres devuelve HTTP 422.
+Una consulta inferior a tres caracteres debe
+devolver HTTP 422.
 
-### Apagado
+### Consultar registros
+
+```bash
+docker compose logs --tail=3 api interfaz
+```
+
+Los registros no deben exponer credenciales reales
+ni el contenido completo de las consultas.
+
+### Verificación automática
+
+Con la composición previamente detenida y las
+dependencias de Python instaladas, ejecutar:
+
+```bash
+python verificar_dockerfile.py
+python verificar_dockerfile.py interfaz/Dockerfile
+python verificar_stack.py
+python buscar_secretos.py
+python verificar_entrega.py
+```
+
+Resultados esperados:
+
+| Verificador | Resultado esperado |
+|---|---|
+| Dockerfile API | 7/7 |
+| Dockerfile interfaz | 7/7 |
+| Composición | 7/7 |
+| Detector de secretos | 5/5 |
+| Entrega | 7/7 |
+
+El verificador del stack construye, inicia, comprueba
+y detiene automáticamente los servicios en modo simulado.
+
+## Cómo detener
+
+Para detener la composición normal:
 
 ```bash
 docker compose down
 ```
 
-El comando elimina los contenedores y la red del proyecto,
-conservando las imágenes construidas.
-
-### Verificación automática
-
-Con la composición previamente detenida, ejecutar:
+Para detener la composición simulada:
 
 ```bash
-python verificar_stack.py
+docker compose --env-file .env.example -f compose.yaml -f compose.pruebas.yaml down
 ```
 
-El verificador construye, inicia, comprueba y detiene
-automáticamente los servicios en modo simulado.
+Estos comandos eliminan los contenedores y la red
+del proyecto, conservando las imágenes construidas.
+
+Comprobar que no quedan contenedores del proyecto:
+
+```bash
+docker compose ps -a
+```
+
+## Problemas frecuentes
+
+| Problema | Causa posible | Solución |
+|---|---|---|
+| Docker no responde | Motor Docker detenido | Iniciar Docker y repetir el comando |
+| Puerto ocupado | Otro servicio utiliza el puerto 8000 u 8080 | Liberar el puerto de forma autorizada o adaptar los puertos publicados y las URLs del verificador |
+| Error de asignación de red | Subredes de Docker agotadas o en conflicto | Configurar VYOPS_SUBNET con una subred privada disponible |
+| Interfaz devuelve HTTP 502 | API no disponible | Comprobar docker compose ps y los registros |
+| Error de comunicación interna | API_URL incorrecta | Verificar que utiliza http://api:8000 |
+| Modelo sin configurar | Credencial Gemini ausente | Utilizar el modo simulado o configurar una credencial válida |
+| ModuleNotFoundError | Dependencias de Python no instaladas | Activar el entorno virtual e instalar requirements.txt |
+| HTTP 422 | Consulta inválida | Introducir una consulta de entre 3 y 500 caracteres |
 
 ### Evidencias de validación
 
@@ -3808,7 +3955,8 @@ Fecha: 27 de noviembre de 2026.
 | Consulta desde la interfaz | PASA |
 | Casos del contrato HTTP | 14/14 |
 | Apagado limpio | PASA |
-| Resultado del verificador | 7/7 |
+| Resultado del verificador del stack | 7/7 |
+| Detector de secretos | 5/5 |
 | Código de salida | 0 |
 
 Pruebas de fallo controlado:
@@ -3826,14 +3974,10 @@ intervenir otros proyectos.
 ### Alcance y limitaciones
 
 Las pruebas documentales se ejecutaron en modo simulado,
-reutilizando `servidor_pruebas.py` y `casos.py`.
-
-Se verificó la infraestructura y el contrato HTTP real,
 sin realizar llamadas a Gemini.
 
 La reproducibilidad se verificó desde un clon limpio
-en Windows y posteriormente en un servidor Linux
-independiente.
+en Windows y posteriormente en un servidor Linux.
 
 Resultados:
 
@@ -3842,8 +3986,8 @@ Resultados:
 - Windows y Linux: detector de secretos 5/5.
 - Apagado limpio confirmado en ambos equipos.
 
-La validación en Linux fue realizada por el alumno
-como alternativa a la revisión cruzada entre participantes.
+La validación en Linux fue realizada por el propio alumno
+y requirió adaptaciones temporales del entorno.
 
 Las evidencias, adaptaciones y limitaciones se encuentran
 documentadas en [Verificación cruzada del despliegue](docs/verificacion_cruzada.md).

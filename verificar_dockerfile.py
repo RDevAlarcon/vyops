@@ -438,16 +438,21 @@ def ejecutar(directorio: Path = BASE_DIR) -> int:
     return 1
 
 
+
+
 if __name__ == "__main__":
-    # Permite verificar otro directorio sin modificar el proyecto.
+    # Permite recibir un directorio o la ruta de un Dockerfile.
     if len(sys.argv) > 2:
-        print("Uso: python verificar_dockerfile.py [directorio]")
+        print("Uso: python verificar_dockerfile.py [directorio o Dockerfile]")
         sys.exit(1)
 
-    directorio = (
+    ruta = (
         Path(sys.argv[1]).resolve()
         if len(sys.argv) == 2
         else BASE_DIR
     )
+
+    # Si se recibe la ruta del Dockerfile, utiliza su directorio.
+    directorio = ruta.parent if ruta.name == "Dockerfile" else ruta
 
     sys.exit(ejecutar(directorio))
