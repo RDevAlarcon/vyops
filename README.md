@@ -3831,6 +3831,23 @@ reutilizando `servidor_pruebas.py` y `casos.py`.
 Se verificó la infraestructura y el contrato HTTP real,
 sin realizar llamadas a Gemini.
 
+La reproducibilidad se verificó desde un clon limpio
+en Windows y posteriormente en un servidor Linux
+independiente.
+
+Resultados:
+
+- Windows: verificador automático 7/7.
+- Windows y Linux: casos HTTP 14/14.
+- Windows y Linux: detector de secretos 5/5.
+- Apagado limpio confirmado en ambos equipos.
+
+La validación en Linux fue realizada por el alumno
+como alternativa a la revisión cruzada entre participantes.
+
+Las evidencias, adaptaciones y limitaciones se encuentran
+documentadas en [Verificación cruzada del despliegue](docs/verificacion_cruzada.md).
+
 ---
 
 ## Derechos de autor y propiedad intelectual
